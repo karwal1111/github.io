@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trade Ledger</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #141414;
+    --surface2: #1c1c1c;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e8e3d8;
+    --muted: #7a7570;
+    --accent: #c9a96e;
+    --accent-dim: rgba(201,169,110,0.12);
+    --green: #4caf6e;
+    --green-dim: rgba(76,175,110,0.1);
+    --red: #e05252;
+    --red-dim: rgba(224,82,82,0.1);
+    --serif: 'Playfair Display', Georgia, serif;
+    --sans: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+    --radius: 8px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* Layout */
+  .shell { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 1.5rem;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .logo {
+    font-family: var(--serif);
+    font-size: 22px;
+    color: var(--accent);
+    letter-spacing: -0.3px;
+    margin-bottom: 0.25rem;
+  }
+  .logo-sub {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 2.5rem;
+  }
+
+  .nav-section { margin-bottom: 2rem; }
+  .nav-label {
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    background: none;
+    border: none;
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    text-align: left;
+  }
+  .nav-btn:hover { background: var(--surface2); }
+  .nav-btn.active { background: var(--accent-dim); color: var(--accent); }
+  .nav-icon { width: 16px; text-align: center; opacity: 0.7; }
+
+  .stats-mini {
+    margin-top: auto;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 5px 0;
+  }
+  .stat-lbl { font-size: 12px; color: var(--muted); }
+  .stat-val { font-family: var(--mono); font-size: 13px; font-weight: 400; }
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+
+  /* Main */
+  .main {
+    flex: 1;
+    padding: 2.5rem 3rem;
+    max-width: 900px;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Page header */
+  .page-title {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 0.35rem;
+    letter-spacing: -0.5px;
+  }
+  .page-sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 2rem;
+  }
+
+  /* Form */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  .form-full { grid-column: 1 / -1; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .field input, .field select, .field textarea {
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent);
+  }
+  .field textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+  .field select option { background: #1a1a1a; }
+
+  .tag-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+  .tag {
+    padding: 5px 14px;
+    border-radius: 100px;
+    border: 1px solid var(--border2);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: none;
+    color: var(--muted);
+  }
+  .tag:hover { border-color: var(--accent); color: var(--accent); }
+  .tag.sel { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #1a1200;
+    border: none;
+    border-radius: var(--radius);
+    padding: 10px 24px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    margin-top: 1.25rem;
+  }
+  .btn-primary:hover { opacity: 0.88; }
+
+  .btn-ghost {
+    background: none;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 7px 16px;
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-ghost:hover { border-color: var(--red); color: var(--red); }
+
+  /* Trade log entries */
+  .filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .filter-bar input, .filter-bar select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    padding: 7px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .filter-bar input:focus, .filter-bar select:focus { border-color: var(--accent); }
+  .filter-bar select option { background: #1a1a1a; }
+
+  .entry-list { display: flex; flex-direction: column; gap: 12px; }
+
+  .entry {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+  .entry:hover { border-color: var(--border2); background: var(--surface2); }
+  .entry.win { border-left: 3px solid var(--green); }
+  .entry.loss { border-left: 3px solid var(--red); }
+  .entry.neutral { border-left: 3px solid var(--muted); }
+
+  .entry-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  .entry-symbol {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    color: var(--text);
+  }
+  .entry-pnl {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 400;
+  }
+  .entry-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .entry-note {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+    font-style: italic;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    margin-top: 8px;
+  }
+  .entry-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .etag {
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 100px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    letter-spacing: 0.5px;
+  }
+
+  .delete-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+    padding: 4px;
+  }
+  .entry:hover .delete-btn { opacity: 1; }
+  .delete-btn:hover { color: var(--red); }
+
+  /* Stats page */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+  }
+  .stat-card .lbl {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .stat-card .val {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 300;
+    line-height: 1;
+  }
+
+  /* Chart */
+  .chart-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .chart-title {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1.25rem;
+  }
+  canvas { width: 100%; }
+
+  /* Notes page */
+  .notes-list { display: flex; flex-direction: column; gap: 12px; }
+  .note-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    position: relative;
+  }
+  .note-card:hover .delete-btn { opacity: 1; }
+  .note-date { font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-bottom: 0.5rem; }
+  .note-body { font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--muted);
+  }
+  .empty-icon { font-size: 32px; margin-bottom: 1rem; opacity: 0.4; }
+  .empty-state p { font-size: 14px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  @media (max-width: 750px) {
+    .sidebar { display: none; }
+    .main { padding: 1.5rem; }
+    .form-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="logo">Trade Ledger</div>
+    <div class="logo-sub">Journal</div>
+
+    <div class="nav-section">
+      <div class="nav-label">Pages</div>
+      <button class="nav-btn active" onclick="showPage('log', this)">
+        <span class="nav-icon">◈</span> Trade Log
+      </button>
+      <button class="nav-btn" onclick="showPage('add', this)">
+        <span class="nav-icon">＋</span> New Entry
+      </button>
+      <button class="nav-btn" onclick="showPage('stats', this)">
+        <span class="nav-icon">◎</span> Statistics
+      </button>
+      <button class="nav-btn" onclick="showPage('notes', this)">
+        <span class="nav-icon">◷</span> Notes
+      </button>
+    </div>
+
+    <div class="stats-mini" id="sidebar-stats">
+      <!-- filled by JS -->
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main">
+
+    <!-- Trade Log -->
+    <div class="page active" id="page-log">
+      <h1 class="page-title">Trade Log</h1>
+      <p class="page-sub" id="log-subtitle">All your recorded trades</p>
+      <div class="filter-bar">
+        <input type="text" id="search" placeholder="Search symbol…" oninput="renderLog()" style="width:160px">
+        <select onchange="renderLog()" id="filter-result">
+          <option value="">All results</option>
+          <option value="win">Wins</option>
+          <option value="loss">Losses</option>
+          <option value="neutral">Neutral</option>
+        </select>
+        <select onchange="renderLog()" id="filter-type">
+          <option value="">All types</option>
+          <option value="Equity">Equity</option>
+          <option value="F&O">F&amp;O</option>
+          <option value="Options">Options</option>
+          <option value="Futures">Futures</option>
+          <option value="Currency">Currency</option>
+        </select>
+      </div>
+      <div class="entry-list" id="entry-list"></div>
+    </div>
+
+    <!-- Add Entry -->
+    <div class="page" id="page-add">
+      <h1 class="page-title">New Entry</h1>
+      <p class="page-sub">Record a trade in your journal</p>
+      <div class="form-card">
+        <div class="form-grid three" style="margin-bottom:1.25rem">
+          <div class="field">
+            <label>Symbol</label>
+            <input id="f-symbol" type="text" placeholder="NIFTY, RELIANCE…">
+          </div>
+          <div class="field">
+            <label>Date</label>
+            <input id="f-date" type="date">
+          </div>
+          <div class="field">
+            <label>Type</label>
+            <select id="f-type">
+              <option>Equity</option>
+              <option>F&O</option>
+              <option>Options</option>
+              <option>Futures</option>
+              <option>Currency</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid" style="margin-bottom:1.25rem">
+          <div class="field">
+            <label>Direction</label>
+            <select id="f-dir">
+              <option value="Long">Long</option>
+              <option value="Short">Short</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Quantity / Lots</label>
+            <input id="f-qty" type="number" placeholder="1">
+          </div>
+          <div class="field">
+            <label>Entry Price (₹)</label>
+            <input id="f-entry" type="number" placeholder="0.00">
+          </div>
+          <div class="field">
+            <label>Exit Price (₹)</label>
+            <input id="f-exit" type="number" placeholder="0.00">
+          </div>
+        </div>
+        <div class="form-grid" style="margin-bottom:1.5rem">
+          <div class="field">
+            <label>P&amp;L (₹)</label>
+            <input id="f-pnl" type="number" placeholder="Auto or manual">
+          </div>
+          <div class="field">
+            <label>Result</label>
+            <select id="f-result">
+              <option value="win">Win</option>
+              <option value="loss">Loss</option>
+              <option value="neutral">Break-even</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-bottom:1rem">
+          <div class="nav-label" style="margin-bottom:0.6rem">Tags</div>
+          <div class="tag-row" id="tag-row">
+            <button class="tag" onclick="toggleTag(this)">Trend Follow</button>
+            <button class="tag" onclick="toggleTag(this)">Breakout</button>
+            <button class="tag" onclick="toggleTag(this)">Reversal</button>
+            <button class="tag" onclick="toggleTag(this)">Momentum</button>
+            <button class="tag" onclick="toggleTag(this)">Options Strategy</button>
+            <button class="tag" onclick="toggleTag(this)">Scalp</button>
+            <button class="tag" onclick="toggleTag(this)">Swing</button>
+            <button class="tag" onclick="toggleTag(this)">Positional</button>
+            <button class="tag" onclick="toggleTag(this)">FOMO</button>
+            <button class="tag" onclick="toggleTag(this)">Disciplined</button>
+          </div>
+        </div>
+
+        <div class="field form-full">
+          <label>Trade Notes / Rationale</label>
+          <textarea id="f-notes" placeholder="Setup, rationale, emotions, lessons…"></textarea>
+        </div>
+        <button class="btn-primary" onclick="saveEntry()">Save Entry</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="page" id="page-stats">
+      <h1 class="page-title">Statistics</h1>
+      <p class="page-sub">Overview of your trading performance</p>
+      <div class="stats-grid" id="stats-grid"></div>
+      <div class="chart-wrap">
+        <div class="chart-title">Cumulative P&amp;L</div>
+        <canvas id="pnl-chart" height="180"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">Win / Loss Breakdown</div>
+        <canvas id="wl-chart" height="180"></canvas>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="page" id="page-notes">
+      <h1 class="page-title">Notes</h1>
+      <p class="page-sub">Free-form journal entries, thoughts, market observations</p>
+      <div class="form-card">
+        <div class="field">
+          <label>Date</label>
+          <input id="n-date" type="date" style="width:180px">
+        </div>
+        <div class="field" style="margin-top:1rem">
+          <label>Note</label>
+          <textarea id="n-body" placeholder="Market thoughts, psychology, rules review…" style="min-height:120px"></textarea>
+        </div>
+        <button class="btn-primary" onclick="saveNote()">Save Note</button>
+      </div>
+      <div class="notes-list" id="notes-list"></div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ─── Storage helpers ───────────────────────────────────────────────
+const LS = {
+  get: k => JSON.parse(localStorage.getItem(k) || '[]'),
+  set: (k,v) => localStorage.setItem(k, JSON.stringify(v))
+};
+
+let trades = LS.get('tl_trades');
+let notes  = LS.get('tl_notes');
+
+function saveTrades() { LS.set('tl_trades', trades); }
+function saveNotes()  { LS.set('tl_notes', notes); }
+
+// ─── Nav ───────────────────────────────────────────────────────────
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (id === 'log')   renderLog();
+  if (id === 'stats') renderStats();
+  if (id === 'notes') renderNotes();
+  if (id === 'add')   setDefaults();
+}
+
+function setDefaults() {
+  document.getElementById('f-date').value = today();
+  document.getElementById('n-date').value = today();
+}
+
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+// ─── Tags ──────────────────────────────────────────────────────────
+function toggleTag(el) { el.classList.toggle('sel'); }
+function getSelTags() {
+  return [...document.querySelectorAll('#tag-row .tag.sel')].map(t => t.textContent.trim());
+}
+function clearTags() {
+  document.querySelectorAll('#tag-row .tag').forEach(t => t.classList.remove('sel'));
+}
+
+// ─── Save trade ────────────────────────────────────────────────────
+function saveEntry() {
+  const sym  = document.getElementById('f-symbol').value.trim().toUpperCase();
+  const date = document.getElementById('f-date').value;
+  if (!sym || !date) { alert('Symbol and date are required.'); return; }
+
+  const entry = parseInt(document.getElementById('f-entry').value) || 0;
+  const exit  = parseInt(document.getElementById('f-exit').value)  || 0;
+  const qty   = parseInt(document.getElementById('f-qty').value)   || 1;
+  let pnl     = parseFloat(document.getElementById('f-pnl').value);
+  if (!pnl && entry && exit) pnl = (exit - entry) * qty;
+
+  trades.unshift({
+    id: Date.now(),
+    sym,
+    date,
+    type:   document.getElementById('f-type').value,
+    dir:    document.getElementById('f-dir').value,
+    qty,
+    entry,
+    exit,
+    pnl:    Math.round(pnl) || 0,
+    result: document.getElementById('f-result').value,
+    notes:  document.getElementById('f-notes').value.trim(),
+    tags:   getSelTags()
+  });
+  saveTrades();
+
+  // reset form
+  ['f-symbol','f-entry','f-exit','f-qty','f-pnl','f-notes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  clearTags();
+
+  updateSidebar();
+  showPage('log', document.querySelector('.nav-btn'));
+  document.querySelectorAll('.nav-btn')[0].classList.add('active');
+}
+
+// ─── Render log ────────────────────────────────────────────────────
+function renderLog() {
+  const search  = document.getElementById('search').value.toLowerCase();
+  const resF    = document.getElementById('filter-result').value;
+  const typeF   = document.getElementById('filter-type').value;
+
+  let filtered = trades.filter(t => {
+    if (search && !t.sym.toLowerCase().includes(search)) return false;
+    if (resF && t.result !== resF) return false;
+    if (typeF && t.type !== typeF) return false;
+    return true;
+  });
+
+  const list = document.getElementById('entry-list');
+  document.getElementById('log-subtitle').textContent =
+    filtered.length + ' ' + (filtered.length === 1 ? 'trade' : 'trades');
+
+  if (!filtered.length) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">◈</div>
+      <p>No trades recorded yet.<br>Add your first entry.</p>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(t => {
+    const sign  = t.pnl >= 0 ? '+' : '';
+    const cls   = t.result;
+    const pclr  = t.pnl >= 0 ? 'pos' : 'neg';
+    const tags  = t.tags && t.tags.length
+      ? t.tags.map(tg => `<span class="etag">${tg}</span>`).join('')
+      : '';
+    const note  = t.notes ? `<div class="entry-note">${t.notes}</div>` : '';
+    return `
+    <div class="entry ${cls}" onclick="expandEntry(${t.id})">
+      <button class="delete-btn" onclick="event.stopPropagation();deleteTrade(${t.id})">✕</button>
+      <div class="entry-top">
+        <span class="entry-symbol">${t.sym}</span>
+        <span class="entry-pnl ${pclr}">${sign}₹${t.pnl.toLocaleString()}</span>
+      </div>
+      <div class="entry-meta">
+        <span>${formatDate(t.date)}</span>
+        <span>${t.type}</span>
+        <span>${t.dir}</span>
+        <span>${t.qty} qty</span>
+        ${t.entry ? `<span>₹${t.entry} → ₹${t.exit}</span>` : ''}
+      </div>
+      ${tags ? `<div class="entry-tags">${tags}</div>` : ''}
+      ${note}
+    </div>`;
+  }).join('');
+}
+
+function formatDate(d) {
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+}
+
+function deleteTrade(id) {
+  if (!confirm('Delete this trade?')) return;
+  trades = trades.filter(t => t.id !== id);
+  saveTrades();
+  renderLog();
+  updateSidebar();
+}
+
+function expandEntry() { /* future: modal detail */ }
+
+// ─── Stats ─────────────────────────────────────────────────────────
+let charts = {};
+
+function renderStats() {
+  const wins   = trades.filter(t => t.result === 'win');
+  const losses = trades.filter(t => t.result === 'loss');
+  const totalPnl = trades.reduce((s,t) => s + t.pnl, 0);
+  const avgWin  = wins.length   ? Math.round(wins.reduce((s,t)=>s+t.pnl,0)/wins.length)   : 0;
+  const avgLoss = losses.length ? Math.round(losses.reduce((s,t)=>s+t.pnl,0)/losses.length) : 0;
+  const wr = trades.length ? ((wins.length/trades.length)*100).toFixed(1) : '—';
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="lbl">Total Trades</div><div class="val">${trades.length}</div></div>
+    <div class="stat-card"><div class="lbl">Win Rate</div><div class="val">${wr}%</div></div>
+    <div class="stat-card"><div class="lbl">Net P&L</div><div class="val ${totalPnl>=0?'pos':'neg'}">${totalPnl>=0?'+':''}₹${Math.abs(totalPnl).toLocaleString()}</div></div>
+    <div class="stat-card"><div class="lbl">Total Wins</div><div class="val pos">${wins.length}</div></div>
+    <div class="stat-card"><div class="lbl">Total Losses</div><div class="val neg">${losses.length}</div></div>
+    <div class="stat-card"><div class="lbl">Avg Win / Avg Loss</div><div class="val">₹${avgWin.toLocaleString()} / ₹${Math.abs(avgLoss).toLocaleString()}</div></div>
+  `;
+
+  // Cumulative PnL chart
+  const sorted = [...trades].sort((a,b) => a.date.localeCompare(b.date));
+  let cum = 0;
+  const cumData = sorted.map(t => { cum += t.pnl; return cum; });
+  const labels  = sorted.map(t => formatDate(t.date));
+
+  if (charts.pnl) charts.pnl.destroy();
+  const ctx1 = document.getElementById('pnl-chart').getContext('2d');
+  charts.pnl = new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: cumData,
+        borderColor: cum >= 0 ? '#4caf6e' : '#e05252',
+        backgroundColor: cum >= 0 ? 'rgba(76,175,110,0.08)' : 'rgba(224,82,82,0.08)',
+        borderWidth: 1.5,
+        pointRadius: 3,
+        pointBackgroundColor: cum >= 0 ? '#4caf6e' : '#e05252',
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: chartOpts()
+  });
+
+  // Win/loss bar
+  const monthly = {};
+  sorted.forEach(t => {
+    const m = t.date.slice(0,7);
+    if (!monthly[m]) monthly[m] = { w:0, l:0 };
+    if (t.result === 'win') monthly[m].w++;
+    else if (t.result === 'loss') monthly[m].l++;
+  });
+  const mLabels = Object.keys(monthly).sort();
+  if (charts.wl) charts.wl.destroy();
+  const ctx2 = document.getElementById('wl-chart').getContext('2d');
+  charts.wl = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: mLabels.map(m => { const d=new Date(m+'-01'); return d.toLocaleDateString('en-IN',{month:'short',year:'2-digit'}); }),
+      datasets: [
+        { label: 'Wins',   data: mLabels.map(m=>monthly[m].w), backgroundColor: 'rgba(76,175,110,0.7)', borderRadius: 4 },
+        { label: 'Losses', data: mLabels.map(m=>monthly[m].l), backgroundColor: 'rgba(224,82,82,0.7)',  borderRadius: 4 }
+      ]
+    },
+    options: { ...chartOpts(), plugins: { ...chartOpts().plugins, legend: { display: true, labels: { color: '#7a7570', font: { size: 11 }, boxWidth: 12 } } } }
+  });
+}
+
+function chartOpts() {
+  return {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1c1c1c',
+        borderColor: 'rgba(255,255,255,0.1)',
+        borderWidth: 1,
+        titleColor: '#e8e3d8',
+        bodyColor: '#7a7570',
+        padding: 10
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { color: '#7a7570', font: { size: 11 } }
+      },
+      y: {
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { color: '#7a7570', font: { size: 11 } }
+      }
+    }
+  };
+}
+
+// ─── Notes ─────────────────────────────────────────────────────────
+function saveNote() {
+  const body = document.getElementById('n-body').value.trim();
+  const date = document.getElementById('n-date').value;
+  if (!body) return;
+  notes.unshift({ id: Date.now(), date, body });
+  saveNotes();
+  document.getElementById('n-body').value = '';
+  renderNotes();
+}
+
+function renderNotes() {
+  const list = document.getElementById('notes-list');
+  if (!notes.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">◷</div><p>No notes yet.</p></div>`;
+    return;
+  }
+  list.innerHTML = notes.map(n => `
+    <div class="note-card">
+      <button class="delete-btn" onclick="deleteNote(${n.id})">✕</button>
+      <div class="note-date">${formatDate(n.date)}</div>
+      <div class="note-body">${n.body}</div>
+    </div>
+  `).join('');
+}
+
+function deleteNote(id) {
+  if (!confirm('Delete this note?')) return;
+  notes = notes.filter(n => n.id !== id);
+  saveNotes();
+  renderNotes();
+}
+
+// ─── Sidebar stats ─────────────────────────────────────────────────
+function updateSidebar() {
+  const totalPnl = trades.reduce((s,t) => s+t.pnl, 0);
+  const wins     = trades.filter(t => t.result === 'win').length;
+  const wr       = trades.length ? ((wins/trades.length)*100).toFixed(1)+'%' : '—';
+  document.getElementById('sidebar-stats').innerHTML = `
+    <div class="nav-label">Summary</div>
+    <div class="stat-row"><span class="stat-lbl">Trades</span><span class="stat-val">${trades.length}</span></div>
+    <div class="stat-row"><span class="stat-lbl">Win rate</span><span class="stat-val">${wr}</span></div>
+    <div class="stat-row"><span class="stat-lbl">Net P&L</span><span class="stat-val ${totalPnl>=0?'pos':'neg'}">${totalPnl>=0?'+':''}₹${Math.abs(totalPnl).toLocaleString()}</span></div>
+  `;
+}
+
+// ─── Init ──────────────────────────────────────────────────────────
+document.getElementById('f-date').value = today();
+document.getElementById('n-date').value = today();
+updateSidebar();
+renderLog();
+</script>
+</body>
+</html>
