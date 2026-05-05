@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>P&L Calendar · Zerodha Tradebook</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0e13;--bg2:#12151d;--bg3:#181c26;--bg4:#1e2230;
+  --bd:#252a38;--bd2:#2e3448;
+  --tx:#e2e6f0;--tx2:#8a91a8;--tx3:#464e66;
+  --g:#00c896;--r:#f04f4f;--b:#4f8ef7;--am:#f5a623;--pu:#a78bfa;
+  --gd:rgba(0,200,150,.12);--rd:rgba(240,79,79,.12);
+}
+html{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:14px}
+body{min-height:100vh}
+
+/* ── Nav ─────────────────────────────────────────────────────────────────── */
+.nav{height:54px;background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:100}
+.nav-logo{font-size:16px;font-weight:700;letter-spacing:-.3px}
+.nav-logo span{color:var(--b)}
+.nav-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.3px;background:rgba(245,166,35,.18);color:var(--am)}
+.nav-sub{font-size:11px;color:var(--tx3);margin-left:4px}
+.nav-r{margin-left:auto;display:flex;gap:8px;align-items:center}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:7px 14px;border-radius:7px;cursor:pointer;border:1px solid var(--bd2);background:var(--bg3);color:var(--tx2);font-family:inherit;transition:all .14s}
+.btn:hover{background:var(--bg4);color:var(--tx);border-color:var(--b)}
+.btn-p{background:var(--b);color:#fff;border-color:var(--b)}.btn-p:hover{opacity:.85}
+
+/* ── Main layout ─────────────────────────────────────────────────────────── */
+.main{max-width:1340px;margin:0 auto;padding:20px 24px}
+
+/* ── Upload screen ───────────────────────────────────────────────────────── */
+#upload-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:78vh;gap:32px;text-align:center}
+.up-hero{font-size:20px;font-weight:700;margin-bottom:8px}
+.up-sub{font-size:13px;color:var(--tx3);line-height:1.8;max-width:500px}
+.up-zones{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.up-zone{width:240px;background:var(--bg2);border:2px dashed var(--bd2);border-radius:14px;padding:28px 20px;cursor:pointer;transition:border-color .15s,background .15s}
+.up-zone:hover,.up-zone.drag{border-color:var(--b);background:var(--bg3)}
+.up-zone.done{border-color:var(--g);border-style:solid;background:rgba(0,200,150,.05)}
+.up-icon{font-size:26px;margin-bottom:9px}
+.up-title{font-size:13px;font-weight:600;margin-bottom:5px}
+.up-hint{font-size:11px;color:var(--tx3);line-height:1.7}
+.up-fname{font-size:11px;color:var(--g);margin-top:7px;font-weight:600}
+.up-or{font-size:12px;color:var(--tx3)}
+
+/* ── Dashboard ───────────────────────────────────────────────────────────── */
+#dashboard{display:none}
+
+/* ── Stats top panel ─────────────────────────────────────────────────────── */
+.stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px}
+.stat-card{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;transition:border-color .15s}
+.stat-card.hi{border-color:var(--b);background:rgba(79,142,247,.07)}
+.s-lbl{font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.s-val{font-size:18px;font-weight:700;line-height:1;letter-spacing:-.3px}
+.s-sub{font-size:11px;color:var(--tx3);margin-top:4px}
+.cg{color:var(--g)}.cr{color:var(--r)}.cb{color:var(--b)}.ca{color:var(--am)}
+
+/* ── Period cards (shown on click) ───────────────────────────────────────── */
+#period-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.p-card{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:14px 16px}
+.p-card.active{border-color:var(--b);background:rgba(79,142,247,.06)}
+.p-lbl{font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.p-val{font-size:20px;font-weight:700;letter-spacing:-.3px;margin-bottom:3px}
+.p-sub{font-size:11px;color:var(--tx3)}
+
+/* ── Calendar card ───────────────────────────────────────────────────────── */
+.cal-card{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:20px;margin-bottom:14px}
+.cal-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.cal-title{font-size:15px;font-weight:700}
+.cal-sub{font-size:11px;color:var(--tx3);margin-top:2px}
+.cal-legend{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--tx3);flex-wrap:wrap}
+.lsq{width:13px;height:13px;border-radius:3px;display:inline-block;flex-shrink:0}
+.year-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.ytab{font-size:12px;font-weight:600;padding:5px 16px;border-radius:20px;cursor:pointer;border:1px solid var(--bd2);background:var(--bg3);color:var(--tx3);font-family:inherit;transition:all .14s}
+.ytab:hover{border-color:var(--b);color:var(--tx)}
+.ytab.on{background:var(--b);color:#fff;border-color:var(--b)}
+#cal-grid{width:100%}
+.cys{display:none}
+.cys.show{display:block}
+.month-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.month-block{}
+.m-lbl{font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px}
+.m-hdr{display:grid;grid-template-columns:repeat(5,22px);gap:2px;margin-bottom:4px}
+.m-hdr-cell{font-size:8px;color:var(--tx3);text-align:center;font-weight:600;width:22px}
+.m-grid{display:grid;grid-template-columns:repeat(5,22px);gap:2px}
+.dc{width:22px;height:22px;border-radius:3px;cursor:pointer;position:relative;display:flex;align-items:flex-start;justify-content:flex-start;padding:2px 2px 0 2px;transition:transform .1s,box-shadow .12s;flex-shrink:0}
+.dc:hover{transform:scale(1.25);z-index:10;box-shadow:0 3px 10px rgba(0,0,0,.55)}
+.dc.sel{outline:2.5px solid var(--b);outline-offset:1px;z-index:5}
+.dc-num{font-size:7px;line-height:1;pointer-events:none;font-weight:700;color:rgba(255,255,255,.7);user-select:none}
+.dc-ep{width:22px;height:22px}
+/* Profit levels */
+.cp1{background:#c8e6c9}.cp2{background:#66bb6a}.cp3{background:#2e7d32}.cp4{background:#1b5e20}
+/* Loss levels */
+.cl1{background:#ffcdd2}.cl2{background:#ef9a9a}.cl3{background:#c62828}.cl4{background:#7f0000}
+/* No trade */
+.cn{background:var(--bg4);border:1px solid var(--bd)}
+
+/* ── Day detail panel ────────────────────────────────────────────────────── */
+#day-panel{display:none;margin-bottom:14px}
+.day-panel-inner{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:18px 20px}
+.dp-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.dp-date{font-size:14px;font-weight:600;color:var(--tx)}
+.dp-pnl{font-size:28px;font-weight:700;margin-top:4px}
+.dp-close{font-size:20px;color:var(--tx3);cursor:pointer;line-height:1;padding:2px 6px;border-radius:5px;background:var(--bg3);border:1px solid var(--bd)}
+.dp-close:hover{color:var(--tx);background:var(--bg4)}
+.dtable{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;min-width:520px}
+.dtable th{padding:8px 11px;text-align:left;font-size:10px;font-weight:700;color:var(--tx3);border-bottom:1px solid var(--bd);background:var(--bg3);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.dtable td{padding:8px 11px;border-bottom:1px solid var(--bd);font-size:12px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dtable tr:last-child td{border-bottom:none}
+.dtable tr:hover td{background:var(--bg3);color:var(--tx)}
+.bx{font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;display:inline-block}
+.b-buy{background:rgba(0,200,150,.15);color:var(--g)}
+.b-sell{background:rgba(240,79,79,.15);color:var(--r)}
+.b-nse{background:rgba(79,142,247,.15);color:var(--b)}
+.b-bse{background:rgba(245,166,35,.15);color:var(--am)}
+.pg{color:var(--g);font-weight:700}.pr{color:var(--r);font-weight:700}
+
+/* ── Monthly bars ────────────────────────────────────────────────────────── */
+.mbars-card{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:20px;margin-bottom:14px}
+.mbar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.mbar-lbl{font-size:11px;color:var(--tx3);width:58px;text-align:right;flex-shrink:0;font-weight:500}
+.mbar-track{flex:1;height:22px;background:var(--bg3);border-radius:5px;overflow:hidden;border:1px solid var(--bd)}
+.mbar-fill{height:100%;border-radius:5px;transition:width .4s ease}
+.mbar-val{font-size:11px;font-weight:700;width:100px;text-align:right;flex-shrink:0}
+
+/* ── Tooltip ─────────────────────────────────────────────────────────────── */
+.tip{position:fixed;background:var(--bg4);color:var(--tx);border:1px solid var(--bd2);padding:10px 13px;border-radius:9px;font-size:12px;pointer-events:none;z-index:9999;display:none;min-width:165px;line-height:1.8;box-shadow:0 6px 24px rgba(0,0,0,.55)}
+
+/* ── File info bar ───────────────────────────────────────────────────────── */
+.file-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.fchip{display:flex;align-items:center;gap:6px;font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx2)}
+.fchip-dot{width:6px;height:6px;border-radius:50%;background:var(--g);flex-shrink:0}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
+@media(max-width:1100px){.month-row{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:900px){.month-row{grid-template-columns:repeat(2,1fr)}#period-row{grid-template-columns:repeat(2,1fr)}.stats-bar{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.month-row{grid-template-columns:1fr}#period-row{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav">
+  <div class="nav-logo">P&amp;L <span>Calendar</span></div>
+  <span class="nav-badge">Zerodha F&amp;O</span>
+  <span class="nav-sub" id="nav-info">Upload your tradebook to begin</span>
+  <div class="nav-r">
+    <label class="btn" style="cursor:pointer">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+      Upload CSV / XLSX
+      <input type="file" id="file-input" accept=".csv,.xlsx,.xls" style="display:none">
+    </label>
+    <button class="btn btn-p" id="demo-btn">&#9654; Load Demo Data</button>
+  </div>
+</nav>
+
+<!-- Upload screen -->
+<div class="main" id="upload-screen">
+  <div>
+    <div class="up-hero">P&amp;L Calendar Dashboard</div>
+    <div class="up-sub">
+      Upload your Zerodha Kite tradebook to visualise every trading day as a colour-coded heatmap — click any day for P&amp;L by day, week, month &amp; year.
+    </div>
+  </div>
+  <div class="up-zones">
+    <div class="up-zone" id="zone-csv" onclick="document.getElementById('f-csv').click()">
+      <div class="up-icon">📋</div>
+      <div class="up-title">Tradebook CSV</div>
+      <div class="up-hint">Console → Reports<br>→ Tradebook → Download CSV</div>
+      <div class="up-fname" id="csv-fname"></div>
+      <input type="file" id="f-csv" accept=".csv" style="display:none">
+    </div>
+    <div class="up-zone" id="zone-xl" onclick="document.getElementById('f-xl').click()">
+      <div class="up-icon">📊</div>
+      <div class="up-title">Tradebook XLSX</div>
+      <div class="up-hint">Console → Reports<br>→ Tradebook → Download XLSX</div>
+      <div class="up-fname" id="xl-fname"></div>
+      <input type="file" id="f-xl" accept=".xlsx,.xls" style="display:none">
+    </div>
+  </div>
+  <div class="up-or">— or —</div>
+  <button class="btn btn-p" style="padding:10px 28px;font-size:13px" id="demo-btn2">&#9654; Try with Demo Data</button>
+  <div style="font-size:11px;color:var(--tx3)">Supports Zerodha Kite CSV &amp; XLSX · All data stays in your browser</div>
+</div>
+
+<!-- Dashboard -->
+<div class="main" id="dashboard">
+
+  <!-- File info bar -->
+  <div class="file-bar">
+    <div class="fchip"><span class="fchip-dot"></span><span id="chip-file">Demo data loaded</span></div>
+    <div class="fchip" id="chip-range"></div>
+  </div>
+
+  <!-- Top stats (updates on click) -->
+  <div class="stats-bar" id="stats-bar"></div>
+
+  <!-- Period cards (Day / Week / Month / Year) — shown after click -->
+  <div id="period-row" style="display:none">
+    <div class="p-card active">
+      <div class="p-lbl">Day</div>
+      <div class="p-val" id="p-day-val"></div>
+      <div class="p-sub" id="p-day-sub"></div>
+    </div>
+    <div class="p-card">
+      <div class="p-lbl">Week</div>
+      <div class="p-val" id="p-week-val"></div>
+      <div class="p-sub" id="p-week-sub"></div>
+    </div>
+    <div class="p-card">
+      <div class="p-lbl">Month</div>
+      <div class="p-val" id="p-month-val"></div>
+      <div class="p-sub" id="p-month-sub"></div>
+    </div>
+    <div class="p-card">
+      <div class="p-lbl">Year</div>
+      <div class="p-val" id="p-year-val"></div>
+      <div class="p-sub" id="p-year-sub"></div>
+    </div>
+  </div>
+
+  <!-- Day detail (trade table) -->
+  <div id="day-panel">
+    <div class="day-panel-inner">
+      <div class="dp-head">
+        <div>
+          <div class="dp-date" id="dp-date"></div>
+          <div class="dp-pnl" id="dp-pnl"></div>
+        </div>
+        <div class="dp-close" onclick="closeDay()">&#x2715;</div>
+      </div>
+      <div style="overflow-x:auto"><div id="dp-trades"></div></div>
+    </div>
+  </div>
+
+  <!-- Calendar card -->
+  <div class="cal-card">
+    <div class="cal-header">
+      <div>
+        <div class="cal-title">P&amp;L Calendar</div>
+        <div class="cal-sub">Click any trading day to see breakdown by day / week / month / year</div>
+      </div>
+      <div class="cal-legend">
+        <span>Loss</span>
+        <span class="lsq" style="background:#7f0000"></span>
+        <span class="lsq" style="background:#c62828"></span>
+        <span class="lsq" style="background:#ef9a9a"></span>
+        <span class="lsq" style="background:#ffcdd2"></span>
+        <span class="lsq" style="background:var(--bg4);border:1px solid var(--bd2)"></span>
+        <span>No trade</span>
+        <span class="lsq" style="background:#c8e6c9"></span>
+        <span class="lsq" style="background:#66bb6a"></span>
+        <span class="lsq" style="background:#2e7d32"></span>
+        <span class="lsq" style="background:#1b5e20"></span>
+        <span>Profit</span>
+        <span style="color:var(--tx3);margin-left:4px">Darker = larger</span>
+      </div>
+    </div>
+    <div class="year-tabs" id="year-tabs"></div>
+    <div id="cal-grid"></div>
+  </div>
+
+  <!-- Monthly bars -->
+  <div class="mbars-card">
+    <div style="font-size:13px;font-weight:700;margin-bottom:14px">Monthly P&amp;L</div>
+    <div id="mbars"></div>
+  </div>
+
+</div><!-- /dashboard -->
+
+<div class="tip" id="tip"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+var T=[], dayPnl={}, dayTrades={};
+var MN=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+var MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
+var DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+// ── Formatters ───────────────────────────────────────────────────────────────
+function fi(v){ return (v>=0?'+':'-')+'\u20b9'+Math.abs(v).toLocaleString('en-IN',{maximumFractionDigits:0}); }
+function fk(v){ var a=Math.abs(v); return (v>=0?'+':'-')+'\u20b9'+(a>=1000?(a/1000).toFixed(1)+'k':a.toFixed(0)); }
+function vc(v){ return v>0?'cg':v<0?'cr':''; }
+
+// ── CSV Parser (Zerodha Kite format) ─────────────────────────────────────────
+function parseCSV(text){
+  var lines=text.split(/\r?\n/).filter(function(l){return l.trim();});
+  var hdr=lines[0].split(',').map(function(h){return h.trim().replace(/^"|"$/g,'').toLowerCase();});
+  function ci(n){return hdr.indexOf(n);}
+  var c={
+    sym: ci('symbol')>=0?ci('symbol'):ci('tradingsymbol'),
+    dt:  ci('trade_date')>=0?ci('trade_date'):ci('date'),
+    ex:  ci('exchange'),
+    tp:  ci('trade_type')>=0?ci('trade_type'):ci('transaction_type'),
+    qty: ci('quantity')>=0?ci('quantity'):ci('qty'),
+    pr:  ci('price')>=0?ci('price'):ci('average_price'),
+    tm:  ci('order_execution_time')>=0?ci('order_execution_time'):ci('time'),
+    exp: ci('expiry_date')>=0?ci('expiry_date'):ci('expiry'),
+  };
+  var rows=[];
+  for(var i=1;i<lines.length;i++){
+    var col=lines[i].split(',').map(function(x){return x.trim().replace(/^"|"$/g,'');});
+    if(col.length<5) continue;
+    var sym=(col[c.sym]||'').toUpperCase();
+    var qty=parseFloat(col[c.qty]||0), pr=parseFloat(col[c.pr]||0);
+    if(!sym||!qty||!pr) continue;
+    var rt=col[c.tm]||'';
+    rows.push({
+      date:col[c.dt]||'', symbol:sym,
+      exchange:(col[c.ex]||'NSE').toUpperCase(),
+      type:(col[c.tp]||'').toLowerCase().indexOf('buy')>=0?'buy':'sell',
+      qty:qty, price:pr, value:parseFloat((qty*pr).toFixed(2)),
+      time:rt.indexOf('T')>=0?rt.split('T')[1].slice(0,5):rt.slice(0,5)||'--',
+      expiry:c.exp>=0?col[c.exp]:'', pnl:null
+    });
+  }
+  return fifo(rows);
+}
+
+// ── XLSX Parser ──────────────────────────────────────────────────────────────
+function parseXLSX(buf){
+  var wb=XLSX.read(buf,{type:'array'});
+  var ws=wb.Sheets[wb.SheetNames[0]];
+  var data=XLSX.utils.sheet_to_json(ws,{defval:''});
+  var rows=[];
+  data.forEach(function(r){
+    function k(n){var lk=n.toLowerCase().replace(/[\s_]+/g,'_');var found=Object.keys(r).find(function(rk){return rk.toLowerCase().replace(/[\s_]+/g,'_')===lk;});return found?String(r[found]).trim():'';}
+    var sym=(k('symbol')||k('tradingsymbol')).toUpperCase();
+    var qty=parseFloat(k('quantity')||k('qty')||0);
+    var pr=parseFloat(k('price')||k('average_price')||k('trade_price')||0);
+    if(!sym||!qty||!pr) return;
+    var rt=k('order_execution_time')||k('time')||'';
+    rows.push({
+      date:k('trade_date')||k('date'),symbol:sym,
+      exchange:(k('exchange')||'NSE').toUpperCase(),
+      type:(k('trade_type')||k('transaction_type')||'').toLowerCase().indexOf('buy')>=0?'buy':'sell',
+      qty:qty,price:pr,value:parseFloat((qty*pr).toFixed(2)),
+      time:rt.indexOf('T')>=0?rt.split('T')[1].slice(0,5):rt.slice(0,5)||'--',
+      expiry:k('expiry_date')||k('expiry'),pnl:null
+    });
+  });
+  return fifo(rows);
+}
+
+// ── FIFO P&L ─────────────────────────────────────────────────────────────────
+function fifo(rows){
+  rows.sort(function(a,b){return (a.date+a.time).localeCompare(b.date+b.time);});
+  var h={};
+  rows.forEach(function(t){
+    var k=t.symbol;
+    if(t.type==='buy'){
+      if(!h[k])h[k]=[];
+      h[k].push({price:t.price,qty:t.qty});
+    } else {
+      var rem=t.qty,pnl=0;
+      if(h[k]&&h[k].length){while(rem>0&&h[k].length){var l=h[k][0],u=Math.min(l.qty,rem);pnl+=u*(t.price-l.price);l.qty-=u;rem-=u;if(l.qty===0)h[k].shift();}}
+      t.pnl=parseFloat(pnl.toFixed(2));
+    }
+  });
+  return rows;
+}
+
+// ── Build day maps ────────────────────────────────────────────────────────────
+function buildMaps(){
+  dayPnl={}; dayTrades={};
+  T.forEach(function(t){
+    if(t.type==='sell'&&t.pnl!=null){
+      dayPnl[t.date]=(dayPnl[t.date]||0)+parseFloat(t.pnl);
+      if(!dayTrades[t.date])dayTrades[t.date]=[];
+      dayTrades[t.date].push(t);
+    }
+  });
+}
+
+// ── File handlers ─────────────────────────────────────────────────────────────
+function wireFileInputs(){
+  document.getElementById('file-input').addEventListener('change',function(){handleFiles(this.files);});
+  document.getElementById('f-csv').addEventListener('change',function(){handleFile(this.files[0]);});
+  document.getElementById('f-xl').addEventListener('change',function(){handleFile(this.files[0]);});
+}
+function handleFiles(files){Array.prototype.forEach.call(files,handleFile);}
+function handleFile(f){
+  if(!f)return;
+  var isXL=/\.xlsx?$/i.test(f.name);
+  if(isXL){
+    var r=new FileReader();
+    r.onload=function(e){T=parseXLSX(new Uint8Array(e.target.result));loadDash(f.name);};
+    r.readAsArrayBuffer(f);
+  } else {
+    var r=new FileReader();
+    r.onload=function(e){T=parseCSV(e.target.result);loadDash(f.name);};
+    r.readAsText(f);
+  }
+  // Mark upload zone
+  var zone=isXL?document.getElementById('zone-xl'):document.getElementById('zone-csv');
+  var fname=isXL?document.getElementById('xl-fname'):document.getElementById('csv-fname');
+  zone.classList.add('done');
+  fname.textContent='\u2713 '+f.name;
+}
+
+// ── Load dashboard ────────────────────────────────────────────────────────────
+function loadDash(fname){
+  buildMaps();
+  if(!Object.keys(dayPnl).length){alert('No closed trades found in this file.');return;}
+  document.getElementById('upload-screen').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+  // Update nav + chips
+  var dates=Object.keys(dayPnl).sort();
+  document.getElementById('nav-info').textContent=(fname||'Demo')+' \u00b7 '+T.length+' trades';
+  document.getElementById('chip-file').textContent=(fname||'Demo data')+' \u00b7 '+T.length+' trades';
+  document.getElementById('chip-range').textContent=dates[0]+' \u2013 '+dates[dates.length-1];
+  renderStats(null);
+  renderCalendar();
+  renderMonthBars();
+}
+
+// ── Demo data loader ──────────────────────────────────────────────────────────
+function loadDemo(){
+  // Generate realistic F&O demo trades for a full year
+  var syms=['NIFTY','SENSEX','BANKNIFTY'], types=['CE','PE'];
+  var strikes=[23000,23500,24000,24500,25000,25500,26000];
+  var rows=[];
+  var baseDate=new Date(2025,3,1); // Apr 2025
+  var holdings={};
+  for(var i=0;i<600;i++){
+    var d=new Date(baseDate);d.setDate(d.getDate()+Math.floor(Math.random()*360));
+    var dow=d.getDay();if(dow===0||dow===6){d.setDate(d.getDate()+(dow===0?1:2));}
+    var dt=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    var idx=syms[Math.floor(Math.random()*3)];
+    var opt=types[Math.floor(Math.random()*2)];
+    var strike=strikes[Math.floor(Math.random()*strikes.length)];
+    var exp=new Date(d);exp.setDate(exp.getDate()+Math.floor(Math.random()*7)+1);
+    var expStr=exp.getFullYear()+'-'+String(exp.getMonth()+1).padStart(2,'0')+'-'+String(exp.getDate()).padStart(2,'0');
+    var yr=String(d.getFullYear()).slice(2);
+    var mo=String(d.getMonth()+1).padStart(2,'0');
+    var sym=idx+yr+mo+String(d.getDate()).padStart(2,'0')+strike+opt;
+    var qty=idx==='NIFTY'?65:idx==='SENSEX'?20:30;
+    qty*=(1+Math.floor(Math.random()*4));
+    var price=parseFloat((Math.random()*200+5).toFixed(2));
+    var h=Math.floor(9+Math.random()*6),mn=Math.floor(Math.random()*59);
+    var time=String(h).padStart(2,'0')+':'+String(mn).padStart(2,'0');
+    rows.push({date:dt,symbol:sym,exchange:idx==='SENSEX'?'BSE':'NSE',type:'buy',qty:qty,price:price,value:parseFloat((qty*price).toFixed(2)),time:time,expiry:expStr,pnl:null});
+    var sellPrice=parseFloat((price*(1+((Math.random()-.45)*.3))).toFixed(2));
+    var h2=Math.min(15,h+Math.floor(Math.random()*4)+1);
+    rows.push({date:dt,symbol:sym,exchange:idx==='SENSEX'?'BSE':'NSE',type:'sell',qty:qty,price:sellPrice,value:parseFloat((qty*sellPrice).toFixed(2)),time:String(h2).padStart(2,'0')+':'+String(Math.floor(Math.random()*59)).padStart(2,'0'),expiry:expStr,pnl:null});
+  }
+  T=fifo(rows);
+  loadDash('Demo (Apr 2025 – Mar 2026)');
+}
+
+// ── Stats panel ───────────────────────────────────────────────────────────────
+function renderStats(selDate){
+  var pnls=Object.values(dayPnl);
+  var tot=pnls.reduce(function(s,v){return s+v;},0);
+  var profD=pnls.filter(function(v){return v>0;}).length;
+  var lossD=pnls.filter(function(v){return v<0;}).length;
+  var vol=T.reduce(function(s,t){return s+t.value;},0);
+  var sortedDays=Object.keys(dayPnl).sort();
+  var best=sortedDays.reduce(function(a,b){return dayPnl[a]>dayPnl[b]?a:b;});
+  var worst=sortedDays.reduce(function(a,b){return dayPnl[a]<dayPnl[b]?a:b;});
+
+  var items;
+  if(selDate){
+    // Selected-day context
+    var pts=selDate.split('-'), yr=+pts[0], mo=+pts[1], day=+pts[2];
+    var moKey=yr+'-'+String(mo).padStart(2,'0');
+    var yrKey=String(yr);
+    var moP=Object.entries(dayPnl).filter(function(e){return e[0].slice(0,7)===moKey;}).reduce(function(s,e){return s+e[1];},0);
+    var yrP=Object.entries(dayPnl).filter(function(e){return e[0].slice(0,4)===yrKey;}).reduce(function(s,e){return s+e[1];},0);
+    items=[
+      {l:'Total Realised P&L',v:fi(tot),c:vc(tot),sub:T.length+' orders'},
+      {l:'Net After Charges',  v:fi(tot),c:vc(tot),sub:'Charges data from XLSX'},
+      {l:'Profit Days',        v:profD+' days',c:'cg',sub:lossD+' loss days'},
+      {l:'Win Rate',           v:(profD+lossD>0?(profD/(profD+lossD)*100).toFixed(0):0)+'%',c:profD>lossD?'cg':'cr',sub:'By trading day'},
+      {l:'Best Day',           v:fk(dayPnl[best]),c:'cg',sub:best.slice(5)},
+      {l:'Worst Day',          v:fk(dayPnl[worst]),c:'cr',sub:worst.slice(5)},
+      {l:'Month P&L',          v:fi(moP),c:vc(moP),sub:MN[mo-1]+' '+yr,hi:true},
+      {l:'Year P&L',           v:fi(yrP),c:vc(yrP),sub:yrKey,hi:true},
+    ];
+  } else {
+    items=[
+      {l:'Total Realised P&L',v:fi(tot),c:vc(tot),sub:T.length+' total orders'},
+      {l:'Net After Charges',  v:fi(tot),c:vc(tot),sub:'Upload P&L XLSX for charges'},
+      {l:'Profit Days',        v:profD+' days',c:'cg',sub:lossD+' loss days'},
+      {l:'Loss Days',          v:lossD+' days',c:'cr',sub:profD+' profit days'},
+      {l:'Win Rate',           v:(profD+lossD>0?(profD/(profD+lossD)*100).toFixed(0):0)+'%',c:profD>lossD?'cg':'cr',sub:'By trading day'},
+      {l:'Turnover',           v:'\u20b9'+(vol/100000).toFixed(1)+'L',c:'cb',sub:'Total traded value'},
+      {l:'Best Day',           v:fk(dayPnl[best]),c:'cg',sub:best.slice(5)},
+      {l:'Worst Day',          v:fk(dayPnl[worst]),c:'cr',sub:worst.slice(5)},
+    ];
+  }
+  document.getElementById('stats-bar').innerHTML=items.map(function(it){
+    return '<div class="stat-card'+(it.hi?' hi':'')+'"><div class="s-lbl">'+it.l+'</div><div class="s-val '+it.c+'">'+it.v+'</div><div class="s-sub">'+it.sub+'</div></div>';
+  }).join('');
+}
+
+// ── Calendar renderer ─────────────────────────────────────────────────────────
+function renderCalendar(){
+  var sorted=Object.keys(dayPnl).sort();
+  if(!sorted.length)return;
+  var sY=+sorted[0].split('-')[0], eY=+sorted[sorted.length-1].split('-')[0];
+
+  var tabEl=document.getElementById('year-tabs');
+  var calEl=document.getElementById('cal-grid');
+  tabEl.innerHTML=''; calEl.innerHTML='';
+
+  function gc(v){
+    var a=Math.abs(v);
+    if(v>0) return a>=5000?'cp4':a>=2000?'cp3':a>=500?'cp2':'cp1';
+    return a>=5000?'cl4':a>=2000?'cl3':a>=500?'cl2':'cl1';
+  }
+  function dim(y,m){return new Date(y,m,0).getDate();}
+
+  function activateYear(yr){
+    tabEl.querySelectorAll('button').forEach(function(b){
+      b.classList.toggle('on',b.getAttribute('data-yr')===String(yr));
+    });
+    calEl.querySelectorAll('.cys').forEach(function(s){
+      s.classList.toggle('show',s.getAttribute('data-year')===String(yr));
+    });
+  }
+
+  for(var yr=sY;yr<=eY;yr++){
+    (function(yr){
+      var btn=document.createElement('button');
+      btn.className='ytab';btn.textContent=yr;btn.setAttribute('data-yr',yr);
+      btn.addEventListener('click',function(){activateYear(yr);});
+      tabEl.appendChild(btn);
+
+      var sec=document.createElement('div');
+      sec.className='cys';sec.setAttribute('data-year',yr);
+
+      for(var ri=0;ri<12;ri+=4){
+        var rowEl=document.createElement('div');
+        rowEl.className='month-row';
+
+        for(var mi=ri;mi<ri+4;mi++){
+          var m=mi+1;
+          var mb=document.createElement('div');mb.className='month-block';
+
+          // Month label
+          var lbl=document.createElement('div');lbl.className='m-lbl';
+          var moP=Object.entries(dayPnl).filter(function(e){return e[0].startsWith(yr+'-'+String(m).padStart(2,'0'));}).reduce(function(s,e){return s+e[1];},0);
+          lbl.textContent=MN[mi];
+          if(moP!==0){lbl.innerHTML+='\u00a0<span style="font-size:9px;font-weight:600;color:'+(moP>0?'var(--g)':'var(--r)')+'">'+fk(moP)+'</span>';}
+          mb.appendChild(lbl);
+
+          // M T W T F header
+          var hdr=document.createElement('div');hdr.className='m-hdr';
+          ['M','T','W','T','F'].forEach(function(dl){
+            var dh=document.createElement('div');dh.className='m-hdr-cell';dh.textContent=dl;hdr.appendChild(dh);
+          });
+          mb.appendChild(hdr);
+
+          // Day grid
+          var cg=document.createElement('div');cg.className='m-grid';
+
+          // Padding
+          var fd=new Date(yr,m-1,1).getDay();
+          var pad=fd===0?4:fd-1;
+          for(var pi=0;pi<pad;pi++){var ep=document.createElement('div');ep.className='dc-ep';cg.appendChild(ep);}
+
+          var days=dim(yr,m);
+          for(var d=1;d<=days;d++){
+            var dow=new Date(yr,m-1,d).getDay();
+            if(dow===0||dow===6)continue;
+            var dt=yr+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+            var pv=dayPnl[dt];
+            var cell=document.createElement('div');
+            cell.className='dc '+(pv!==undefined?gc(pv):'cn');
+            cell.setAttribute('data-dt',dt);
+            var dn=document.createElement('div');dn.className='dc-num';dn.textContent=d;cell.appendChild(dn);
+
+            cell.addEventListener('mouseenter',(function(dt,pv){return function(e){
+              var tip=document.getElementById('tip');
+              var tc=(dayTrades[dt]||[]).length;
+              var pts=dt.split('-');
+              tip.innerHTML='<div style="font-size:10px;color:var(--tx3);margin-bottom:4px">'+DN[new Date(dt).getDay()]+', '+parseInt(pts[2])+' '+MF[+pts[1]-1]+' '+pts[0]+'</div>'
+                +(pv!==undefined?'<div style="font-size:17px;font-weight:700;color:'+(pv>=0?'var(--g)':'var(--r)')+'">'+fi(pv)+'</div><div style="font-size:11px;color:var(--tx3);margin-top:3px">'+tc+' closed trade'+(tc!==1?'s':'')+'</div>':'<div style="font-size:12px;color:var(--tx3)">No trades</div>');
+              tip.style.display='block';
+              moveTip(e);
+            };})(dt,pv));
+            cell.addEventListener('mousemove',moveTip);
+            cell.addEventListener('mouseleave',function(){document.getElementById('tip').style.display='none';this.style.transform='';this.style.boxShadow='';});
+            cell.addEventListener('mouseenter',function(){this.style.transform='scale(1.25)';this.style.zIndex='10';this.style.boxShadow='0 3px 10px rgba(0,0,0,.5)';},true);
+            cell.addEventListener('click',(function(dt){return function(){clickDay(dt);};})(dt));
+            cg.appendChild(cell);
+          }
+          mb.appendChild(cg);
+          rowEl.appendChild(mb);
+        }
+        sec.appendChild(rowEl);
+      }
+      calEl.appendChild(sec);
+    })(yr);
+  }
+  activateYear(sY);
+}
+
+function moveTip(e){
+  var tip=document.getElementById('tip');
+  var x=e.clientX+14,y=e.clientY-10;
+  if(x+180>window.innerWidth)x=e.clientX-195;
+  if(y+90>window.innerHeight)y=e.clientY-90;
+  tip.style.left=x+'px';tip.style.top=y+'px';
+}
+
+// ── Click day ─────────────────────────────────────────────────────────────────
+function clickDay(dt){
+  // Clear previous selection
+  document.querySelectorAll('.dc.sel').forEach(function(c){c.classList.remove('sel');});
+  var cell=document.querySelector('.dc[data-dt="'+dt+'"]');
+  if(cell)cell.classList.add('sel');
+
+  var pts=dt.split('-'), yr=+pts[0], mo=+pts[1], day=+pts[2];
+  var pv=dayPnl[dt], dayT=dayTrades[dt]||[];
+  var dtObj=new Date(yr,mo-1,day);
+
+  // Week range
+  var dow=dtObj.getDay();
+  var mon=new Date(dtObj);mon.setDate(day+(dow===0?-6:1-dow));
+  var fri=new Date(mon);fri.setDate(mon.getDate()+4);
+  var weekPnl=0,weekOrds=0,weekDays=0;
+  var p=new Date(mon);
+  while(p<=fri){
+    var ds=p.getFullYear()+'-'+String(p.getMonth()+1).padStart(2,'0')+'-'+String(p.getDate()).padStart(2,'0');
+    if(dayPnl[ds]!==undefined){weekPnl+=dayPnl[ds];weekDays++;}
+    weekOrds+=T.filter(function(t){return t.date===ds;}).length;
+    p.setDate(p.getDate()+1);
+  }
+
+  // Month / Year
+  var moKey=yr+'-'+String(mo).padStart(2,'0');
+  var monthPnl=Object.entries(dayPnl).filter(function(e){return e[0].slice(0,7)===moKey;}).reduce(function(s,e){return s+e[1];},0);
+  var monthOrds=T.filter(function(t){return t.date.slice(0,7)===moKey;}).length;
+  var monthDays=Object.keys(dayPnl).filter(function(d){return d.slice(0,7)===moKey;}).length;
+  var yearPnl=Object.entries(dayPnl).filter(function(e){return e[0].slice(0,4)===String(yr);}).reduce(function(s,e){return s+e[1];},0);
+  var yearOrds=T.filter(function(t){return t.date.slice(0,4)===String(yr);}).length;
+  var yearDays=Object.keys(dayPnl).filter(function(d){return d.slice(0,4)===String(yr);}).length;
+  var dayOrds=T.filter(function(t){return t.date===dt;}).length;
+
+  // Period cards
+  document.getElementById('period-row').style.display='grid';
+  function sp(id,v,sub){
+    document.getElementById('p-'+id+'-val').textContent=fi(v);
+    document.getElementById('p-'+id+'-val').style.color=v>=0?'var(--g)':'var(--r)';
+    document.getElementById('p-'+id+'-sub').textContent=sub;
+  }
+  sp('day',  pv||0, dayOrds+' orders');
+  sp('week', weekPnl, weekOrds+' orders \u00b7 '+weekDays+' trade days');
+  sp('month',monthPnl,monthOrds+' orders \u00b7 '+monthDays+' trade days');
+  sp('year', yearPnl, yearOrds+' orders \u00b7 '+yearDays+' trade days');
+
+  // Stats bar update
+  renderStats(dt);
+
+  // Day detail panel
+  var dname=DN[dtObj.getDay()];
+  document.getElementById('dp-date').textContent=dname+', '+day+' '+MF[mo-1]+' '+yr+' \u00b7 '+dayT.length+' closed trade'+(dayT.length!==1?'s':'');
+  var pnlEl=document.getElementById('dp-pnl');
+  pnlEl.textContent=pv!==undefined?fi(pv):'No closed trades';
+  pnlEl.style.color=pv!==undefined?(pv>=0?'var(--g)':'var(--r)'):'var(--tx3)';
+
+  var html='';
+  if(dayT.length){
+    dayT.sort(function(a,b){return b.pnl-a.pnl;});
+    html='<table class="dtable"><thead><tr><th style="width:160px">Symbol</th><th style="width:50px">Type</th><th style="width:60px">Qty</th><th style="width:80px">Price</th><th style="width:55px">Exch</th><th style="width:90px">P&L</th><th style="width:55px">Time</th></tr></thead><tbody>';
+    dayT.forEach(function(t){
+      html+='<tr><td style="font-weight:600;font-size:11px">'+t.symbol+'</td><td><span class="bx b-'+t.type+'">'+t.type.toUpperCase()+'</span></td><td>'+t.qty.toLocaleString('en-IN')+'</td><td>\u20b9'+parseFloat(t.price).toFixed(2)+'</td><td><span class="bx b-'+t.exchange.toLowerCase()+'">'+t.exchange+'</span></td><td class="'+(t.pnl>=0?'pg':'pr')+'">'+(t.pnl>=0?'+':'-')+'\u20b9'+Math.abs(t.pnl).toLocaleString('en-IN',{maximumFractionDigits:0})+'</td><td style="color:var(--tx3);font-size:11px">'+t.time+'</td></tr>';
+    });
+    html+='</tbody></table>';
+  } else {
+    html='<div style="color:var(--tx3);padding:12px 0">No closed trades on this day.</div>';
+  }
+  document.getElementById('dp-trades').innerHTML=html;
+  document.getElementById('day-panel').style.display='block';
+  setTimeout(function(){document.getElementById('day-panel').scrollIntoView({behavior:'smooth',block:'nearest'});},60);
+}
+
+function closeDay(){
+  document.getElementById('day-panel').style.display='none';
+  document.getElementById('period-row').style.display='none';
+  document.querySelectorAll('.dc.sel').forEach(function(c){c.classList.remove('sel');});
+  renderStats(null);
+}
+
+// ── Monthly bars ──────────────────────────────────────────────────────────────
+function renderMonthBars(){
+  var moMap={};
+  Object.entries(dayPnl).forEach(function(e){var mo=e[0].slice(0,7);moMap[mo]=(moMap[mo]||0)+e[1];});
+  var arr=Object.entries(moMap).sort();
+  var maxA=Math.max.apply(null,arr.map(function(e){return Math.abs(e[1]);}));
+  document.getElementById('mbars').innerHTML=arr.map(function(e){
+    var mo=e[0],v=e[1],p=mo.split('-');
+    var w=(Math.abs(v)/maxA*100).toFixed(1);
+    var col=v>=0?'#2e7d32':'#c62828';
+    return '<div class="mbar-row"><div class="mbar-lbl">'+MN[+p[1]-1]+' '+p[0]+'</div><div class="mbar-track"><div class="mbar-fill" style="width:'+w+'%;background:'+col+'"></div></div><div class="mbar-val" style="color:'+col+'">'+fi(v)+'</div></div>';
+  }).join('');
+}
+
+// ── Drag-and-drop on upload screen ───────────────────────────────────────────
+function wireDrag(){
+  ['zone-csv','zone-xl'].forEach(function(id){
+    var el=document.getElementById(id);
+    el.addEventListener('dragover',function(e){e.preventDefault();this.classList.add('drag');});
+    el.addEventListener('dragleave',function(){this.classList.remove('drag');});
+    el.addEventListener('drop',function(e){e.preventDefault();this.classList.remove('drag');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+  });
+  document.body.addEventListener('dragover',function(e){e.preventDefault();});
+  document.body.addEventListener('drop',function(e){e.preventDefault();if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+wireFileInputs();
+wireDrag();
+document.getElementById('demo-btn').addEventListener('click',loadDemo);
+document.getElementById('demo-btn2').addEventListener('click',loadDemo);
+document.getElementById('file-input').addEventListener('change',function(){handleFiles(this.files);});
+</script>
+</body>
+</html>

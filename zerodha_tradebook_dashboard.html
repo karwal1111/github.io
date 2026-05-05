@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zerodha Kite Tradebook Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#1a1a1a;min-height:100vh}
+.dash{padding:20px;max-width:1400px;margin:0 auto}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.topbar h1{font-size:20px;font-weight:600}
+.topbar .sub{font-size:12px;color:#666;margin-top:2px}
+.kite-badge{background:#387ed1;color:#fff;font-size:11px;padding:3px 8px;border-radius:4px;font-weight:500}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px}
+.metric{background:#fff;border-radius:8px;padding:14px 16px;border:1px solid #e8e8e8}
+.metric .lbl{font-size:11px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.metric .val{font-size:22px;font-weight:600}
+.metric .chg{font-size:11px;margin-top:2px}
+.pos{color:#2d9e5f}.neg{color:#d84040}
+.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid #e8e8e8}
+.tab{padding:8px 18px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;color:#888;background:none;border-top:none;border-left:none;border-right:none;transition:color .15s;font-family:inherit}
+.tab.active{color:#1a1a1a;border-bottom-color:#387ed1;font-weight:500}
+.tab:hover{color:#1a1a1a}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.filters select,.filters input{font-size:12px;padding:6px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;color:#1a1a1a;cursor:pointer;font-family:inherit}
+.filters label{font-size:12px;color:#666}
+.reset-btn{font-size:12px;padding:6px 12px;border:1px solid #ddd;border-radius:6px;cursor:pointer;background:#fff;color:#666;font-family:inherit}
+.reset-btn:hover{background:#f5f5f5}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.chart-box{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:16px}
+.chart-box.full{grid-column:1/-1}
+.chart-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.chart-sub{font-size:11px;color:#888;margin-bottom:14px}
+.chart-wrap{position:relative;width:100%}
+.table-box{background:#fff;border:1px solid #e8e8e8;border-radius:10px;overflow:hidden;margin-bottom:14px}
+table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+th{padding:10px 12px;text-align:left;font-weight:600;font-size:11px;color:#888;border-bottom:1px solid #e8e8e8;background:#fafafa;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+td{padding:9px 12px;border-bottom:1px solid #f0f0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafafa}
+.badge{font-size:10px;padding:2px 7px;border-radius:3px;font-weight:500;display:inline-block}
+.badge.buy{background:#e6f3ed;color:#1e7a44}
+.badge.sell{background:#fde8e8;color:#c0392b}
+.badge.nse{background:#e8f0fb;color:#1a56b0}
+.badge.bse{background:#fef3e2;color:#a05c00}
+.badge.eq,.badge.equity{background:#e8f3f0;color:#1b6b59}
+.badge.fo{background:#fff3e8;color:#a05c00}
+.badge.cur{background:#e8f5ff;color:#1565a8}
+.insight-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:16px}
+.insight-card{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:14px}
+.insight-card .ititle{font-size:11px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px}
+.insight-card .ival{font-size:16px;font-weight:600;margin-bottom:2px}
+.insight-card .idesc{font-size:11px;color:#888}
+.no-data{text-align:center;padding:32px;color:#888;font-size:13px}
+.legend-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;color:#888}
+.legend-dot{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:4px}
+.pnl-positive{color:#2d9e5f;font-weight:500}
+.pnl-negative{color:#d84040;font-weight:500}
+.section-label{font-size:12px;font-weight:600;color:#888;margin-bottom:10px;text-transform:uppercase;letter-spacing:.4px}
+.upload-hint{text-align:center;padding:48px 20px;border:2px dashed #ddd;border-radius:12px;color:#888;font-size:13px;margin-bottom:20px;background:#fff}
+.btn-primary{font-size:12px;padding:7px 14px;border:none;border-radius:6px;cursor:pointer;background:#387ed1;color:#fff;font-family:inherit;font-weight:500}
+.btn-primary:hover{background:#2d6db5}
+.btn-outline{font-size:12px;padding:7px 14px;border:1px solid #ddd;border-radius:6px;cursor:pointer;background:#fff;color:#666;font-family:inherit}
+.btn-outline:hover{background:#f5f5f5}
+.consistency-box{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:16px;margin-bottom:14px}
+@media(max-width:700px){.chart-row{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="dash">
+
+  <div class="topbar">
+    <div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <h1>Tradebook Analytics</h1>
+        <span class="kite-badge">Zerodha Kite</span>
+      </div>
+      <div class="sub">Upload your Zerodha tradebook CSV or load sample data to get started</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <label class="btn-outline" style="cursor:pointer">
+        📂 Upload CSV
+        <input type="file" accept=".csv" id="csvFile" style="display:none" onchange="handleCSV(this)">
+      </label>
+      <button class="btn-primary" onclick="loadSampleData()">Load Sample Data</button>
+    </div>
+  </div>
+
+  <div id="upload-hint" class="upload-hint">
+    <div style="font-size:32px;margin-bottom:12px">📊</div>
+    <div style="font-weight:600;margin-bottom:8px;color:#333;font-size:15px">Connect your Zerodha Kite Tradebook</div>
+    <div style="margin-bottom:4px">Go to <strong>Kite Console → Reports → Tradebook</strong> → Download CSV</div>
+    <div style="margin-bottom:20px">Then upload it here to analyse your trades</div>
+    <button class="btn-primary" onclick="loadSampleData()" style="font-size:13px;padding:9px 20px">Try with Sample Data →</button>
+  </div>
+
+  <div id="dashboard" style="display:none">
+
+    <div class="metrics" id="metrics-row"></div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('overview')">Overview</button>
+      <button class="tab" onclick="switchTab('trades')">Trades</button>
+      <button class="tab" onclick="switchTab('insights')">Insights</button>
+    </div>
+
+    <!-- OVERVIEW TAB -->
+    <div id="tab-overview">
+      <div class="filters">
+        <label>Segment:</label>
+        <select id="f-segment" onchange="applyFilters()">
+          <option value="">All Segments</option>
+          <option value="EQ">Equity</option>
+          <option value="FO">F&amp;O</option>
+          <option value="CUR">Currency</option>
+        </select>
+        <label>Exchange:</label>
+        <select id="f-exchange" onchange="applyFilters()">
+          <option value="">All</option>
+          <option value="NSE">NSE</option>
+          <option value="BSE">BSE</option>
+        </select>
+        <label>Type:</label>
+        <select id="f-type" onchange="applyFilters()">
+          <option value="">Buy &amp; Sell</option>
+          <option value="buy">Buy</option>
+          <option value="sell">Sell</option>
+        </select>
+        <label>Period:</label>
+        <select id="f-period" onchange="applyFilters()">
+          <option value="all">All Time</option>
+          <option value="1m">Last Month</option>
+          <option value="3m">Last 3 Months</option>
+          <option value="6m">Last 6 Months</option>
+        </select>
+        <button class="reset-btn" onclick="resetFilters()">Reset</button>
+      </div>
+
+      <div class="chart-row">
+        <div class="chart-box full">
+          <div class="chart-title">Cumulative P&amp;L</div>
+          <div class="chart-sub">Running profit/loss over time from closed positions</div>
+          <div class="chart-wrap" style="height:220px"><canvas id="chart-pnl"></canvas></div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">P&amp;L by Symbol</div>
+          <div class="chart-sub">Top performers &amp; losers</div>
+          <div class="legend-row">
+            <span><span class="legend-dot" style="background:#2d9e5f"></span>Profit</span>
+            <span><span class="legend-dot" style="background:#d84040"></span>Loss</span>
+          </div>
+          <div class="chart-wrap" id="chart-symbol-wrap" style="height:240px"><canvas id="chart-symbol"></canvas></div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Trade Volume by Hour</div>
+          <div class="chart-sub">When you trade most (market hours)</div>
+          <div class="chart-wrap" style="height:240px"><canvas id="chart-hour"></canvas></div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Segment Breakdown</div>
+          <div class="chart-sub">Trade count by market segment</div>
+          <div class="chart-wrap" style="height:200px"><canvas id="chart-segment"></canvas></div>
+          <div id="seg-legend" class="legend-row" style="justify-content:center;margin-top:10px;margin-bottom:0"></div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">P&amp;L by Day of Week</div>
+          <div class="chart-sub">Net realized P&amp;L per weekday</div>
+          <div class="chart-wrap" style="height:240px"><canvas id="chart-daybar"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRADES TAB -->
+    <div id="tab-trades" style="display:none">
+      <div class="filters">
+        <input type="text" id="search-symbol" placeholder="Search symbol..." style="width:150px" oninput="renderTradeTable()">
+        <select id="tf-segment" onchange="renderTradeTable()">
+          <option value="">All Segments</option>
+          <option value="EQ">Equity</option>
+          <option value="FO">F&amp;O</option>
+          <option value="CUR">Currency</option>
+        </select>
+        <select id="tf-type" onchange="renderTradeTable()">
+          <option value="">Buy &amp; Sell</option>
+          <option value="buy">Buy</option>
+          <option value="sell">Sell</option>
+        </select>
+        <select id="tf-sort" onchange="renderTradeTable()">
+          <option value="date-desc">Date (Newest)</option>
+          <option value="date-asc">Date (Oldest)</option>
+          <option value="pnl-desc">P&amp;L (High → Low)</option>
+          <option value="pnl-asc">P&amp;L (Low → High)</option>
+          <option value="qty-desc">Qty (High → Low)</option>
+        </select>
+      </div>
+      <div class="table-box">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:90px">Date</th>
+              <th style="width:110px">Symbol</th>
+              <th style="width:55px">Exch</th>
+              <th style="width:50px">Type</th>
+              <th style="width:60px">Qty</th>
+              <th style="width:80px">Avg Price</th>
+              <th style="width:80px">Value</th>
+              <th style="width:80px">P&amp;L</th>
+              <th style="width:55px">Seg</th>
+              <th style="width:55px">Time</th>
+            </tr>
+          </thead>
+          <tbody id="trade-tbody"></tbody>
+        </table>
+      </div>
+      <div style="font-size:11px;color:#888;text-align:right" id="trade-count"></div>
+    </div>
+
+    <!-- INSIGHTS TAB -->
+    <div id="tab-insights" style="display:none">
+      <div id="insights-container"></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let allTrades = [];
+let filteredTrades = [];
+let charts = {};
+let activeTab = 'overview';
+
+// ─── Sample Data Config ───────────────────────────────────────────────────────
+const SAMPLE_SYMBOLS = [
+  'RELIANCE','TCS','INFY','HDFCBANK','ICICIBANK','WIPRO','SBIN',
+  'BAJFINANCE','NIFTY25JAN18CE','NIFTY25JAN18PE','BANKNIFTY25JAN48000CE',
+  'TATAMOTORS','ADANIENT','MARUTI','LTIM','HINDALCO','DRREDDY',
+  'SUNPHARMA','ONGC','NTPC'
+];
+const EXCHANGES = ['NSE','NSE','NSE','BSE','NSE'];
+const SEGMENTS = {
+  'RELIANCE':'EQ','TCS':'EQ','INFY':'EQ','HDFCBANK':'EQ','ICICIBANK':'EQ',
+  'WIPRO':'EQ','SBIN':'EQ','BAJFINANCE':'EQ','NIFTY25JAN18CE':'FO',
+  'NIFTY25JAN18PE':'FO','BANKNIFTY25JAN48000CE':'FO','TATAMOTORS':'EQ',
+  'ADANIENT':'EQ','MARUTI':'EQ','LTIM':'EQ','HINDALCO':'EQ',
+  'DRREDDY':'EQ','SUNPHARMA':'EQ','ONGC':'EQ','NTPC':'EQ'
+};
+const BASE_PRICES = {
+  'RELIANCE':2800,'TCS':3900,'INFY':1700,'HDFCBANK':1650,'ICICIBANK':1200,
+  'WIPRO':540,'SBIN':800,'BAJFINANCE':6800,'TATAMOTORS':940,'ADANIENT':2400,
+  'MARUTI':11200,'LTIM':5400,'HINDALCO':680,'DRREDDY':6200,'SUNPHARMA':1850,
+  'ONGC':280,'NTPC':390,'NIFTY25JAN18CE':180,'NIFTY25JAN18PE':220,
+  'BANKNIFTY25JAN48000CE':350
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function randBetween(a, b) { return a + Math.random() * (b - a); }
+function randInt(a, b) { return Math.floor(randBetween(a, b)); }
+function fmtINR(v) { return '₹' + Math.abs(v).toLocaleString('en-IN', { maximumFractionDigits: 0 }); }
+function fmtINR2(v) { return '₹' + Math.abs(v).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+// ─── Sample Data Generator ────────────────────────────────────────────────────
+function generateSample() {
+  const trades = [];
+  const now = new Date();
+
+  for (let i = 0; i < 180; i++) {
+    const daysAgo = randInt(0, 180);
+    const date = new Date(now);
+    date.setDate(date.getDate() - daysAgo);
+    // skip weekends
+    if (date.getDay() === 0 || date.getDay() === 6) { date.setDate(date.getDate() - 1); }
+
+    const sym = SAMPLE_SYMBOLS[randInt(0, SAMPLE_SYMBOLS.length)];
+    const base = BASE_PRICES[sym] || 500;
+    const price = parseFloat((base * (1 + randBetween(-0.05, 0.05))).toFixed(2));
+    const isFO = SEGMENTS[sym] === 'FO';
+    const qty = isFO ? randInt(1, 8) * 25 : randInt(1, 200);
+    const type = Math.random() > 0.5 ? 'buy' : 'sell';
+    const hour = randInt(9, 16);
+    const min = randInt(0, 59);
+    const timeStr = `${hour.toString().padStart(2,'0')}:${min.toString().padStart(2,'0')}`;
+    const exch = sym.includes('NIFTY') || sym.includes('BANKNIFTY') ? 'NSE' : EXCHANGES[randInt(0, EXCHANGES.length)];
+
+    trades.push({
+      date: date.toISOString().split('T')[0],
+      symbol: sym,
+      exchange: exch,
+      type,
+      qty,
+      price,
+      value: parseFloat((qty * price).toFixed(2)),
+      segment: SEGMENTS[sym] || 'EQ',
+      time: timeStr,
+      raw: date,
+      pnl: null
+    });
+  }
+
+  // Compute realized P&L (FIFO)
+  trades.sort((a, b) => a.raw - b.raw);
+  const holdings = {};
+  trades.forEach(t => {
+    const k = t.symbol;
+    if (t.type === 'buy') {
+      if (!holdings[k]) holdings[k] = [];
+      holdings[k].push({ price: t.price, qty: t.qty });
+    } else {
+      let remaining = t.qty, pnl = 0;
+      if (holdings[k] && holdings[k].length > 0) {
+        while (remaining > 0 && holdings[k].length > 0) {
+          const lot = holdings[k][0];
+          const used = Math.min(lot.qty, remaining);
+          pnl += used * (t.price - lot.price);
+          lot.qty -= used;
+          remaining -= used;
+          if (lot.qty === 0) holdings[k].shift();
+        }
+        t.pnl = parseFloat(pnl.toFixed(2));
+      } else {
+        t.pnl = parseFloat((t.qty * (t.price - t.price * 0.98)).toFixed(2));
+      }
+    }
+  });
+  return trades;
+}
+
+// ─── CSV Upload Parser ────────────────────────────────────────────────────────
+// Supports Zerodha Kite Console tradebook CSV format.
+// Columns expected (case-insensitive, flexible):
+//   trade_date / date, tradingsymbol / symbol, exchange,
+//   transaction_type / trade_type / type, quantity / qty,
+//   price / average_price / trade_price, segment
+function handleCSV(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines = e.target.result.split('\n').filter(l => l.trim());
+    const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_'));
+    const trades = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',');
+      if (cols.length < 5) continue;
+      const row = {};
+      header.forEach((h, idx) => { row[h] = cols[idx] ? cols[idx].trim().replace(/^"|"$/g, '') : ''; });
+
+      const sym = (row.symbol || row.tradingsymbol || row.instrument || '').toUpperCase();
+      const dt = row.trade_date || row.date || '';
+      const tp = (row.trade_type || row.transaction_type || row.type || '').toLowerCase();
+      const qty = parseFloat(row.quantity || row.qty || 0);
+      const price = parseFloat(row.price || row.average_price || row.trade_price || 0);
+      const exch = (row.exchange || 'NSE').toUpperCase();
+      const seg = sym.match(/CE$|PE$|FUT$/) ? 'FO' : sym.match(/USD|EUR|GBP/) ? 'CUR' : 'EQ';
+
+      if (sym && qty && price) {
+        trades.push({
+          date: dt,
+          symbol: sym,
+          exchange: exch,
+          type: tp.includes('buy') ? 'buy' : 'sell',
+          qty,
+          price,
+          value: parseFloat((qty * price).toFixed(2)),
+          segment: seg,
+          time: row.order_execution_time || row.time || '--',
+          raw: new Date(dt),
+          pnl: parseFloat(row.realized_p_l || row.pnl || 0) || null
+        });
+      }
+    }
+
+    if (trades.length > 0) { allTrades = trades; loadDashboard(); }
+    else alert('Could not parse CSV.\nPlease use the Zerodha Kite Console Tradebook CSV format.');
+  };
+  reader.readAsText(file);
+}
+
+function loadSampleData() { allTrades = generateSample(); loadDashboard(); }
+
+// ─── Dashboard Init ───────────────────────────────────────────────────────────
+function loadDashboard() {
+  document.getElementById('upload-hint').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  filteredTrades = [...allTrades];
+  renderMetrics();
+  renderCharts();
+  renderTradeTable();
+  renderInsights();
+}
+
+// ─── Filters ──────────────────────────────────────────────────────────────────
+function applyFilters() {
+  const seg = document.getElementById('f-segment').value;
+  const exch = document.getElementById('f-exchange').value;
+  const tp = document.getElementById('f-type').value;
+  const period = document.getElementById('f-period').value;
+  const now = new Date();
+
+  filteredTrades = allTrades.filter(t => {
+    if (seg && t.segment !== seg) return false;
+    if (exch && t.exchange !== exch) return false;
+    if (tp && t.type !== tp) return false;
+    if (period !== 'all') {
+      const days = period === '1m' ? 30 : period === '3m' ? 90 : 180;
+      const cutoff = new Date(now);
+      cutoff.setDate(cutoff.getDate() - days);
+      if (t.raw < cutoff) return false;
+    }
+    return true;
+  });
+
+  renderMetrics();
+  renderCharts();
+  renderTradeTable();
+  renderInsights();
+}
+
+function resetFilters() {
+  ['f-segment','f-exchange','f-type'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('f-period').value = 'all';
+  applyFilters();
+}
+
+// ─── Tab Switcher ─────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  activeTab = tab;
+  const names = ['overview','trades','insights'];
+  document.querySelectorAll('.tab').forEach((b, i) => b.classList.toggle('active', names[i] === tab));
+  names.forEach(n => { document.getElementById('tab-' + n).style.display = n === tab ? 'block' : 'none'; });
+  if (tab === 'overview') renderCharts();
+}
+
+// ─── Metrics Row ──────────────────────────────────────────────────────────────
+function renderMetrics() {
+  const sells = filteredTrades.filter(t => t.type === 'sell' && t.pnl != null);
+  const totalPnl = sells.reduce((s, t) => s + t.pnl, 0);
+  const totalVol = filteredTrades.reduce((s, t) => s + t.value, 0);
+  const winners = sells.filter(t => t.pnl > 0);
+  const losers = sells.filter(t => t.pnl < 0);
+  const winRate = sells.length > 0 ? (winners.length / sells.length * 100).toFixed(1) : 0;
+  const avgWin = winners.length > 0 ? (winners.reduce((s, t) => s + t.pnl, 0) / winners.length).toFixed(0) : 0;
+  const avgLoss = losers.length > 0 ? Math.abs(losers.reduce((s, t) => s + t.pnl, 0) / losers.length).toFixed(0) : 0;
+  const pf = avgLoss > 0 ? (avgWin / avgLoss).toFixed(2) : '∞';
+
+  document.getElementById('metrics-row').innerHTML = `
+    <div class="metric">
+      <div class="lbl">Total P&L</div>
+      <div class="val ${totalPnl >= 0 ? 'pos' : 'neg'}">${totalPnl >= 0 ? '+' : '-'}${fmtINR(totalPnl)}</div>
+      <div class="chg ${totalPnl >= 0 ? 'pos' : 'neg'}">${totalPnl >= 0 ? '▲ Profitable' : '▼ Net Loss'}</div>
+    </div>
+    <div class="metric">
+      <div class="lbl">Total Trades</div>
+      <div class="val">${filteredTrades.length}</div>
+      <div class="chg" style="color:#888">${sells.length} closed positions</div>
+    </div>
+    <div class="metric">
+      <div class="lbl">Win Rate</div>
+      <div class="val ${parseFloat(winRate) >= 50 ? 'pos' : 'neg'}">${winRate}%</div>
+      <div class="chg" style="color:#888">${winners.length}W / ${losers.length}L</div>
+    </div>
+    <div class="metric">
+      <div class="lbl">Turnover</div>
+      <div class="val">₹${(totalVol / 100000).toFixed(1)}L</div>
+      <div class="chg" style="color:#888">${filteredTrades.length} orders</div>
+    </div>
+    <div class="metric">
+      <div class="lbl">Profit Factor</div>
+      <div class="val ${parseFloat(pf) >= 1 ? 'pos' : 'neg'}">${pf}</div>
+      <div class="chg" style="color:#888">Avg win / avg loss</div>
+    </div>
+    <div class="metric">
+      <div class="lbl">Avg Win</div>
+      <div class="val pos">+${fmtINR(parseInt(avgWin))}</div>
+      <div class="chg" style="color:#888">per closed trade</div>
+    </div>
+  `;
+}
+
+// ─── Chart Helpers ────────────────────────────────────────────────────────────
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+function renderCharts() {
+  renderPnlChart();
+  renderSymbolChart();
+  renderHourChart();
+  renderSegmentChart();
+  renderDayChart();
+}
+
+// Cumulative P&L line chart
+function renderPnlChart() {
+  destroyChart('pnl');
+  const sells = filteredTrades.filter(t => t.type === 'sell' && t.pnl != null).sort((a, b) => a.raw - b.raw);
+  const labels = [], data = [];
+  let cum = 0;
+  sells.forEach(t => { cum += t.pnl; labels.push(t.date); data.push(parseFloat(cum.toFixed(2))); });
+  if (!labels.length) { labels.push('No data'); data.push(0); }
+  const isProfit = data[data.length - 1] >= 0;
+  const ctx = document.getElementById('chart-pnl').getContext('2d');
+  charts['pnl'] = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{ label: 'Cumulative P&L', data, fill: true, tension: 0.35, pointRadius: 0, borderColor: isProfit ? '#2d9e5f' : '#d84040', backgroundColor: isProfit ? 'rgba(45,158,95,.12)' : 'rgba(216,64,64,.1)', borderWidth: 2 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: v => (v.raw >= 0 ? '+' : '-') + fmtINR(v.raw) } } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 8, color: '#888', font: { size: 10 } }, grid: { display: false }, border: { display: false } },
+        y: { ticks: { color: '#888', font: { size: 10 }, callback: v => (v >= 0 ? '+' : '') + fmtINR(v) }, grid: { color: 'rgba(0,0,0,.05)' }, border: { display: false } }
+      }
+    }
+  });
+}
+
+// Symbol P&L horizontal bar chart
+function renderSymbolChart() {
+  destroyChart('symbol');
+  const pnlMap = {};
+  filteredTrades.filter(t => t.type === 'sell' && t.pnl != null).forEach(t => {
+    pnlMap[t.symbol] = (pnlMap[t.symbol] || 0) + t.pnl;
+  });
+  let entries = Object.entries(pnlMap).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 10);
+  entries.sort((a, b) => b[1] - a[1]);
+  const labels = entries.map(e => e[0]);
+  const data = entries.map(e => parseFloat(e[1].toFixed(2)));
+  const colors = data.map(v => v >= 0 ? '#2d9e5f' : '#d84040');
+  const wrapH = Math.max(240, labels.length * 28 + 60);
+  document.getElementById('chart-symbol-wrap').style.height = wrapH + 'px';
+  const ctx = document.getElementById('chart-symbol').getContext('2d');
+  charts['symbol'] = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderRadius: 4, borderSkipped: false }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: v => (v.raw >= 0 ? '+' : '-') + fmtINR(v.raw) } } },
+      scales: {
+        x: { ticks: { color: '#888', font: { size: 10 }, callback: v => fmtINR(v) }, grid: { color: 'rgba(0,0,0,.05)' }, border: { display: false } },
+        y: { ticks: { color: '#888', font: { size: 10 } }, grid: { display: false }, border: { display: false } }
+      }
+    }
+  });
+}
+
+// Trade volume by hour bar chart
+function renderHourChart() {
+  destroyChart('hour');
+  const hourMap = {};
+  for (let h = 9; h <= 15; h++) hourMap[h] = 0;
+  filteredTrades.forEach(t => {
+    const h = parseInt((t.time || '09:00').split(':')[0]);
+    if (h >= 9 && h <= 15) hourMap[h] = (hourMap[h] || 0) + 1;
+  });
+  const labels = Object.keys(hourMap).map(h => h + ':00');
+  const data = Object.values(hourMap);
+  const max = Math.max(...data);
+  const ctx = document.getElementById('chart-hour').getContext('2d');
+  charts['hour'] = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ data, backgroundColor: data.map(v => v === max ? '#387ed1' : 'rgba(56,126,209,.35)'), borderRadius: 4 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: v => v.raw + ' trades' } } },
+      scales: {
+        x: { ticks: { color: '#888', font: { size: 10 }, autoSkip: false, maxRotation: 0 }, grid: { display: false }, border: { display: false } },
+        y: { ticks: { color: '#888', font: { size: 10 }, stepSize: 1 }, grid: { color: 'rgba(0,0,0,.05)' }, border: { display: false } }
+      }
+    }
+  });
+}
+
+// Segment doughnut chart
+function renderSegmentChart() {
+  destroyChart('segment');
+  const segMap = {};
+  filteredTrades.forEach(t => { segMap[t.segment] = (segMap[t.segment] || 0) + 1; });
+  const labels = Object.keys(segMap);
+  const data = Object.values(segMap);
+  const COLORS = ['#387ed1','#2d9e5f','#e8a838','#9b59b6','#e74c3c'];
+  const ctx = document.getElementById('chart-segment').getContext('2d');
+  charts['segment'] = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: COLORS.slice(0, labels.length), borderWidth: 0, hoverOffset: 6 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: v => v.label + ': ' + v.raw + ' trades' } } } }
+  });
+  const leg = document.getElementById('seg-legend');
+  leg.innerHTML = labels.map((l, i) => `<span><span class="legend-dot" style="background:${COLORS[i]}"></span>${l} ${data[i]}</span>`).join('');
+}
+
+// P&L by weekday bar chart
+function renderDayChart() {
+  destroyChart('daybar');
+  const days = ['Mon','Tue','Wed','Thu','Fri'];
+  const dayPnl = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0 };
+  filteredTrades.filter(t => t.type === 'sell' && t.pnl != null).forEach(t => {
+    const d = new Date(t.date);
+    const day = days[d.getDay() - 1];
+    if (day) dayPnl[day] += t.pnl;
+  });
+  const data = days.map(d => parseFloat(dayPnl[d].toFixed(2)));
+  const colors = data.map(v => v >= 0 ? '#2d9e5f' : '#d84040');
+  const ctx = document.getElementById('chart-daybar').getContext('2d');
+  charts['daybar'] = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: days, datasets: [{ data, backgroundColor: colors, borderRadius: 4 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: v => (v.raw >= 0 ? '+' : '-') + fmtINR(v.raw) } } },
+      scales: {
+        x: { ticks: { color: '#888', font: { size: 11 }, autoSkip: false }, grid: { display: false }, border: { display: false } },
+        y: { ticks: { color: '#888', font: { size: 10 }, callback: v => fmtINR(v) }, grid: { color: 'rgba(0,0,0,.05)' }, border: { display: false } }
+      }
+    }
+  });
+}
+
+// ─── Trade Table ──────────────────────────────────────────────────────────────
+function renderTradeTable() {
+  const sym = (document.getElementById('search-symbol').value || '').toUpperCase();
+  const seg = document.getElementById('tf-segment').value;
+  const tp = document.getElementById('tf-type').value;
+  const sort = document.getElementById('tf-sort').value;
+
+  let trades = [...filteredTrades];
+  if (sym) trades = trades.filter(t => t.symbol.includes(sym));
+  if (seg) trades = trades.filter(t => t.segment === seg);
+  if (tp) trades = trades.filter(t => t.type === tp);
+
+  trades.sort((a, b) => {
+    if (sort === 'date-desc') return b.raw - a.raw;
+    if (sort === 'date-asc') return a.raw - b.raw;
+    if (sort === 'pnl-desc') return (b.pnl || 0) - (a.pnl || 0);
+    if (sort === 'pnl-asc') return (a.pnl || 0) - (b.pnl || 0);
+    if (sort === 'qty-desc') return b.qty - a.qty;
+    return 0;
+  });
+
+  const tbody = document.getElementById('trade-tbody');
+  if (!trades.length) {
+    tbody.innerHTML = '<tr><td colspan="10" class="no-data">No trades found</td></tr>';
+    document.getElementById('trade-count').textContent = '';
+    return;
+  }
+
+  tbody.innerHTML = trades.slice(0, 200).map(t => {
+    const pnlCell = t.pnl != null
+      ? `<span class="${t.pnl >= 0 ? 'pnl-positive' : 'pnl-negative'}">${t.pnl >= 0 ? '+' : '-'}${fmtINR(t.pnl)}</span>`
+      : '<span style="color:#aaa">Open</span>';
+    const segClass = t.segment === 'FO' ? 'fo' : t.segment === 'CUR' ? 'cur' : 'eq';
+    return `<tr>
+      <td style="font-size:11px">${t.date}</td>
+      <td style="font-weight:500">${t.symbol}</td>
+      <td><span class="badge ${t.exchange.toLowerCase()}">${t.exchange}</span></td>
+      <td><span class="badge ${t.type}">${t.type.toUpperCase()}</span></td>
+      <td>${t.qty.toLocaleString('en-IN')}</td>
+      <td>${fmtINR2(t.price)}</td>
+      <td>₹${(t.value / 1000).toFixed(1)}K</td>
+      <td>${pnlCell}</td>
+      <td><span class="badge ${segClass}">${t.segment}</span></td>
+      <td style="font-size:11px;color:#888">${t.time}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('trade-count').textContent =
+    `Showing ${Math.min(200, trades.length)} of ${trades.length} trades`;
+}
+
+// ─── Insights Tab ─────────────────────────────────────────────────────────────
+function renderInsights() {
+  const sells = filteredTrades.filter(t => t.type === 'sell' && t.pnl != null);
+  const winners = sells.filter(t => t.pnl > 0);
+  const losers = sells.filter(t => t.pnl < 0);
+  const totalPnl = sells.reduce((s, t) => s + t.pnl, 0);
+  const winRate = sells.length ? (winners.length / sells.length * 100).toFixed(1) : 0;
+
+  const bestTrade = sells.reduce((b, t) => t.pnl >= (b?.pnl || -Infinity) ? t : b, null);
+  const worstTrade = sells.reduce((b, t) => t.pnl <= (b?.pnl || Infinity) ? t : b, null);
+
+  const pnlMap = {};
+  sells.forEach(t => { pnlMap[t.symbol] = (pnlMap[t.symbol] || 0) + t.pnl; });
+  const symEntries = Object.entries(pnlMap).sort((a, b) => b[1] - a[1]);
+  const topSym = symEntries[0];
+  const botSym = symEntries[symEntries.length - 1];
+
+  const hourMap = {};
+  sells.forEach(t => { const h = parseInt((t.time || '09:00').split(':')[0]); hourMap[h] = (hourMap[h] || 0) + t.pnl; });
+  const bestHour = Object.entries(hourMap).sort((a, b) => b[1] - a[1])[0];
+
+  const grossWin = winners.reduce((s, t) => s + t.pnl, 0);
+  const grossLoss = Math.abs(losers.reduce((s, t) => s + t.pnl, 0));
+  const pf = grossLoss > 0 ? (grossWin / grossLoss).toFixed(2) : '∞';
+
+  const cards = [
+    { title: 'Best Single Trade', val: bestTrade ? `+${fmtINR(bestTrade.pnl)}` : '--', desc: bestTrade ? `${bestTrade.symbol} on ${bestTrade.date}` : 'No closed trades', isPos: true },
+    { title: 'Worst Single Trade', val: worstTrade ? `-${fmtINR(Math.abs(worstTrade.pnl))}` : '--', desc: worstTrade ? `${worstTrade.symbol} on ${worstTrade.date}` : 'No closed trades', isNeg: true },
+    { title: 'Most Profitable Symbol', val: topSym ? topSym[0] : '--', desc: topSym ? `${topSym[1] >= 0 ? '+' : ''}${fmtINR(topSym[1])} total P&L` : 'No data', isPos: topSym && topSym[1] > 0 },
+    { title: 'Least Profitable Symbol', val: botSym ? botSym[0] : '--', desc: botSym ? `${botSym[1] >= 0 ? '+' : ''}${fmtINR(botSym[1])} total P&L` : 'No data', isNeg: botSym && botSym[1] < 0 },
+    { title: 'Best Hour to Trade', val: bestHour ? `${bestHour[0]}:00` : '--', desc: bestHour ? `${bestHour[1] >= 0 ? '+' : ''}${fmtINR(bestHour[1])} net P&L` : 'No data', isPos: bestHour && bestHour[1] > 0 },
+    { title: 'Profit Factor', val: pf, desc: 'Gross profit ÷ gross loss', isPos: parseFloat(pf) >= 1 },
+    { title: 'Win Rate', val: `${winRate}%`, desc: `${winners.length} winners, ${losers.length} losers`, isPos: parseFloat(winRate) >= 50 },
+    { title: 'Net Realized P&L', val: `${totalPnl >= 0 ? '+' : '-'}${fmtINR(totalPnl)}`, desc: 'Across all closed positions', isPos: totalPnl >= 0, isNeg: totalPnl < 0 },
+  ];
+
+  let html = '<div class="section-label">Performance Insights</div>';
+  html += '<div class="insight-grid">';
+  cards.forEach(c => {
+    const cls = c.isPos ? 'pos' : c.isNeg ? 'neg' : '';
+    html += `<div class="insight-card">
+      <div class="ititle">${c.title}</div>
+      <div class="ival ${cls}">${c.val}</div>
+      <div class="idesc">${c.desc}</div>
+    </div>`;
+  });
+  html += '</div>';
+
+  // Consistency Section
+  const dayPnl = {};
+  sells.forEach(t => { dayPnl[t.date] = (dayPnl[t.date] || 0) + t.pnl; });
+  const dayVals = Object.values(dayPnl);
+  const profitDays = dayVals.filter(v => v > 0).length;
+  const lossDays = dayVals.filter(v => v < 0).length;
+  const avgDayPnl = dayVals.length ? dayVals.reduce((s, v) => s + v, 0) / dayVals.length : 0;
+  const maxDrawdown = (() => {
+    let peak = 0, max_dd = 0, cum = 0;
+    sells.sort((a, b) => a.raw - b.raw).forEach(t => {
+      cum += t.pnl;
+      if (cum > peak) peak = cum;
+      const dd = peak - cum;
+      if (dd > max_dd) max_dd = dd;
+    });
+    return max_dd;
+  })();
+
+  html += `<div class="section-label" style="margin-top:24px">Trading Consistency</div>`;
+  html += `<div class="consistency-box">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;text-align:center">
+      <div>
+        <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Profit Days</div>
+        <div style="font-size:22px;font-weight:600;color:#2d9e5f">${profitDays}</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Loss Days</div>
+        <div style="font-size:22px;font-weight:600;color:#d84040">${lossDays}</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Avg Daily P&L</div>
+        <div style="font-size:22px;font-weight:600;${avgDayPnl >= 0 ? 'color:#2d9e5f' : 'color:#d84040'}">${avgDayPnl >= 0 ? '+' : '-'}${fmtINR(avgDayPnl)}</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Max Drawdown</div>
+        <div style="font-size:22px;font-weight:600;color:#d84040">-${fmtINR(maxDrawdown)}</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Total Orders</div>
+        <div style="font-size:22px;font-weight:600">${filteredTrades.length}</div>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('insights-container').innerHTML = html;
+}
+</script>
+</body>
+</html>

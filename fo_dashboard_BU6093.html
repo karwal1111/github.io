@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BU6093 · F&O Analytics Dashboard</title>
+<style>
+/* ── Reset & base ─────────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f14;--bg2:#13161e;--bg3:#1a1e2a;--bg4:#222738;
+  --border:#2a2f40;--border2:#343a50;
+  --text:#e8eaf0;--text2:#9da3b8;--text3:#5a6078;
+  --green:#00c896;--red:#f05252;--blue:#4f8ef7;--amber:#f5a623;--purple:#a78bfa;
+  --green-dim:rgba(0,200,150,.12);--red-dim:rgba(240,82,82,.12);
+  --blue-dim:rgba(79,142,247,.12);--amber-dim:rgba(245,166,35,.12);
+  --r:8px;--r2:12px;--r3:16px;
+  --shadow:0 4px 24px rgba(0,0,0,.4);
+}
+html{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+a{color:inherit;text-decoration:none}
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.app{display:flex;flex-direction:column;min-height:100vh}
+.topnav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:16px;height:54px;position:sticky;top:0;z-index:100}
+.logo{font-size:15px;font-weight:700;letter-spacing:-.3px;color:var(--text)}
+.logo span{color:var(--blue)}
+.nav-pill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;letter-spacing:.3px}
+.pill-fo{background:rgba(245,166,35,.2);color:var(--amber)}
+.pill-id{background:var(--blue-dim);color:var(--blue)}
+.topnav-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.upload-btn{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:7px 12px;border-radius:var(--r);cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);transition:all .15s;font-family:inherit}
+.upload-btn:hover{background:var(--bg4);color:var(--text);border-color:var(--blue)}
+.reload-btn{font-size:12px;font-weight:600;padding:7px 14px;border-radius:var(--r);cursor:pointer;border:none;background:var(--blue);color:#fff;font-family:inherit;transition:opacity .15s}
+.reload-btn:hover{opacity:.85}
+.main{flex:1;padding:20px 24px;max-width:1440px;width:100%;margin:0 auto}
+/* ── Data source bar ─────────────────────────────────────────────────────── */
+.datasrc{display:flex;gap:10px;margin-bottom:18px;align-items:center;flex-wrap:wrap}
+.src-chip{display:flex;align-items:center;gap:6px;font-size:11px;padding:5px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);color:var(--text2)}
+.src-chip .dot{width:6px;height:6px;border-radius:50%}
+.src-chip.loaded .dot{background:var(--green)}
+.src-chip.empty .dot{background:var(--text3)}
+.src-meta{font-size:11px;color:var(--text3);margin-left:4px}
+/* ── Metric strip ────────────────────────────────────────────────────────── */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:18px}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px;cursor:pointer;transition:border-color .15s,transform .12s}
+.metric:hover{border-color:var(--border2);transform:translateY(-1px)}
+.metric.active{border-color:var(--blue);background:var(--blue-dim)}
+.m-lbl{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.m-val{font-size:22px;font-weight:700;line-height:1;letter-spacing:-.5px}
+.m-note{font-size:11px;color:var(--text3);margin-top:5px}
+.g{color:var(--green)}.r{color:var(--red)}.b{color:var(--blue)}.a{color:var(--amber)}.p{color:var(--purple)}
+/* ── Tabs ────────────────────────────────────────────────────────────────── */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:18px}
+.tab{padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text3);background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:inherit;letter-spacing:.1px;transition:color .15s}
+.tab:hover{color:var(--text2)}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+/* ── Section header ──────────────────────────────────────────────────────── */
+.sec-hd{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:10px}
+/* ── Filter bar ──────────────────────────────────────────────────────────── */
+.fbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px}
+.fbar label{font-size:11px;color:var(--text3);font-weight:600}
+.fbar select,.fbar input[type=text]{font-size:12px;padding:6px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--bg3);color:var(--text);font-family:inherit;outline:none;cursor:pointer}
+.fbar select:focus,.fbar input:focus{border-color:var(--blue)}
+.fbar select option{background:var(--bg3)}
+.fbtn{font-size:11px;font-weight:500;padding:6px 12px;border-radius:6px;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text3);font-family:inherit;transition:all .12s}
+.fbtn:hover{border-color:var(--border2);color:var(--text);background:var(--bg4)}
+/* ── Chart grid ──────────────────────────────────────────────────────────── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.grid3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.full{grid-column:1/-1}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:16px}
+.card.clickable{cursor:pointer;transition:border-color .15s}
+.card.clickable:hover{border-color:var(--border2)}
+.ct{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.cs{font-size:11px;color:var(--text3);margin-bottom:12px}
+.ch{position:relative;width:100%}
+/* ── Legend ──────────────────────────────────────────────────────────────── */
+.leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--text3);margin-bottom:8px}
+.ld{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:3px;vertical-align:middle}
+/* ── Table ───────────────────────────────────────────────────────────────── */
+.tbox{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);border-bottom:1px solid var(--border);background:var(--bg3);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+th:hover{color:var(--text2)}
+td{padding:9px 12px;border-bottom:1px solid var(--border);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text2)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3);color:var(--text)}
+.badge{font-size:10px;padding:2px 7px;border-radius:3px;font-weight:700;display:inline-block}
+.b-buy{background:rgba(0,200,150,.15);color:var(--green)}
+.b-sell{background:rgba(240,82,82,.15);color:var(--red)}
+.b-nse{background:var(--blue-dim);color:var(--blue)}
+.b-bse{background:var(--amber-dim);color:var(--amber)}
+.b-ce{background:rgba(167,139,250,.15);color:var(--purple)}
+.b-pe{background:rgba(245,166,35,.15);color:var(--amber)}
+.pnl-g{color:var(--green);font-weight:700}
+.pnl-r{color:var(--red);font-weight:700}
+.no-data{text-align:center;padding:36px;color:var(--text3);font-size:13px}
+.tc{font-size:11px;color:var(--text3);text-align:right;margin-top:6px;padding-right:4px}
+/* ── P&L table (symbol view) ─────────────────────────────────────────────── */
+.pnl-bar-pos{display:inline-block;height:6px;border-radius:3px;background:var(--green);vertical-align:middle}
+.pnl-bar-neg{display:inline-block;height:6px;border-radius:3px;background:var(--red);vertical-align:middle}
+/* ── Charges section ─────────────────────────────────────────────────────── */
+.charge-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:14px}
+.charge-item{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px}
+.charge-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.charge-val{font-size:15px;font-weight:700;color:var(--red)}
+/* ── Upload landing ──────────────────────────────────────────────────────── */
+#upload-page{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:28px;text-align:center}
+.up-zone{width:380px;max-width:100%;background:var(--bg2);border:2px dashed var(--border2);border-radius:var(--r3);padding:36px 28px;cursor:pointer;transition:border-color .15s}
+.up-zone:hover,.up-zone.drag{border-color:var(--blue)}
+.up-zone.done{border-color:var(--green);border-style:solid}
+.up-icon{font-size:32px;margin-bottom:10px}
+.up-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}
+.up-sub{font-size:12px;color:var(--text3);line-height:1.7}
+.up-fname{font-size:12px;color:var(--green);margin-top:6px;font-weight:600}
+/* ── Insight cards ───────────────────────────────────────────────────────── */
+.ins-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:10px;margin-bottom:16px}
+.ins-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px}
+.ins-lbl{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.ins-val{font-size:18px;font-weight:700;margin-bottom:3px}
+.ins-desc{font-size:11px;color:var(--text3)}
+/* ── Sparkline style ─────────────────────────────────────────────────────── */
+.spark-row{display:flex;gap:2px;align-items:flex-end;height:28px;margin-top:6px}
+.spark-bar{flex:1;border-radius:2px 2px 0 0;min-height:2px}
+/* ── Expiry chip ─────────────────────────────────────────────────────────── */
+.exp{font-size:10px;color:var(--text3);background:var(--bg3);padding:1px 6px;border-radius:3px}
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+@media(max-width:900px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ── Top nav ─────────────────────────────────────────────────────────── -->
+<nav class="topnav">
+  <div class="logo">F&amp;O <span>Analytics</span></div>
+  <span class="nav-pill pill-fo">F&amp;O</span>
+  <span class="nav-pill pill-id" id="nav-id">BU6093</span>
+  <span style="font-size:11px;color:var(--text3)" id="nav-period">Feb 2026 · P&amp;L + Tradebook</span>
+  <div class="topnav-right">
+    <label class="upload-btn" title="Upload new files">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+      Upload Files
+      <input type="file" id="anyFile" accept=".csv,.xlsx,.xls" multiple style="display:none" onchange="handleUpload(this)">
+    </label>
+    <button class="reload-btn" onclick="initDash()">↺ My Data</button>
+  </div>
+</nav>
+
+<!-- ── Upload page ─────────────────────────────────────────────────────── -->
+<div id="upload-page">
+  <div>
+    <div style="font-size:22px;font-weight:700;margin-bottom:6px">Upload your Zerodha files</div>
+    <div style="font-size:13px;color:var(--text3)">Select both files together or one at a time</div>
+  </div>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+    <div class="up-zone" id="zone-tb" onclick="document.getElementById('f-tb').click()">
+      <div class="up-icon">📋</div>
+      <div class="up-title">Tradebook CSV</div>
+      <div class="up-sub">Kite Console → Reports<br>→ Tradebook → Download CSV</div>
+      <div class="up-fname" id="tb-fname"></div>
+      <input type="file" id="f-tb" accept=".csv" style="display:none" onchange="loadTradebook(this)">
+    </div>
+    <div class="up-zone" id="zone-pnl" onclick="document.getElementById('f-pnl').click()">
+      <div class="up-icon">📊</div>
+      <div class="up-title">P&amp;L Statement XLSX</div>
+      <div class="up-sub">Kite Console → Reports<br>→ P&amp;L → Download XLSX</div>
+      <div class="up-fname" id="pnl-fname"></div>
+      <input type="file" id="f-pnl" accept=".xlsx,.xls" style="display:none" onchange="loadPnlXLSX(this)">
+    </div>
+  </div>
+  <button class="reload-btn" style="padding:10px 28px;font-size:13px" onclick="initDash()">Or Load My Data (BU6093)</button>
+</div>
+
+<!-- ── Main dashboard ──────────────────────────────────────────────────── -->
+<div class="main" id="dash" style="display:none">
+
+  <!-- Data source chips -->
+  <div class="datasrc">
+    <div class="src-chip loaded" id="chip-tb">
+      <span class="dot"></span> Tradebook · <strong id="chip-tb-info">398 trades</strong>
+    </div>
+    <div class="src-chip loaded" id="chip-pnl">
+      <span class="dot"></span> P&amp;L Statement · <strong id="chip-pnl-info">59 symbols · Feb 2026</strong>
+    </div>
+    <span class="src-meta" id="chip-period">Jan 12 – Mar 16, 2026</span>
+  </div>
+
+  <!-- Metric strip -->
+  <div class="metrics" id="metrics"></div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('overview')">Overview</button>
+    <button class="tab" onclick="switchTab('pnl')">P&amp;L by Symbol</button>
+    <button class="tab" onclick="switchTab('trades')">Trades</button>
+    <button class="tab" onclick="switchTab('charges')">Charges</button>
+    <button class="tab" onclick="switchTab('insights')">Insights</button>
+  </div>
+
+  <!-- ── OVERVIEW ─────────────────────────────────────────────────────── -->
+  <div id="tab-overview">
+    <div class="fbar">
+      <label>Index:</label>
+      <select id="f-idx" onchange="applyF()">
+        <option value="">All</option><option value="NIFTY">NIFTY</option>
+        <option value="BANKNIFTY">BANKNIFTY</option><option value="SENSEX">SENSEX</option>
+      </select>
+      <label>Option:</label>
+      <select id="f-opt" onchange="applyF()">
+        <option value="">CE+PE</option><option value="CE">CE (Calls)</option>
+        <option value="PE">PE (Puts)</option>
+      </select>
+      <label>Exchange:</label>
+      <select id="f-exch" onchange="applyF()">
+        <option value="">All</option><option value="NSE">NSE</option><option value="BSE">BSE</option>
+      </select>
+      <label>Period:</label>
+      <select id="f-per" onchange="applyF()">
+        <option value="all">All Time</option><option value="feb">Feb 2026</option>
+        <option value="jan">Jan 2026</option><option value="mar">Mar 2026</option>
+      </select>
+      <button class="fbtn" onclick="resetF()">Reset</button>
+    </div>
+    <div class="grid2">
+      <div class="card full">
+        <div class="ct">Cumulative Realized P&amp;L</div>
+        <div class="cs">Running P&amp;L from closed positions over time — click any point to see that day's trades</div>
+        <div class="ch" style="height:200px"><canvas id="c-cum"></canvas></div>
+      </div>
+    </div>
+    <div class="grid3">
+      <div class="card">
+        <div class="ct">P&amp;L by Symbol (Top 14)</div>
+        <div class="cs">Sorted by absolute P&amp;L — click a bar to see trades</div>
+        <div class="leg"><span><span class="ld" style="background:var(--green)"></span>Profit</span><span><span class="ld" style="background:var(--red)"></span>Loss</span></div>
+        <div class="ch" id="c-sym-wrap" style="height:320px"><canvas id="c-sym"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="ct">Hourly Trade Volume</div>
+        <div class="cs">Orders placed per market hour</div>
+        <div class="ch" style="height:320px"><canvas id="c-hour"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="ct">P&amp;L by Day of Week</div>
+        <div class="cs">Net realized P&amp;L per weekday</div>
+        <div class="ch" style="height:320px"><canvas id="c-day"></canvas></div>
+      </div>
+    </div>
+    <div class="grid4">
+      <div class="card">
+        <div class="ct">CE vs PE P&amp;L</div>
+        <div class="cs">Realized P&amp;L split by option type</div>
+        <div class="ch" style="height:160px"><canvas id="c-opt"></canvas></div>
+        <div id="l-opt" class="leg" style="justify-content:center;margin-top:8px;margin-bottom:0"></div>
+      </div>
+      <div class="card">
+        <div class="ct">Index Breakdown</div>
+        <div class="cs">Trade count by index</div>
+        <div class="ch" style="height:160px"><canvas id="c-idx"></canvas></div>
+        <div id="l-idx" class="leg" style="justify-content:center;margin-top:8px;margin-bottom:0"></div>
+      </div>
+      <div class="card">
+        <div class="ct">NSE vs BSE</div>
+        <div class="cs">Exchange split</div>
+        <div class="ch" style="height:160px"><canvas id="c-exch"></canvas></div>
+        <div id="l-exch" class="leg" style="justify-content:center;margin-top:8px;margin-bottom:0"></div>
+      </div>
+      <div class="card">
+        <div class="ct">Daily P&amp;L Distribution</div>
+        <div class="cs">Histogram of daily outcomes</div>
+        <div class="ch" style="height:160px"><canvas id="c-hist"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── P&L BY SYMBOL ──────────────────────────────────────────────────── -->
+  <div id="tab-pnl" style="display:none">
+    <div class="fbar">
+      <input type="text" id="ps-search" placeholder="Search symbol…" style="width:180px" oninput="renderPnlTable()">
+      <label>Index:</label>
+      <select id="ps-idx" onchange="renderPnlTable()">
+        <option value="">All</option><option value="NIFTY">NIFTY</option>
+        <option value="BANKNIFTY">BANKNIFTY</option><option value="SENSEX">SENSEX</option>
+      </select>
+      <label>Option:</label>
+      <select id="ps-opt" onchange="renderPnlTable()">
+        <option value="">All</option><option value="CE">CE</option><option value="PE">PE</option>
+      </select>
+      <label>Sort:</label>
+      <select id="ps-sort" onchange="renderPnlTable()">
+        <option value="pnl-d">P&amp;L (High→Low)</option>
+        <option value="pnl-a">P&amp;L (Low→High)</option>
+        <option value="sym">Symbol A–Z</option>
+        <option value="qty-d">Qty (High)</option>
+      </select>
+    </div>
+    <div class="tbox">
+      <table>
+        <thead><tr>
+          <th style="width:175px" onclick="sortPnl('sym')">Symbol ↕</th>
+          <th style="width:55px">Opt</th>
+          <th style="width:60px">Qty</th>
+          <th style="width:90px" onclick="sortPnl('buy')">Buy Value ↕</th>
+          <th style="width:90px" onclick="sortPnl('sell')">Sell Value ↕</th>
+          <th style="width:100px" onclick="sortPnl('pnl-d')">Realized P&amp;L ↕</th>
+          <th style="width:70px">P&amp;L %</th>
+          <th style="width:120px">Visual</th>
+          <th style="width:80px">Trades</th>
+        </tr></thead>
+        <tbody id="pnl-tbody"></tbody>
+      </table>
+    </div>
+    <div class="tc" id="pnl-count"></div>
+  </div>
+
+  <!-- ── TRADES ─────────────────────────────────────────────────────────── -->
+  <div id="tab-trades" style="display:none">
+    <div class="fbar">
+      <input type="text" id="ts-sym" placeholder="Search symbol…" style="width:160px" oninput="renderTrades()">
+      <label>Index:</label>
+      <select id="ts-idx" onchange="renderTrades()">
+        <option value="">All</option><option value="NIFTY">NIFTY</option>
+        <option value="BANKNIFTY">BANKNIFTY</option><option value="SENSEX">SENSEX</option>
+      </select>
+      <label>Option:</label>
+      <select id="ts-opt" onchange="renderTrades()">
+        <option value="">All</option><option value="CE">CE</option><option value="PE">PE</option>
+      </select>
+      <label>Type:</label>
+      <select id="ts-tp" onchange="renderTrades()">
+        <option value="">All</option><option value="buy">Buy</option><option value="sell">Sell</option>
+      </select>
+      <label>Exchange:</label>
+      <select id="ts-exch" onchange="renderTrades()">
+        <option value="">All</option><option value="NSE">NSE</option><option value="BSE">BSE</option>
+      </select>
+      <label>Sort:</label>
+      <select id="ts-sort" onchange="renderTrades()">
+        <option value="dt-d">Date ↓</option><option value="dt-a">Date ↑</option>
+        <option value="pnl-d">P&amp;L High</option><option value="pnl-a">P&amp;L Low</option>
+        <option value="val-d">Value High</option>
+      </select>
+    </div>
+    <div class="tbox">
+      <table>
+        <thead><tr>
+          <th style="width:90px">Date</th>
+          <th style="width:155px">Symbol</th>
+          <th style="width:50px">Exch</th>
+          <th style="width:48px">Type</th>
+          <th style="width:55px">Opt</th>
+          <th style="width:65px">Qty</th>
+          <th style="width:72px">Price</th>
+          <th style="width:78px">Value</th>
+          <th style="width:82px">Trade P&amp;L</th>
+          <th style="width:82px">Sym P&amp;L</th>
+          <th style="width:80px">Expiry</th>
+          <th style="width:50px">Time</th>
+        </tr></thead>
+        <tbody id="trades-tbody"></tbody>
+      </table>
+    </div>
+    <div class="tc" id="trades-count"></div>
+  </div>
+
+  <!-- ── CHARGES ────────────────────────────────────────────────────────── -->
+  <div id="tab-charges" style="display:none">
+    <div id="charges-content"></div>
+  </div>
+
+  <!-- ── INSIGHTS ───────────────────────────────────────────────────────── -->
+  <div id="tab-insights" style="display:none">
+    <div id="insights-content"></div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ── Embedded data ──────────────────────────────────────────────────────────
+const EMB_TRADES  = [{"date":"2026-01-12","symbol":"NIFTY2611325700PE","exchange":"NSE","type":"buy","qty":65.0,"price":77.7,"value":5050.5,"time":"13:01","expiry":"2026-01-13","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-01-12","symbol":"NIFTY2611325700PE","exchange":"NSE","type":"buy","qty":65.0,"price":77.7,"value":5050.5,"time":"13:01","expiry":"2026-01-13","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-01-12","symbol":"NIFTY2611325700PE","exchange":"NSE","type":"sell","qty":130.0,"price":73.0,"value":9490.0,"time":"13:05","expiry":"2026-01-13","pnl":-611.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-01-12","symbol":"NIFTY2611325700PE","exchange":"NSE","type":"buy","qty":65.0,"price":77.2,"value":5018.0,"time":"13:07","expiry":"2026-01-13","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-01-12","symbol":"NIFTY2611325700PE","exchange":"NSE","type":"buy","qty":65.0,"price":77.2,"value":5018.0,"time":"13:07","expiry":"2026-01-13","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-01-12","symbol":"NIFTY2611325700PE","exchange":"NSE","type":"sell","qty":130.0,"price":35.65,"value":4634.5,"time":"14:51","expiry":"2026-01-13","pnl":-5401.5,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-01-12","symbol":"NIFTY2611325900CE","exchange":"NSE","type":"buy","qty":195.0,"price":29.35,"value":5723.25,"time":"14:51","expiry":"2026-01-13","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-01-12","symbol":"NIFTY2611325900CE","exchange":"NSE","type":"sell","qty":195.0,"price":30.65,"value":5976.75,"time":"15:21","expiry":"2026-01-13","pnl":253.5,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-01-13","symbol":"NIFTY2611326000CE","exchange":"NSE","type":"buy","qty":390.0,"price":14.4,"value":5616.0,"time":"09:17","expiry":"2026-01-13","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-01-13","symbol":"NIFTY2611326000CE","exchange":"NSE","type":"sell","qty":390.0,"price":3.95,"value":1540.5,"time":"10:39","expiry":"2026-01-13","pnl":-4075.5,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-01-13","symbol":"NIFTY2611325700PE","exchange":"NSE","type":"buy","qty":65.0,"price":20.7,"value":1345.5,"time":"10:39","expiry":"2026-01-13","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-01-13","symbol":"NIFTY2611325700PE","exchange":"NSE","type":"sell","qty":65.0,"price":18.8,"value":1222.0,"time":"11:06","expiry":"2026-01-13","pnl":-123.5,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-01-13","symbol":"NIFTY2611325850CE","exchange":"NSE","type":"buy","qty":65.0,"price":27.25,"value":1771.25,"time":"11:39","expiry":"2026-01-13","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-01-13","symbol":"NIFTY2611325850CE","exchange":"NSE","type":"sell","qty":65.0,"price":16.9,"value":1098.5,"time":"11:48","expiry":"2026-01-13","pnl":-672.75,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-01-13","symbol":"NIFTY2611325550PE","exchange":"NSE","type":"buy","qty":325.0,"price":3.0,"value":975.0,"time":"13:27","expiry":"2026-01-13","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-01-13","symbol":"NIFTY2611325550PE","exchange":"NSE","type":"sell","qty":325.0,"price":0.65,"value":211.25,"time":"14:40","expiry":"2026-01-13","pnl":-763.75,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-01-13","symbol":"NIFTY2611325600PE","exchange":"NSE","type":"buy","qty":65.0,"price":1.85,"value":120.25,"time":"14:40","expiry":"2026-01-13","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-01-13","symbol":"NIFTY2611325600PE","exchange":"NSE","type":"buy","qty":130.0,"price":1.85,"value":240.5,"time":"14:40","expiry":"2026-01-13","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-01-13","symbol":"NIFTY2611325600PE","exchange":"NSE","type":"sell","qty":195.0,"price":0.9,"value":175.5,"time":"14:41","expiry":"2026-01-13","pnl":-185.25,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-01-20","symbol":"NIFTY2612025500CE","exchange":"NSE","type":"buy","qty":650.0,"price":10.65,"value":6922.5,"time":"13:06","expiry":"2026-01-20","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-01-20","symbol":"NIFTY2612025500CE","exchange":"NSE","type":"sell","qty":650.0,"price":2.9,"value":1885.0,"time":"14:03","expiry":"2026-01-20","pnl":-5037.5,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-01-20","symbol":"NIFTY2612025250PE","exchange":"NSE","type":"buy","qty":650.0,"price":2.35,"value":1527.5,"time":"14:10","expiry":"2026-01-20","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-01-20","symbol":"NIFTY2612025250PE","exchange":"NSE","type":"buy","qty":130.0,"price":2.35,"value":305.5,"time":"14:10","expiry":"2026-01-20","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-01-20","symbol":"NIFTY2612025250PE","exchange":"NSE","type":"sell","qty":780.0,"price":1.5,"value":1170.0,"time":"14:18","expiry":"2026-01-20","pnl":-663.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-01-20","symbol":"NIFTY26JAN25950CE","exchange":"NSE","type":"buy","qty":65.0,"price":17.1,"value":1111.5,"time":"14:47","expiry":"2026-01-27","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-01-22","symbol":"NIFTY26JAN25950CE","exchange":"NSE","type":"sell","qty":65.0,"price":8.15,"value":529.75,"time":"13:11","expiry":"2026-01-27","pnl":-581.75,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-01-22","symbol":"NIFTY26JAN24400PE","exchange":"NSE","type":"buy","qty":65.0,"price":8.2,"value":533.0,"time":"13:12","expiry":"2026-01-27","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-01-27","symbol":"NIFTY26JAN24400PE","exchange":"NSE","type":"sell","qty":65.0,"price":0.25,"value":16.25,"time":"14:45","expiry":"2026-01-27","pnl":-516.75,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-01-29","symbol":"SENSEX26JAN82100CE","exchange":"BSE","type":"buy","qty":20.0,"price":198.0,"value":3960.0,"time":"09:24","expiry":"2026-01-29","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-01-29","symbol":"SENSEX26JAN82100CE","exchange":"BSE","type":"sell","qty":20.0,"price":247.45,"value":4949.0,"time":"09:26","expiry":"2026-01-29","pnl":989.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-01-29","symbol":"SENSEX26JAN81500PE","exchange":"BSE","type":"buy","qty":40.0,"price":111.1,"value":4444.0,"time":"10:06","expiry":"2026-01-29","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-01-29","symbol":"SENSEX26JAN81500PE","exchange":"BSE","type":"sell","qty":40.0,"price":17.25,"value":690.0,"time":"12:06","expiry":"2026-01-29","pnl":-3754.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-01-29","symbol":"SENSEX26JAN82200PE","exchange":"BSE","type":"buy","qty":20.0,"price":74.65,"value":1493.0,"time":"12:51","expiry":"2026-01-29","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-01-29","symbol":"SENSEX26JAN82200PE","exchange":"BSE","type":"sell","qty":20.0,"price":57.2,"value":1144.0,"time":"13:03","expiry":"2026-01-29","pnl":-349.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-01-29","symbol":"SENSEX26JAN82600CE","exchange":"BSE","type":"buy","qty":20.0,"price":69.65,"value":1393.0,"time":"14:16","expiry":"2026-01-29","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-01-29","symbol":"SENSEX26JAN82600CE","exchange":"BSE","type":"sell","qty":20.0,"price":89.85,"value":1797.0,"time":"14:35","expiry":"2026-01-29","pnl":404.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-01-29","symbol":"SENSEX26JAN82400PE","exchange":"BSE","type":"buy","qty":100.0,"price":15.75,"value":1575.0,"time":"14:36","expiry":"2026-01-29","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-01-29","symbol":"SENSEX26JAN82400PE","exchange":"BSE","type":"sell","qty":100.0,"price":1.7,"value":170.0,"time":"15:08","expiry":"2026-01-29","pnl":-1405.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-02-02","symbol":"NIFTY2620325050CE","exchange":"NSE","type":"buy","qty":65.0,"price":70.55,"value":4585.75,"time":"13:53","expiry":"2026-02-03","pnl":null,"pnl_reported":721.5,"buy_val_reported":4585.75,"sell_val_reported":5307.25,"index":"NIFTY","opt":"CE"},{"date":"2026-02-02","symbol":"NIFTY2620325050CE","exchange":"NSE","type":"sell","qty":65.0,"price":81.65,"value":5307.25,"time":"14:51","expiry":"2026-02-03","pnl":721.5,"pnl_reported":721.5,"buy_val_reported":4585.75,"sell_val_reported":5307.25,"index":"NIFTY","opt":"CE"},{"date":"2026-02-02","symbol":"NIFTY2620324950PE","exchange":"NSE","type":"buy","qty":65.0,"price":74.6,"value":4849.0,"time":"14:52","expiry":"2026-02-03","pnl":null,"pnl_reported":-2008.5,"buy_val_reported":4849.0,"sell_val_reported":2840.5,"index":"NIFTY","opt":"PE"},{"date":"2026-02-02","symbol":"NIFTY2620324950PE","exchange":"NSE","type":"sell","qty":65.0,"price":43.7,"value":2840.5,"time":"15:26","expiry":"2026-02-03","pnl":-2008.5,"pnl_reported":-2008.5,"buy_val_reported":4849.0,"sell_val_reported":2840.5,"index":"NIFTY","opt":"PE"},{"date":"2026-02-03","symbol":"NIFTY2620325700PE","exchange":"NSE","type":"buy","qty":65.0,"price":24.5,"value":1592.5,"time":"13:08","expiry":"2026-02-03","pnl":null,"pnl_reported":-1030.25,"buy_val_reported":1924.0001,"sell_val_reported":893.7499,"index":"NIFTY","opt":"PE"},{"date":"2026-02-03","symbol":"NIFTY2620325850CE","exchange":"NSE","type":"buy","qty":65.0,"price":32.35,"value":2102.75,"time":"13:09","expiry":"2026-02-03","pnl":null,"pnl_reported":-1075.75,"buy_val_reported":2102.75,"sell_val_reported":1027.0,"index":"NIFTY","opt":"CE"},{"date":"2026-02-03","symbol":"NIFTY2620325850CE","exchange":"NSE","type":"sell","qty":65.0,"price":15.8,"value":1027.0,"time":"13:35","expiry":"2026-02-03","pnl":-1075.75,"pnl_reported":-1075.75,"buy_val_reported":2102.75,"sell_val_reported":1027.0,"index":"NIFTY","opt":"CE"},{"date":"2026-02-03","symbol":"NIFTY2620325900CE","exchange":"NSE","type":"buy","qty":65.0,"price":17.85,"value":1160.25,"time":"13:45","expiry":"2026-02-03","pnl":null,"pnl_reported":-481.0,"buy_val_reported":1160.25,"sell_val_reported":679.25,"index":"NIFTY","opt":"CE"},{"date":"2026-02-03","symbol":"NIFTY2620325700PE","exchange":"NSE","type":"sell","qty":65.0,"price":12.65,"value":822.25,"time":"13:57","expiry":"2026-02-03","pnl":-770.25,"pnl_reported":-1030.25,"buy_val_reported":1924.0001,"sell_val_reported":893.7499,"index":"NIFTY","opt":"PE"},{"date":"2026-02-03","symbol":"NIFTY2620325900CE","exchange":"NSE","type":"sell","qty":65.0,"price":10.45,"value":679.25,"time":"13:58","expiry":"2026-02-03","pnl":-481.0,"pnl_reported":-481.0,"buy_val_reported":1160.25,"sell_val_reported":679.25,"index":"NIFTY","opt":"CE"},{"date":"2026-02-03","symbol":"NIFTY2620325500PE","exchange":"NSE","type":"buy","qty":65.0,"price":3.0,"value":195.0,"time":"14:00","expiry":"2026-02-03","pnl":null,"pnl_reported":-1404.0,"buy_val_reported":1755.0,"sell_val_reported":351.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-03","symbol":"NIFTY2620325500PE","exchange":"NSE","type":"buy","qty":65.0,"price":3.0,"value":195.0,"time":"14:00","expiry":"2026-02-03","pnl":null,"pnl_reported":-1404.0,"buy_val_reported":1755.0,"sell_val_reported":351.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-03","symbol":"NIFTY2620325500PE","exchange":"NSE","type":"buy","qty":65.0,"price":3.0,"value":195.0,"time":"14:00","expiry":"2026-02-03","pnl":null,"pnl_reported":-1404.0,"buy_val_reported":1755.0,"sell_val_reported":351.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-03","symbol":"NIFTY2620325500PE","exchange":"NSE","type":"buy","qty":390.0,"price":3.0,"value":1170.0,"time":"14:00","expiry":"2026-02-03","pnl":null,"pnl_reported":-1404.0,"buy_val_reported":1755.0,"sell_val_reported":351.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-03","symbol":"NIFTY2620325500PE","exchange":"NSE","type":"sell","qty":585.0,"price":0.6,"value":351.0,"time":"15:06","expiry":"2026-02-03","pnl":-1404.0,"pnl_reported":-1404.0,"buy_val_reported":1755.0,"sell_val_reported":351.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-03","symbol":"NIFTY2620325700PE","exchange":"NSE","type":"buy","qty":130.0,"price":2.55,"value":331.5,"time":"15:06","expiry":"2026-02-03","pnl":null,"pnl_reported":-1030.25,"buy_val_reported":1924.0001,"sell_val_reported":893.7499,"index":"NIFTY","opt":"PE"},{"date":"2026-02-03","symbol":"NIFTY2620325700PE","exchange":"NSE","type":"sell","qty":130.0,"price":0.55,"value":71.5,"time":"15:17","expiry":"2026-02-03","pnl":-260.0,"pnl_reported":-1030.25,"buy_val_reported":1924.0001,"sell_val_reported":893.7499,"index":"NIFTY","opt":"PE"},{"date":"2026-02-09","symbol":"NIFTY2621025700PE","exchange":"NSE","type":"buy","qty":390.0,"price":25.9,"value":10101.0,"time":"11:12","expiry":"2026-02-10","pnl":null,"pnl_reported":-598.0,"buy_val_reported":13468.0,"sell_val_reported":12870.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-09","symbol":"NIFTY2621025700PE","exchange":"NSE","type":"buy","qty":130.0,"price":25.9,"value":3367.0,"time":"11:12","expiry":"2026-02-10","pnl":null,"pnl_reported":-598.0,"buy_val_reported":13468.0,"sell_val_reported":12870.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-09","symbol":"NIFTY2621025700PE","exchange":"NSE","type":"sell","qty":520.0,"price":24.75,"value":12870.0,"time":"11:29","expiry":"2026-02-10","pnl":-598.0,"pnl_reported":-598.0,"buy_val_reported":13468.0,"sell_val_reported":12870.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-09","symbol":"NIFTY2621025700CE","exchange":"NSE","type":"buy","qty":65.0,"price":184.0,"value":11960.0,"time":"12:20","expiry":"2026-02-10","pnl":null,"pnl_reported":552.5,"buy_val_reported":11960.0,"sell_val_reported":12512.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-09","symbol":"NIFTY2621025700CE","exchange":"NSE","type":"sell","qty":65.0,"price":192.5,"value":12512.5,"time":"12:22","expiry":"2026-02-10","pnl":552.5,"pnl_reported":552.5,"buy_val_reported":11960.0,"sell_val_reported":12512.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-09","symbol":"NIFTY2621025750PE","exchange":"NSE","type":"buy","qty":130.0,"price":34.9,"value":4537.0,"time":"12:37","expiry":"2026-02-10","pnl":null,"pnl_reported":-253.5,"buy_val_reported":27631.5,"sell_val_reported":27378.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-09","symbol":"NIFTY2621025750PE","exchange":"NSE","type":"buy","qty":65.0,"price":34.9,"value":2268.5,"time":"12:37","expiry":"2026-02-10","pnl":null,"pnl_reported":-253.5,"buy_val_reported":27631.5,"sell_val_reported":27378.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-09","symbol":"NIFTY2621025750PE","exchange":"NSE","type":"buy","qty":65.0,"price":34.9,"value":2268.5,"time":"12:37","expiry":"2026-02-10","pnl":null,"pnl_reported":-253.5,"buy_val_reported":27631.5,"sell_val_reported":27378.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-09","symbol":"NIFTY2621025750PE","exchange":"NSE","type":"buy","qty":130.0,"price":34.9,"value":4537.0,"time":"12:37","expiry":"2026-02-10","pnl":null,"pnl_reported":-253.5,"buy_val_reported":27631.5,"sell_val_reported":27378.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-09","symbol":"NIFTY2621025750PE","exchange":"NSE","type":"sell","qty":390.0,"price":36.4,"value":14196.0,"time":"12:38","expiry":"2026-02-10","pnl":585.0,"pnl_reported":-253.5,"buy_val_reported":27631.5,"sell_val_reported":27378.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-09","symbol":"NIFTY2621025750PE","exchange":"NSE","type":"buy","qty":390.0,"price":35.95,"value":14020.5,"time":"13:00","expiry":"2026-02-10","pnl":null,"pnl_reported":-253.5,"buy_val_reported":27631.5,"sell_val_reported":27378.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-09","symbol":"NIFTY2621025750PE","exchange":"NSE","type":"sell","qty":390.0,"price":33.8,"value":13182.0,"time":"15:21","expiry":"2026-02-10","pnl":-838.5,"pnl_reported":-253.5,"buy_val_reported":27631.5,"sell_val_reported":27378.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-10","symbol":"NIFTY2621026000CE","exchange":"NSE","type":"buy","qty":325.0,"price":31.35,"value":10188.75,"time":"09:47","expiry":"2026-02-10","pnl":null,"pnl_reported":1121.25,"buy_val_reported":23221.2503,"sell_val_reported":24342.5003,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621026000CE","exchange":"NSE","type":"sell","qty":325.0,"price":33.0,"value":10725.0,"time":"09:48","expiry":"2026-02-10","pnl":536.25,"pnl_reported":1121.25,"buy_val_reported":23221.2503,"sell_val_reported":24342.5003,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621025950CE","exchange":"NSE","type":"buy","qty":325.0,"price":40.0,"value":13000.0,"time":"10:01","expiry":"2026-02-10","pnl":null,"pnl_reported":3656.25,"buy_val_reported":46166.25,"sell_val_reported":49822.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621025950CE","exchange":"NSE","type":"sell","qty":130.0,"price":42.3,"value":5499.0,"time":"10:02","expiry":"2026-02-10","pnl":299.0,"pnl_reported":3656.25,"buy_val_reported":46166.25,"sell_val_reported":49822.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621025950CE","exchange":"NSE","type":"sell","qty":65.0,"price":42.3,"value":2749.5,"time":"10:02","expiry":"2026-02-10","pnl":149.5,"pnl_reported":3656.25,"buy_val_reported":46166.25,"sell_val_reported":49822.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621025950CE","exchange":"NSE","type":"sell","qty":130.0,"price":42.3,"value":5499.0,"time":"10:02","expiry":"2026-02-10","pnl":299.0,"pnl_reported":3656.25,"buy_val_reported":46166.25,"sell_val_reported":49822.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621025900PE","exchange":"NSE","type":"buy","qty":65.0,"price":23.35,"value":1517.75,"time":"10:09","expiry":"2026-02-10","pnl":null,"pnl_reported":776.75,"buy_val_reported":38008.7498,"sell_val_reported":38785.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-10","symbol":"NIFTY2621025900PE","exchange":"NSE","type":"buy","qty":130.0,"price":23.35,"value":3035.5,"time":"10:09","expiry":"2026-02-10","pnl":null,"pnl_reported":776.75,"buy_val_reported":38008.7498,"sell_val_reported":38785.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-10","symbol":"NIFTY2621025900PE","exchange":"NSE","type":"buy","qty":130.0,"price":23.35,"value":3035.5,"time":"10:09","expiry":"2026-02-10","pnl":null,"pnl_reported":776.75,"buy_val_reported":38008.7498,"sell_val_reported":38785.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-10","symbol":"NIFTY2621025900PE","exchange":"NSE","type":"buy","qty":130.0,"price":23.35,"value":3035.5,"time":"10:09","expiry":"2026-02-10","pnl":null,"pnl_reported":776.75,"buy_val_reported":38008.7498,"sell_val_reported":38785.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-10","symbol":"NIFTY2621025900PE","exchange":"NSE","type":"buy","qty":65.0,"price":23.35,"value":1517.75,"time":"10:09","expiry":"2026-02-10","pnl":null,"pnl_reported":776.75,"buy_val_reported":38008.7498,"sell_val_reported":38785.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-10","symbol":"NIFTY2621025900PE","exchange":"NSE","type":"sell","qty":520.0,"price":25.05,"value":13026.0,"time":"10:09","expiry":"2026-02-10","pnl":884.0,"pnl_reported":776.75,"buy_val_reported":38008.7498,"sell_val_reported":38785.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-10","symbol":"NIFTY2621025950CE","exchange":"NSE","type":"buy","qty":325.0,"price":39.55,"value":12853.75,"time":"10:12","expiry":"2026-02-10","pnl":null,"pnl_reported":3656.25,"buy_val_reported":46166.25,"sell_val_reported":49822.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621025950CE","exchange":"NSE","type":"sell","qty":325.0,"price":42.0,"value":13650.0,"time":"10:12","expiry":"2026-02-10","pnl":796.25,"pnl_reported":3656.25,"buy_val_reported":46166.25,"sell_val_reported":49822.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621025900PE","exchange":"NSE","type":"buy","qty":65.0,"price":21.55,"value":1400.75,"time":"10:17","expiry":"2026-02-10","pnl":null,"pnl_reported":776.75,"buy_val_reported":38008.7498,"sell_val_reported":38785.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-10","symbol":"NIFTY2621025900PE","exchange":"NSE","type":"buy","qty":130.0,"price":21.55,"value":2801.5,"time":"10:17","expiry":"2026-02-10","pnl":null,"pnl_reported":776.75,"buy_val_reported":38008.7498,"sell_val_reported":38785.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-10","symbol":"NIFTY2621025900PE","exchange":"NSE","type":"buy","qty":65.0,"price":21.55,"value":1400.75,"time":"10:17","expiry":"2026-02-10","pnl":null,"pnl_reported":776.75,"buy_val_reported":38008.7498,"sell_val_reported":38785.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-10","symbol":"NIFTY2621025900PE","exchange":"NSE","type":"buy","qty":65.0,"price":21.55,"value":1400.75,"time":"10:17","expiry":"2026-02-10","pnl":null,"pnl_reported":776.75,"buy_val_reported":38008.7498,"sell_val_reported":38785.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-10","symbol":"NIFTY2621025900PE","exchange":"NSE","type":"buy","qty":195.0,"price":21.55,"value":4202.25,"time":"10:17","expiry":"2026-02-10","pnl":null,"pnl_reported":776.75,"buy_val_reported":38008.7498,"sell_val_reported":38785.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-10","symbol":"NIFTY2621025900PE","exchange":"NSE","type":"buy","qty":65.0,"price":21.55,"value":1400.75,"time":"10:17","expiry":"2026-02-10","pnl":null,"pnl_reported":776.75,"buy_val_reported":38008.7498,"sell_val_reported":38785.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-10","symbol":"NIFTY2621025900PE","exchange":"NSE","type":"sell","qty":585.0,"price":18.7,"value":10939.5,"time":"10:41","expiry":"2026-02-10","pnl":-1667.25,"pnl_reported":776.75,"buy_val_reported":38008.7498,"sell_val_reported":38785.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-10","symbol":"NIFTY2621026000CE","exchange":"NSE","type":"buy","qty":650.0,"price":20.05,"value":13032.5,"time":"10:50","expiry":"2026-02-10","pnl":null,"pnl_reported":1121.25,"buy_val_reported":23221.2503,"sell_val_reported":24342.5003,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621026000CE","exchange":"NSE","type":"sell","qty":325.0,"price":20.95,"value":6808.75,"time":"11:03","expiry":"2026-02-10","pnl":292.5,"pnl_reported":1121.25,"buy_val_reported":23221.2503,"sell_val_reported":24342.5003,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621026000CE","exchange":"NSE","type":"sell","qty":325.0,"price":20.95,"value":6808.75,"time":"11:03","expiry":"2026-02-10","pnl":292.5,"pnl_reported":1121.25,"buy_val_reported":23221.2503,"sell_val_reported":24342.5003,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621025900PE","exchange":"NSE","type":"buy","qty":195.0,"price":17.0,"value":3315.0,"time":"11:22","expiry":"2026-02-10","pnl":null,"pnl_reported":776.75,"buy_val_reported":38008.7498,"sell_val_reported":38785.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-10","symbol":"NIFTY2621025900PE","exchange":"NSE","type":"buy","qty":585.0,"price":17.0,"value":9945.0,"time":"11:22","expiry":"2026-02-10","pnl":null,"pnl_reported":776.75,"buy_val_reported":38008.7498,"sell_val_reported":38785.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-10","symbol":"NIFTY2621025900PE","exchange":"NSE","type":"sell","qty":195.0,"price":19.0,"value":3705.0,"time":"11:24","expiry":"2026-02-10","pnl":390.0,"pnl_reported":776.75,"buy_val_reported":38008.7498,"sell_val_reported":38785.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-10","symbol":"NIFTY2621025900PE","exchange":"NSE","type":"sell","qty":585.0,"price":19.0,"value":11115.0,"time":"11:24","expiry":"2026-02-10","pnl":1170.0,"pnl_reported":776.75,"buy_val_reported":38008.7498,"sell_val_reported":38785.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-10","symbol":"NIFTY2621025950CE","exchange":"NSE","type":"buy","qty":650.0,"price":6.3,"value":4095.0,"time":"14:29","expiry":"2026-02-10","pnl":null,"pnl_reported":3656.25,"buy_val_reported":46166.25,"sell_val_reported":49822.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621025950CE","exchange":"NSE","type":"buy","qty":975.0,"price":6.3,"value":6142.5,"time":"14:29","expiry":"2026-02-10","pnl":null,"pnl_reported":3656.25,"buy_val_reported":46166.25,"sell_val_reported":49822.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621025950CE","exchange":"NSE","type":"sell","qty":910.0,"price":7.0,"value":6370.0,"time":"14:30","expiry":"2026-02-10","pnl":637.0,"pnl_reported":3656.25,"buy_val_reported":46166.25,"sell_val_reported":49822.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621025950CE","exchange":"NSE","type":"sell","qty":715.0,"price":7.0,"value":5005.0,"time":"14:30","expiry":"2026-02-10","pnl":500.5,"pnl_reported":3656.25,"buy_val_reported":46166.25,"sell_val_reported":49822.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621025950CE","exchange":"NSE","type":"buy","qty":780.0,"price":6.2,"value":4836.0,"time":"14:34","expiry":"2026-02-10","pnl":null,"pnl_reported":3656.25,"buy_val_reported":46166.25,"sell_val_reported":49822.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621025950CE","exchange":"NSE","type":"buy","qty":845.0,"price":6.2,"value":5239.0,"time":"14:34","expiry":"2026-02-10","pnl":null,"pnl_reported":3656.25,"buy_val_reported":46166.25,"sell_val_reported":49822.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621025950CE","exchange":"NSE","type":"sell","qty":1625.0,"price":6.8,"value":11050.0,"time":"14:35","expiry":"2026-02-10","pnl":975.0,"pnl_reported":3656.25,"buy_val_reported":46166.25,"sell_val_reported":49822.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621025900CE","exchange":"NSE","type":"buy","qty":65.0,"price":24.85,"value":1615.25,"time":"14:44","expiry":"2026-02-10","pnl":null,"pnl_reported":2678.0,"buy_val_reported":12922.0,"sell_val_reported":15600.0,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621025900CE","exchange":"NSE","type":"buy","qty":455.0,"price":24.85,"value":11306.75,"time":"14:44","expiry":"2026-02-10","pnl":null,"pnl_reported":2678.0,"buy_val_reported":12922.0,"sell_val_reported":15600.0,"index":"NIFTY","opt":"CE"},{"date":"2026-02-10","symbol":"NIFTY2621025900CE","exchange":"NSE","type":"sell","qty":520.0,"price":30.0,"value":15600.0,"time":"14:45","expiry":"2026-02-10","pnl":2678.0,"pnl_reported":2678.0,"buy_val_reported":12922.0,"sell_val_reported":15600.0,"index":"NIFTY","opt":"CE"},{"date":"2026-02-11","symbol":"SENSEX2621284200CE","exchange":"BSE","type":"buy","qty":40.0,"price":292.2,"value":11688.0,"time":"09:53","expiry":"2026-02-12","pnl":null,"pnl_reported":-1526.0,"buy_val_reported":35240.0,"sell_val_reported":33714.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-11","symbol":"SENSEX2621284200CE","exchange":"BSE","type":"sell","qty":40.0,"price":305.0,"value":12200.0,"time":"09:53","expiry":"2026-02-12","pnl":512.0,"pnl_reported":-1526.0,"buy_val_reported":35240.0,"sell_val_reported":33714.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-11","symbol":"SENSEX2621284300PE","exchange":"BSE","type":"buy","qty":60.0,"price":216.35,"value":12981.0,"time":"10:18","expiry":"2026-02-12","pnl":null,"pnl_reported":-1566.0,"buy_val_reported":12981.0,"sell_val_reported":11415.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-11","symbol":"SENSEX2621284300PE","exchange":"BSE","type":"sell","qty":20.0,"price":190.2,"value":3804.0,"time":"10:59","expiry":"2026-02-12","pnl":-523.0,"pnl_reported":-1566.0,"buy_val_reported":12981.0,"sell_val_reported":11415.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-11","symbol":"SENSEX2621284300PE","exchange":"BSE","type":"sell","qty":20.0,"price":190.25,"value":3805.0,"time":"10:59","expiry":"2026-02-12","pnl":-522.0,"pnl_reported":-1566.0,"buy_val_reported":12981.0,"sell_val_reported":11415.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-11","symbol":"SENSEX2621284300PE","exchange":"BSE","type":"sell","qty":20.0,"price":190.3,"value":3806.0,"time":"10:59","expiry":"2026-02-12","pnl":-521.0,"pnl_reported":-1566.0,"buy_val_reported":12981.0,"sell_val_reported":11415.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-11","symbol":"SENSEX2621284200CE","exchange":"BSE","type":"buy","qty":40.0,"price":289.4,"value":11576.0,"time":"10:59","expiry":"2026-02-12","pnl":null,"pnl_reported":-1526.0,"buy_val_reported":35240.0,"sell_val_reported":33714.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-11","symbol":"SENSEX2621284200CE","exchange":"BSE","type":"sell","qty":40.0,"price":282.95,"value":11318.0,"time":"11:00","expiry":"2026-02-12","pnl":-258.0,"pnl_reported":-1526.0,"buy_val_reported":35240.0,"sell_val_reported":33714.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-11","symbol":"SENSEX2621284200CE","exchange":"BSE","type":"buy","qty":20.0,"price":299.6,"value":5992.0,"time":"11:05","expiry":"2026-02-12","pnl":null,"pnl_reported":-1526.0,"buy_val_reported":35240.0,"sell_val_reported":33714.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-11","symbol":"SENSEX2621284200CE","exchange":"BSE","type":"buy","qty":20.0,"price":299.2,"value":5984.0,"time":"11:05","expiry":"2026-02-12","pnl":null,"pnl_reported":-1526.0,"buy_val_reported":35240.0,"sell_val_reported":33714.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-11","symbol":"SENSEX2621284200CE","exchange":"BSE","type":"sell","qty":40.0,"price":254.9,"value":10196.0,"time":"12:02","expiry":"2026-02-12","pnl":-1780.0,"pnl_reported":-1526.0,"buy_val_reported":35240.0,"sell_val_reported":33714.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-11","symbol":"NIFTY2621725950PE","exchange":"NSE","type":"buy","qty":65.0,"price":112.65,"value":7322.25,"time":"12:32","expiry":"2026-02-17","pnl":null,"pnl_reported":100.75,"buy_val_reported":7322.25,"sell_val_reported":7423.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-11","symbol":"NIFTY2621725950PE","exchange":"NSE","type":"sell","qty":65.0,"price":114.2,"value":7423.0,"time":"12:36","expiry":"2026-02-17","pnl":100.75,"pnl_reported":100.75,"buy_val_reported":7322.25,"sell_val_reported":7423.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-11","symbol":"NIFTY2621725900CE","exchange":"NSE","type":"buy","qty":65.0,"price":155.0,"value":10075.0,"time":"12:37","expiry":"2026-02-17","pnl":null,"pnl_reported":412.75,"buy_val_reported":18177.25,"sell_val_reported":18590.0,"index":"NIFTY","opt":"CE"},{"date":"2026-02-11","symbol":"NIFTY2621725900CE","exchange":"NSE","type":"sell","qty":65.0,"price":157.0,"value":10205.0,"time":"13:28","expiry":"2026-02-17","pnl":130.0,"pnl_reported":412.75,"buy_val_reported":18177.25,"sell_val_reported":18590.0,"index":"NIFTY","opt":"CE"},{"date":"2026-02-11","symbol":"SENSEX2621284200PE","exchange":"BSE","type":"buy","qty":60.0,"price":169.0,"value":10140.0,"time":"14:10","expiry":"2026-02-12","pnl":null,"pnl_reported":1272.0,"buy_val_reported":10140.0,"sell_val_reported":11412.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-11","symbol":"SENSEX2621284200PE","exchange":"BSE","type":"sell","qty":60.0,"price":190.2,"value":11412.0,"time":"14:30","expiry":"2026-02-12","pnl":1272.0,"pnl_reported":1272.0,"buy_val_reported":10140.0,"sell_val_reported":11412.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-12","symbol":"SENSEX2621284000CE","exchange":"BSE","type":"buy","qty":80.0,"price":121.1,"value":9688.0,"time":"09:22","expiry":"2026-02-12","pnl":null,"pnl_reported":-1149.0,"buy_val_reported":18756.0,"sell_val_reported":17607.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-12","symbol":"SENSEX2621284000CE","exchange":"BSE","type":"sell","qty":20.0,"price":115.1,"value":2302.0,"time":"09:23","expiry":"2026-02-12","pnl":-120.0,"pnl_reported":-1149.0,"buy_val_reported":18756.0,"sell_val_reported":17607.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-12","symbol":"SENSEX2621284000CE","exchange":"BSE","type":"sell","qty":40.0,"price":115.05,"value":4602.0,"time":"09:23","expiry":"2026-02-12","pnl":-242.0,"pnl_reported":-1149.0,"buy_val_reported":18756.0,"sell_val_reported":17607.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-12","symbol":"SENSEX2621284000CE","exchange":"BSE","type":"sell","qty":20.0,"price":115.15,"value":2303.0,"time":"09:23","expiry":"2026-02-12","pnl":-119.0,"pnl_reported":-1149.0,"buy_val_reported":18756.0,"sell_val_reported":17607.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-12","symbol":"SENSEX2621284000CE","exchange":"BSE","type":"buy","qty":80.0,"price":113.35,"value":9068.0,"time":"09:24","expiry":"2026-02-12","pnl":null,"pnl_reported":-1149.0,"buy_val_reported":18756.0,"sell_val_reported":17607.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-12","symbol":"SENSEX2621284000CE","exchange":"BSE","type":"sell","qty":80.0,"price":105.0,"value":8400.0,"time":"09:53","expiry":"2026-02-12","pnl":-668.0,"pnl_reported":-1149.0,"buy_val_reported":18756.0,"sell_val_reported":17607.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-12","symbol":"NIFTY2621725900CE","exchange":"NSE","type":"buy","qty":65.0,"price":105.2,"value":6838.0,"time":"10:02","expiry":"2026-02-17","pnl":null,"pnl_reported":412.75,"buy_val_reported":18177.25,"sell_val_reported":18590.0,"index":"NIFTY","opt":"CE"},{"date":"2026-02-12","symbol":"NIFTY2621725900CE","exchange":"NSE","type":"sell","qty":65.0,"price":111.15,"value":7224.75,"time":"10:14","expiry":"2026-02-17","pnl":386.75,"pnl_reported":412.75,"buy_val_reported":18177.25,"sell_val_reported":18590.0,"index":"NIFTY","opt":"CE"},{"date":"2026-02-12","symbol":"NIFTY2621725900PE","exchange":"NSE","type":"buy","qty":65.0,"price":117.15,"value":7614.75,"time":"11:01","expiry":"2026-02-17","pnl":null,"pnl_reported":185.25,"buy_val_reported":7614.75,"sell_val_reported":7800.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-12","symbol":"NIFTY2621725900PE","exchange":"NSE","type":"sell","qty":65.0,"price":120.0,"value":7800.0,"time":"11:16","expiry":"2026-02-17","pnl":185.25,"pnl_reported":185.25,"buy_val_reported":7614.75,"sell_val_reported":7800.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-12","symbol":"SENSEX2621283800CE","exchange":"BSE","type":"buy","qty":120.0,"price":85.45,"value":10254.0,"time":"13:10","expiry":"2026-02-12","pnl":null,"pnl_reported":-3991.0,"buy_val_reported":16153.9997,"sell_val_reported":12162.9995,"index":"SENSEX","opt":"CE"},{"date":"2026-02-12","symbol":"SENSEX2621283800CE","exchange":"BSE","type":"sell","qty":20.0,"price":97.6,"value":1952.0,"time":"13:18","expiry":"2026-02-12","pnl":243.0,"pnl_reported":-3991.0,"buy_val_reported":16153.9997,"sell_val_reported":12162.9995,"index":"SENSEX","opt":"CE"},{"date":"2026-02-12","symbol":"SENSEX2621283800CE","exchange":"BSE","type":"sell","qty":80.0,"price":97.65,"value":7812.0,"time":"13:18","expiry":"2026-02-12","pnl":976.0,"pnl_reported":-3991.0,"buy_val_reported":16153.9997,"sell_val_reported":12162.9995,"index":"SENSEX","opt":"CE"},{"date":"2026-02-12","symbol":"SENSEX2621283800CE","exchange":"BSE","type":"sell","qty":20.0,"price":97.45,"value":1949.0,"time":"13:18","expiry":"2026-02-12","pnl":240.0,"pnl_reported":-3991.0,"buy_val_reported":16153.9997,"sell_val_reported":12162.9995,"index":"SENSEX","opt":"CE"},{"date":"2026-02-12","symbol":"SENSEX2621283900PE","exchange":"BSE","type":"buy","qty":100.0,"price":107.7,"value":10770.0,"time":"13:19","expiry":"2026-02-12","pnl":null,"pnl_reported":1730.0,"buy_val_reported":10770.0,"sell_val_reported":12500.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-12","symbol":"SENSEX2621283900PE","exchange":"BSE","type":"sell","qty":100.0,"price":125.0,"value":12500.0,"time":"13:20","expiry":"2026-02-12","pnl":1730.0,"pnl_reported":1730.0,"buy_val_reported":10770.0,"sell_val_reported":12500.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-12","symbol":"SENSEX2621283700CE","exchange":"BSE","type":"buy","qty":100.0,"price":105.0,"value":10500.0,"time":"13:52","expiry":"2026-02-12","pnl":null,"pnl_reported":-1095.0,"buy_val_reported":10500.0,"sell_val_reported":9405.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-12","symbol":"SENSEX2621283700CE","exchange":"BSE","type":"sell","qty":100.0,"price":94.05,"value":9405.0,"time":"14:03","expiry":"2026-02-12","pnl":-1095.0,"pnl_reported":-1095.0,"buy_val_reported":10500.0,"sell_val_reported":9405.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-12","symbol":"SENSEX2621283900CE","exchange":"BSE","type":"buy","qty":500.0,"price":20.0,"value":10000.0,"time":"14:09","expiry":"2026-02-12","pnl":null,"pnl_reported":-5000.0,"buy_val_reported":19750.0005,"sell_val_reported":14749.9995,"index":"SENSEX","opt":"CE"},{"date":"2026-02-12","symbol":"SENSEX2621283900CE","exchange":"BSE","type":"sell","qty":500.0,"price":22.1,"value":11050.0,"time":"14:12","expiry":"2026-02-12","pnl":1050.0,"pnl_reported":-5000.0,"buy_val_reported":19750.0005,"sell_val_reported":14749.9995,"index":"SENSEX","opt":"CE"},{"date":"2026-02-12","symbol":"SENSEX2621283900CE","exchange":"BSE","type":"buy","qty":1000.0,"price":9.75,"value":9750.0,"time":"14:35","expiry":"2026-02-12","pnl":null,"pnl_reported":-5000.0,"buy_val_reported":19750.0005,"sell_val_reported":14749.9995,"index":"SENSEX","opt":"CE"},{"date":"2026-02-12","symbol":"SENSEX2621283900CE","exchange":"BSE","type":"sell","qty":1000.0,"price":3.7,"value":3700.0,"time":"14:46","expiry":"2026-02-12","pnl":-6050.0,"pnl_reported":-5000.0,"buy_val_reported":19750.0005,"sell_val_reported":14749.9995,"index":"SENSEX","opt":"CE"},{"date":"2026-02-12","symbol":"SENSEX2621283800CE","exchange":"BSE","type":"buy","qty":1000.0,"price":5.9,"value":5900.0,"time":"14:50","expiry":"2026-02-12","pnl":null,"pnl_reported":-3991.0,"buy_val_reported":16153.9997,"sell_val_reported":12162.9995,"index":"SENSEX","opt":"CE"},{"date":"2026-02-12","symbol":"SENSEX2621283800CE","exchange":"BSE","type":"sell","qty":1000.0,"price":0.45,"value":450.0,"time":"15:16","expiry":"2026-02-12","pnl":-5450.0,"pnl_reported":-3991.0,"buy_val_reported":16153.9997,"sell_val_reported":12162.9995,"index":"SENSEX","opt":"CE"},{"date":"2026-02-13","symbol":"RELIANCE26FEB1360PE","exchange":"NSE","type":"buy","qty":500.0,"price":2.05,"value":1025.0,"time":"10:02","expiry":"2026-02-24","pnl":null,"pnl_reported":0.0,"buy_val_reported":1025.0,"sell_val_reported":1025.0,"index":"OTHER","opt":"PE"},{"date":"2026-02-13","symbol":"RELIANCE26FEB1360PE","exchange":"NSE","type":"sell","qty":500.0,"price":2.05,"value":1025.0,"time":"10:09","expiry":"2026-02-24","pnl":0.0,"pnl_reported":0.0,"buy_val_reported":1025.0,"sell_val_reported":1025.0,"index":"OTHER","opt":"PE"},{"date":"2026-02-13","symbol":"NIFTY2621725900CE","exchange":"NSE","type":"buy","qty":65.0,"price":19.45,"value":1264.25,"time":"12:49","expiry":"2026-02-17","pnl":null,"pnl_reported":412.75,"buy_val_reported":18177.25,"sell_val_reported":18590.0,"index":"NIFTY","opt":"CE"},{"date":"2026-02-13","symbol":"NIFTY2621725900CE","exchange":"NSE","type":"sell","qty":65.0,"price":17.85,"value":1160.25,"time":"13:47","expiry":"2026-02-17","pnl":-104.0,"pnl_reported":412.75,"buy_val_reported":18177.25,"sell_val_reported":18590.0,"index":"NIFTY","opt":"CE"},{"date":"2026-02-13","symbol":"NIFTY2621725200PE","exchange":"NSE","type":"buy","qty":65.0,"price":18.5,"value":1202.5,"time":"13:47","expiry":"2026-02-17","pnl":null,"pnl_reported":617.5,"buy_val_reported":1202.5,"sell_val_reported":1820.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-13","symbol":"NIFTY2621725200PE","exchange":"NSE","type":"sell","qty":65.0,"price":28.0,"value":1820.0,"time":"15:05","expiry":"2026-02-17","pnl":617.5,"pnl_reported":617.5,"buy_val_reported":1202.5,"sell_val_reported":1820.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-16","symbol":"NIFTY2621725300PE","exchange":"NSE","type":"buy","qty":65.0,"price":24.4,"value":1586.0,"time":"09:59","expiry":"2026-02-17","pnl":null,"pnl_reported":-354.25,"buy_val_reported":1586.0,"sell_val_reported":1231.75,"index":"NIFTY","opt":"PE"},{"date":"2026-02-16","symbol":"NIFTY2621725300PE","exchange":"NSE","type":"sell","qty":65.0,"price":18.95,"value":1231.75,"time":"11:08","expiry":"2026-02-17","pnl":-354.25,"pnl_reported":-354.25,"buy_val_reported":1586.0,"sell_val_reported":1231.75,"index":"NIFTY","opt":"PE"},{"date":"2026-02-16","symbol":"NIFTY2621725750CE","exchange":"NSE","type":"buy","qty":65.0,"price":19.95,"value":1296.75,"time":"11:08","expiry":"2026-02-17","pnl":null,"pnl_reported":2762.5,"buy_val_reported":11573.25,"sell_val_reported":14335.7506,"index":"NIFTY","opt":"CE"},{"date":"2026-02-16","symbol":"NIFTY2621725750CE","exchange":"NSE","type":"sell","qty":65.0,"price":30.0,"value":1950.0,"time":"14:28","expiry":"2026-02-17","pnl":653.25,"pnl_reported":2762.5,"buy_val_reported":11573.25,"sell_val_reported":14335.7506,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725550PE","exchange":"NSE","type":"buy","qty":65.0,"price":27.4,"value":1781.0,"time":"09:34","expiry":"2026-02-17","pnl":null,"pnl_reported":-104.0,"buy_val_reported":1781.0,"sell_val_reported":1677.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725550PE","exchange":"NSE","type":"sell","qty":65.0,"price":25.8,"value":1677.0,"time":"09:39","expiry":"2026-02-17","pnl":-104.0,"pnl_reported":-104.0,"buy_val_reported":1781.0,"sell_val_reported":1677.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725750CE","exchange":"NSE","type":"buy","qty":195.0,"price":9.2,"value":1794.0,"time":"09:42","expiry":"2026-02-17","pnl":null,"pnl_reported":2762.5,"buy_val_reported":11573.25,"sell_val_reported":14335.7506,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725750CE","exchange":"NSE","type":"sell","qty":195.0,"price":17.75,"value":3461.25,"time":"09:53","expiry":"2026-02-17","pnl":1667.25,"pnl_reported":2762.5,"buy_val_reported":11573.25,"sell_val_reported":14335.7506,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725600PE","exchange":"NSE","type":"buy","qty":65.0,"price":28.45,"value":1849.25,"time":"09:56","expiry":"2026-02-17","pnl":null,"pnl_reported":1303.25,"buy_val_reported":6964.7497,"sell_val_reported":8268.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725600PE","exchange":"NSE","type":"sell","qty":65.0,"price":25.05,"value":1628.25,"time":"09:57","expiry":"2026-02-17","pnl":-221.0,"pnl_reported":1303.25,"buy_val_reported":6964.7497,"sell_val_reported":8268.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725600PE","exchange":"NSE","type":"buy","qty":65.0,"price":27.4,"value":1781.0,"time":"10:02","expiry":"2026-02-17","pnl":null,"pnl_reported":1303.25,"buy_val_reported":6964.7497,"sell_val_reported":8268.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725600PE","exchange":"NSE","type":"sell","qty":65.0,"price":24.0,"value":1560.0,"time":"10:09","expiry":"2026-02-17","pnl":-221.0,"pnl_reported":1303.25,"buy_val_reported":6964.7497,"sell_val_reported":8268.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725800CE","exchange":"NSE","type":"buy","qty":130.0,"price":12.05,"value":1566.5,"time":"10:18","expiry":"2026-02-17","pnl":null,"pnl_reported":383.5,"buy_val_reported":5024.5004,"sell_val_reported":5407.9999,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725800CE","exchange":"NSE","type":"sell","qty":65.0,"price":14.1,"value":916.5,"time":"10:21","expiry":"2026-02-17","pnl":133.25,"pnl_reported":383.5,"buy_val_reported":5024.5004,"sell_val_reported":5407.9999,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725800CE","exchange":"NSE","type":"sell","qty":65.0,"price":14.1,"value":916.5,"time":"10:21","expiry":"2026-02-17","pnl":133.25,"pnl_reported":383.5,"buy_val_reported":5024.5004,"sell_val_reported":5407.9999,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725800CE","exchange":"NSE","type":"buy","qty":260.0,"price":6.5,"value":1690.0,"time":"11:06","expiry":"2026-02-17","pnl":null,"pnl_reported":383.5,"buy_val_reported":5024.5004,"sell_val_reported":5407.9999,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725800CE","exchange":"NSE","type":"sell","qty":260.0,"price":8.75,"value":2275.0,"time":"11:17","expiry":"2026-02-17","pnl":585.0,"pnl_reported":383.5,"buy_val_reported":5024.5004,"sell_val_reported":5407.9999,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725600PE","exchange":"NSE","type":"buy","qty":195.0,"price":8.1,"value":1579.5,"time":"11:36","expiry":"2026-02-17","pnl":null,"pnl_reported":1303.25,"buy_val_reported":6964.7497,"sell_val_reported":8268.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725600PE","exchange":"NSE","type":"sell","qty":195.0,"price":7.05,"value":1374.75,"time":"11:38","expiry":"2026-02-17","pnl":-204.75,"pnl_reported":1303.25,"buy_val_reported":6964.7497,"sell_val_reported":8268.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725650PE","exchange":"NSE","type":"buy","qty":130.0,"price":12.9,"value":1677.0,"time":"11:39","expiry":"2026-02-17","pnl":null,"pnl_reported":-1586.0,"buy_val_reported":6545.5001,"sell_val_reported":4959.5002,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725650PE","exchange":"NSE","type":"sell","qty":65.0,"price":11.7,"value":760.5,"time":"11:48","expiry":"2026-02-17","pnl":-78.0,"pnl_reported":-1586.0,"buy_val_reported":6545.5001,"sell_val_reported":4959.5002,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725650PE","exchange":"NSE","type":"sell","qty":65.0,"price":11.7,"value":760.5,"time":"11:48","expiry":"2026-02-17","pnl":-78.0,"pnl_reported":-1586.0,"buy_val_reported":6545.5001,"sell_val_reported":4959.5002,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725650PE","exchange":"NSE","type":"buy","qty":130.0,"price":11.7,"value":1521.0,"time":"11:50","expiry":"2026-02-17","pnl":null,"pnl_reported":-1586.0,"buy_val_reported":6545.5001,"sell_val_reported":4959.5002,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725650PE","exchange":"NSE","type":"sell","qty":65.0,"price":11.5,"value":747.5,"time":"11:52","expiry":"2026-02-17","pnl":-13.0,"pnl_reported":-1586.0,"buy_val_reported":6545.5001,"sell_val_reported":4959.5002,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725650PE","exchange":"NSE","type":"sell","qty":65.0,"price":11.5,"value":747.5,"time":"11:52","expiry":"2026-02-17","pnl":-13.0,"pnl_reported":-1586.0,"buy_val_reported":6545.5001,"sell_val_reported":4959.5002,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725650PE","exchange":"NSE","type":"buy","qty":130.0,"price":11.4,"value":1482.0,"time":"11:54","expiry":"2026-02-17","pnl":null,"pnl_reported":-1586.0,"buy_val_reported":6545.5001,"sell_val_reported":4959.5002,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725650PE","exchange":"NSE","type":"sell","qty":130.0,"price":9.0,"value":1170.0,"time":"12:18","expiry":"2026-02-17","pnl":-312.0,"pnl_reported":-1586.0,"buy_val_reported":6545.5001,"sell_val_reported":4959.5002,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725750CE","exchange":"NSE","type":"buy","qty":65.0,"price":26.3,"value":1709.5,"time":"12:41","expiry":"2026-02-17","pnl":null,"pnl_reported":2762.5,"buy_val_reported":11573.25,"sell_val_reported":14335.7506,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725750CE","exchange":"NSE","type":"sell","qty":65.0,"price":32.0,"value":2080.0,"time":"12:56","expiry":"2026-02-17","pnl":370.5,"pnl_reported":2762.5,"buy_val_reported":11573.25,"sell_val_reported":14335.7506,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725800CE","exchange":"NSE","type":"buy","qty":455.0,"price":3.4,"value":1547.0,"time":"14:09","expiry":"2026-02-17","pnl":null,"pnl_reported":383.5,"buy_val_reported":5024.5004,"sell_val_reported":5407.9999,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725800CE","exchange":"NSE","type":"buy","qty":65.0,"price":3.4,"value":221.0,"time":"14:09","expiry":"2026-02-17","pnl":null,"pnl_reported":383.5,"buy_val_reported":5024.5004,"sell_val_reported":5407.9999,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725800CE","exchange":"NSE","type":"sell","qty":520.0,"price":2.5,"value":1300.0,"time":"14:10","expiry":"2026-02-17","pnl":-468.0,"pnl_reported":383.5,"buy_val_reported":5024.5004,"sell_val_reported":5407.9999,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725600PE","exchange":"NSE","type":"buy","qty":650.0,"price":2.7,"value":1755.0,"time":"14:10","expiry":"2026-02-17","pnl":null,"pnl_reported":1303.25,"buy_val_reported":6964.7497,"sell_val_reported":8268.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725600PE","exchange":"NSE","type":"sell","qty":650.0,"price":5.7,"value":3705.0,"time":"14:14","expiry":"2026-02-17","pnl":1950.0,"pnl_reported":1303.25,"buy_val_reported":6964.7497,"sell_val_reported":8268.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725750CE","exchange":"NSE","type":"buy","qty":325.0,"price":5.5,"value":1787.5,"time":"14:16","expiry":"2026-02-17","pnl":null,"pnl_reported":2762.5,"buy_val_reported":11573.25,"sell_val_reported":14335.7506,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725750CE","exchange":"NSE","type":"sell","qty":325.0,"price":5.25,"value":1706.25,"time":"14:22","expiry":"2026-02-17","pnl":-81.25,"pnl_reported":2762.5,"buy_val_reported":11573.25,"sell_val_reported":14335.7506,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725650PE","exchange":"NSE","type":"buy","qty":455.0,"price":4.1,"value":1865.5,"time":"14:36","expiry":"2026-02-17","pnl":null,"pnl_reported":-1586.0,"buy_val_reported":6545.5001,"sell_val_reported":4959.5002,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725650PE","exchange":"NSE","type":"sell","qty":455.0,"price":1.7,"value":773.5,"time":"14:39","expiry":"2026-02-17","pnl":-1092.0,"pnl_reported":-1586.0,"buy_val_reported":6545.5001,"sell_val_reported":4959.5002,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725750CE","exchange":"NSE","type":"buy","qty":65.0,"price":8.6,"value":559.0,"time":"14:41","expiry":"2026-02-17","pnl":null,"pnl_reported":2762.5,"buy_val_reported":11573.25,"sell_val_reported":14335.7506,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725750CE","exchange":"NSE","type":"buy","qty":130.0,"price":8.6,"value":1118.0,"time":"14:41","expiry":"2026-02-17","pnl":null,"pnl_reported":2762.5,"buy_val_reported":11573.25,"sell_val_reported":14335.7506,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725750CE","exchange":"NSE","type":"sell","qty":195.0,"price":10.55,"value":2057.25,"time":"14:43","expiry":"2026-02-17","pnl":380.25,"pnl_reported":2762.5,"buy_val_reported":11573.25,"sell_val_reported":14335.7506,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725750CE","exchange":"NSE","type":"buy","qty":650.0,"price":2.65,"value":1722.5,"time":"14:50","expiry":"2026-02-17","pnl":null,"pnl_reported":2762.5,"buy_val_reported":11573.25,"sell_val_reported":14335.7506,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725750CE","exchange":"NSE","type":"sell","qty":390.0,"price":0.9,"value":351.0,"time":"14:57","expiry":"2026-02-17","pnl":-682.5,"pnl_reported":2762.5,"buy_val_reported":11573.25,"sell_val_reported":14335.7506,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725750CE","exchange":"NSE","type":"sell","qty":260.0,"price":0.9,"value":234.0,"time":"14:57","expiry":"2026-02-17","pnl":-455.0,"pnl_reported":2762.5,"buy_val_reported":11573.25,"sell_val_reported":14335.7506,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725750CE","exchange":"NSE","type":"buy","qty":520.0,"price":3.05,"value":1586.0,"time":"15:00","expiry":"2026-02-17","pnl":null,"pnl_reported":2762.5,"buy_val_reported":11573.25,"sell_val_reported":14335.7506,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725750CE","exchange":"NSE","type":"sell","qty":455.0,"price":4.8,"value":2184.0,"time":"15:01","expiry":"2026-02-17","pnl":796.25,"pnl_reported":2762.5,"buy_val_reported":11573.25,"sell_val_reported":14335.7506,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725750CE","exchange":"NSE","type":"sell","qty":65.0,"price":4.8,"value":312.0,"time":"15:01","expiry":"2026-02-17","pnl":113.75,"pnl_reported":2762.5,"buy_val_reported":11573.25,"sell_val_reported":14335.7506,"index":"NIFTY","opt":"CE"},{"date":"2026-02-17","symbol":"NIFTY2621725700PE","exchange":"NSE","type":"buy","qty":325.0,"price":1.65,"value":536.25,"time":"15:04","expiry":"2026-02-17","pnl":null,"pnl_reported":-1560.0,"buy_val_reported":1608.75,"sell_val_reported":48.75,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725700PE","exchange":"NSE","type":"buy","qty":650.0,"price":1.65,"value":1072.5,"time":"15:04","expiry":"2026-02-17","pnl":null,"pnl_reported":-1560.0,"buy_val_reported":1608.75,"sell_val_reported":48.75,"index":"NIFTY","opt":"PE"},{"date":"2026-02-17","symbol":"NIFTY2621725700PE","exchange":"NSE","type":"sell","qty":975.0,"price":0.05,"value":48.75,"time":"15:19","expiry":"2026-02-17","pnl":-1560.0,"pnl_reported":-1560.0,"buy_val_reported":1608.75,"sell_val_reported":48.75,"index":"NIFTY","opt":"PE"},{"date":"2026-02-18","symbol":"SENSEX2621982700PE","exchange":"BSE","type":"buy","qty":20.0,"price":69.15,"value":1383.0,"time":"10:38","expiry":"2026-02-19","pnl":null,"pnl_reported":1463.0,"buy_val_reported":6413.0,"sell_val_reported":7876.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-18","symbol":"SENSEX2621982700PE","exchange":"BSE","type":"sell","qty":20.0,"price":73.0,"value":1460.0,"time":"10:45","expiry":"2026-02-19","pnl":77.0,"pnl_reported":1463.0,"buy_val_reported":6413.0,"sell_val_reported":7876.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-18","symbol":"SENSEX2621983800CE","exchange":"BSE","type":"buy","qty":20.0,"price":72.8,"value":1456.0,"time":"11:06","expiry":"2026-02-19","pnl":null,"pnl_reported":-125.0,"buy_val_reported":6818.0,"sell_val_reported":6693.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-18","symbol":"SENSEX2621983800CE","exchange":"BSE","type":"sell","qty":20.0,"price":62.0,"value":1240.0,"time":"11:19","expiry":"2026-02-19","pnl":-216.0,"pnl_reported":-125.0,"buy_val_reported":6818.0,"sell_val_reported":6693.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-18","symbol":"SENSEX2621982800PE","exchange":"BSE","type":"buy","qty":20.0,"price":63.55,"value":1271.0,"time":"11:22","expiry":"2026-02-19","pnl":null,"pnl_reported":-895.0,"buy_val_reported":6475.0,"sell_val_reported":5580.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-18","symbol":"SENSEX2621982800PE","exchange":"BSE","type":"sell","qty":20.0,"price":58.0,"value":1160.0,"time":"11:33","expiry":"2026-02-19","pnl":-111.0,"pnl_reported":-895.0,"buy_val_reported":6475.0,"sell_val_reported":5580.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-18","symbol":"SENSEX2621983900CE","exchange":"BSE","type":"buy","qty":20.0,"price":61.45,"value":1229.0,"time":"11:36","expiry":"2026-02-19","pnl":null,"pnl_reported":-214.0,"buy_val_reported":1229.0,"sell_val_reported":1015.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-18","symbol":"SENSEX2621983900CE","exchange":"BSE","type":"sell","qty":20.0,"price":50.75,"value":1015.0,"time":"11:41","expiry":"2026-02-19","pnl":-214.0,"pnl_reported":-214.0,"buy_val_reported":1229.0,"sell_val_reported":1015.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-18","symbol":"SENSEX2621984200CE","exchange":"BSE","type":"buy","qty":20.0,"price":50.35,"value":1007.0,"time":"15:00","expiry":"2026-02-19","pnl":null,"pnl_reported":-530.0,"buy_val_reported":1007.0,"sell_val_reported":477.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-19","symbol":"SENSEX2621984200CE","exchange":"BSE","type":"sell","qty":20.0,"price":23.85,"value":477.0,"time":"09:16","expiry":"2026-02-19","pnl":-530.0,"pnl_reported":-530.0,"buy_val_reported":1007.0,"sell_val_reported":477.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-19","symbol":"SENSEX2621983700PE","exchange":"BSE","type":"buy","qty":40.0,"price":135.0,"value":5400.0,"time":"09:35","expiry":"2026-02-19","pnl":null,"pnl_reported":1980.0,"buy_val_reported":5400.0,"sell_val_reported":7380.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621983700PE","exchange":"BSE","type":"sell","qty":40.0,"price":184.5,"value":7380.0,"time":"09:38","expiry":"2026-02-19","pnl":1980.0,"pnl_reported":1980.0,"buy_val_reported":5400.0,"sell_val_reported":7380.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621983700CE","exchange":"BSE","type":"buy","qty":40.0,"price":134.0,"value":5360.0,"time":"09:49","expiry":"2026-02-19","pnl":null,"pnl_reported":-1036.0,"buy_val_reported":5360.0,"sell_val_reported":4324.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-19","symbol":"SENSEX2621983700CE","exchange":"BSE","type":"sell","qty":40.0,"price":108.1,"value":4324.0,"time":"09:52","expiry":"2026-02-19","pnl":-1036.0,"pnl_reported":-1036.0,"buy_val_reported":5360.0,"sell_val_reported":4324.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-19","symbol":"SENSEX2621983600PE","exchange":"BSE","type":"buy","qty":40.0,"price":130.15,"value":5206.0,"time":"09:54","expiry":"2026-02-19","pnl":null,"pnl_reported":60.0,"buy_val_reported":5206.0,"sell_val_reported":5266.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621983600PE","exchange":"BSE","type":"sell","qty":40.0,"price":131.65,"value":5266.0,"time":"10:00","expiry":"2026-02-19","pnl":60.0,"pnl_reported":60.0,"buy_val_reported":5206.0,"sell_val_reported":5266.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621983600CE","exchange":"BSE","type":"buy","qty":40.0,"price":135.0,"value":5400.0,"time":"10:01","expiry":"2026-02-19","pnl":null,"pnl_reported":1218.0,"buy_val_reported":5400.0,"sell_val_reported":6618.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-19","symbol":"SENSEX2621983600CE","exchange":"BSE","type":"sell","qty":40.0,"price":165.45,"value":6618.0,"time":"10:06","expiry":"2026-02-19","pnl":1218.0,"pnl_reported":1218.0,"buy_val_reported":5400.0,"sell_val_reported":6618.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-19","symbol":"SENSEX2621983000PE","exchange":"BSE","type":"buy","qty":240.0,"price":22.35,"value":5364.0,"time":"10:28","expiry":"2026-02-19","pnl":null,"pnl_reported":960.0,"buy_val_reported":10788.0,"sell_val_reported":11748.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621983000PE","exchange":"BSE","type":"sell","qty":240.0,"price":24.05,"value":5772.0,"time":"10:36","expiry":"2026-02-19","pnl":408.0,"pnl_reported":960.0,"buy_val_reported":10788.0,"sell_val_reported":11748.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621983800CE","exchange":"BSE","type":"buy","qty":140.0,"price":38.3,"value":5362.0,"time":"10:41","expiry":"2026-02-19","pnl":null,"pnl_reported":-125.0,"buy_val_reported":6818.0,"sell_val_reported":6693.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-19","symbol":"SENSEX2621983800CE","exchange":"BSE","type":"sell","qty":140.0,"price":38.95,"value":5453.0,"time":"10:51","expiry":"2026-02-19","pnl":91.0,"pnl_reported":-125.0,"buy_val_reported":6818.0,"sell_val_reported":6693.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-19","symbol":"SENSEX2621983000PE","exchange":"BSE","type":"buy","qty":240.0,"price":22.6,"value":5424.0,"time":"11:03","expiry":"2026-02-19","pnl":null,"pnl_reported":960.0,"buy_val_reported":10788.0,"sell_val_reported":11748.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621983000PE","exchange":"BSE","type":"sell","qty":240.0,"price":24.9,"value":5976.0,"time":"11:13","expiry":"2026-02-19","pnl":552.0,"pnl_reported":960.0,"buy_val_reported":10788.0,"sell_val_reported":11748.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621982600PE","exchange":"BSE","type":"buy","qty":220.0,"price":24.75,"value":5445.0,"time":"12:38","expiry":"2026-02-19","pnl":null,"pnl_reported":5512.0,"buy_val_reported":16243.0002,"sell_val_reported":21754.9997,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621982600PE","exchange":"BSE","type":"sell","qty":40.0,"price":33.0,"value":1320.0,"time":"12:49","expiry":"2026-02-19","pnl":330.0,"pnl_reported":5512.0,"buy_val_reported":16243.0002,"sell_val_reported":21754.9997,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621982600PE","exchange":"BSE","type":"sell","qty":180.0,"price":33.0,"value":5940.0,"time":"12:49","expiry":"2026-02-19","pnl":1485.0,"pnl_reported":5512.0,"buy_val_reported":16243.0002,"sell_val_reported":21754.9997,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621982800PE","exchange":"BSE","type":"buy","qty":80.0,"price":65.05,"value":5204.0,"time":"12:52","expiry":"2026-02-19","pnl":null,"pnl_reported":-895.0,"buy_val_reported":6475.0,"sell_val_reported":5580.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621982800PE","exchange":"BSE","type":"sell","qty":80.0,"price":55.25,"value":4420.0,"time":"12:53","expiry":"2026-02-19","pnl":-784.0,"pnl_reported":-895.0,"buy_val_reported":6475.0,"sell_val_reported":5580.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621983400CE","exchange":"BSE","type":"buy","qty":140.0,"price":24.0,"value":3360.0,"time":"12:56","expiry":"2026-02-19","pnl":null,"pnl_reported":-3322.0,"buy_val_reported":5280.0,"sell_val_reported":1958.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-19","symbol":"SENSEX2621983400CE","exchange":"BSE","type":"buy","qty":80.0,"price":24.0,"value":1920.0,"time":"12:56","expiry":"2026-02-19","pnl":null,"pnl_reported":-3322.0,"buy_val_reported":5280.0,"sell_val_reported":1958.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-19","symbol":"SENSEX2621983400CE","exchange":"BSE","type":"sell","qty":220.0,"price":8.9,"value":1958.0,"time":"13:47","expiry":"2026-02-19","pnl":-3322.0,"pnl_reported":-3322.0,"buy_val_reported":5280.0,"sell_val_reported":1958.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-19","symbol":"SENSEX2621982600PE","exchange":"BSE","type":"buy","qty":340.0,"price":15.7,"value":5338.0,"time":"13:49","expiry":"2026-02-19","pnl":null,"pnl_reported":5512.0,"buy_val_reported":16243.0002,"sell_val_reported":21754.9997,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621982600PE","exchange":"BSE","type":"sell","qty":340.0,"price":21.9,"value":7446.0,"time":"13:53","expiry":"2026-02-19","pnl":2108.0,"pnl_reported":5512.0,"buy_val_reported":16243.0002,"sell_val_reported":21754.9997,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621982600PE","exchange":"BSE","type":"buy","qty":140.0,"price":39.0,"value":5460.0,"time":"14:48","expiry":"2026-02-19","pnl":null,"pnl_reported":5512.0,"buy_val_reported":16243.0002,"sell_val_reported":21754.9997,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621982600PE","exchange":"BSE","type":"sell","qty":140.0,"price":50.35,"value":7049.0,"time":"14:49","expiry":"2026-02-19","pnl":1589.0,"pnl_reported":5512.0,"buy_val_reported":16243.0002,"sell_val_reported":21754.9997,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621982700CE","exchange":"BSE","type":"buy","qty":100.0,"price":54.3,"value":5430.0,"time":"14:49","expiry":"2026-02-19","pnl":null,"pnl_reported":945.0,"buy_val_reported":5430.0,"sell_val_reported":6375.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-19","symbol":"SENSEX2621982700CE","exchange":"BSE","type":"sell","qty":100.0,"price":63.75,"value":6375.0,"time":"14:50","expiry":"2026-02-19","pnl":945.0,"pnl_reported":945.0,"buy_val_reported":5430.0,"sell_val_reported":6375.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-19","symbol":"SENSEX2621982700PE","exchange":"BSE","type":"buy","qty":40.0,"price":62.85,"value":2514.0,"time":"14:57","expiry":"2026-02-19","pnl":null,"pnl_reported":1463.0,"buy_val_reported":6413.0,"sell_val_reported":7876.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621982700PE","exchange":"BSE","type":"buy","qty":40.0,"price":62.9,"value":2516.0,"time":"14:57","expiry":"2026-02-19","pnl":null,"pnl_reported":1463.0,"buy_val_reported":6413.0,"sell_val_reported":7876.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621982700PE","exchange":"BSE","type":"sell","qty":20.0,"price":80.05,"value":1601.0,"time":"15:00","expiry":"2026-02-19","pnl":344.0,"pnl_reported":1463.0,"buy_val_reported":6413.0,"sell_val_reported":7876.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-19","symbol":"SENSEX2621982700PE","exchange":"BSE","type":"sell","qty":60.0,"price":80.25,"value":4815.0,"time":"15:00","expiry":"2026-02-19","pnl":1042.0,"pnl_reported":1463.0,"buy_val_reported":6413.0,"sell_val_reported":7876.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-23","symbol":"NIFTY26FEB25800CE","exchange":"NSE","type":"buy","qty":65.0,"price":86.55,"value":5625.75,"time":"09:28","expiry":"2026-02-24","pnl":null,"pnl_reported":178.75,"buy_val_reported":5625.75,"sell_val_reported":5804.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-23","symbol":"NIFTY26FEB25800CE","exchange":"NSE","type":"sell","qty":65.0,"price":89.3,"value":5804.5,"time":"09:31","expiry":"2026-02-24","pnl":178.75,"pnl_reported":178.75,"buy_val_reported":5625.75,"sell_val_reported":5804.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-23","symbol":"NIFTY26FEB25700PE","exchange":"NSE","type":"buy","qty":65.0,"price":78.35,"value":5092.75,"time":"09:32","expiry":"2026-02-24","pnl":null,"pnl_reported":1995.5,"buy_val_reported":17504.5001,"sell_val_reported":19500.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-23","symbol":"NIFTY26FEB25700PE","exchange":"NSE","type":"sell","qty":65.0,"price":88.0,"value":5720.0,"time":"09:40","expiry":"2026-02-24","pnl":627.25,"pnl_reported":1995.5,"buy_val_reported":17504.5001,"sell_val_reported":19500.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-23","symbol":"NIFTY26FEB25700PE","exchange":"NSE","type":"buy","qty":65.0,"price":91.95,"value":5976.75,"time":"09:54","expiry":"2026-02-24","pnl":null,"pnl_reported":1995.5,"buy_val_reported":17504.5001,"sell_val_reported":19500.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-23","symbol":"NIFTY26FEB25700PE","exchange":"NSE","type":"sell","qty":65.0,"price":94.0,"value":6110.0,"time":"10:28","expiry":"2026-02-24","pnl":133.25,"pnl_reported":1995.5,"buy_val_reported":17504.5001,"sell_val_reported":19500.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-23","symbol":"NIFTY26FEB25700PE","exchange":"NSE","type":"buy","qty":65.0,"price":99.0,"value":6435.0,"time":"12:44","expiry":"2026-02-24","pnl":null,"pnl_reported":1995.5,"buy_val_reported":17504.5001,"sell_val_reported":19500.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-23","symbol":"NIFTY26FEB25700PE","exchange":"NSE","type":"sell","qty":65.0,"price":118.0,"value":7670.0,"time":"12:51","expiry":"2026-02-24","pnl":1235.0,"pnl_reported":1995.5,"buy_val_reported":17504.5001,"sell_val_reported":19500.0,"index":"NIFTY","opt":"PE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25500CE","exchange":"NSE","type":"buy","qty":65.0,"price":74.6,"value":4849.0,"time":"10:02","expiry":"2026-02-24","pnl":null,"pnl_reported":-1248.0,"buy_val_reported":6786.0,"sell_val_reported":5538.0,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25500CE","exchange":"NSE","type":"sell","qty":65.0,"price":70.0,"value":4550.0,"time":"10:02","expiry":"2026-02-24","pnl":-299.0,"pnl_reported":-1248.0,"buy_val_reported":6786.0,"sell_val_reported":5538.0,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25600CE","exchange":"NSE","type":"buy","qty":195.0,"price":31.25,"value":6093.75,"time":"10:05","expiry":"2026-02-24","pnl":null,"pnl_reported":-2603.25,"buy_val_reported":8615.75,"sell_val_reported":6012.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25600CE","exchange":"NSE","type":"sell","qty":195.0,"price":20.1,"value":3919.5,"time":"10:17","expiry":"2026-02-24","pnl":-2174.25,"pnl_reported":-2603.25,"buy_val_reported":8615.75,"sell_val_reported":6012.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25400PE","exchange":"NSE","type":"buy","qty":195.0,"price":20.0,"value":3900.0,"time":"10:20","expiry":"2026-02-24","pnl":null,"pnl_reported":-2457.0,"buy_val_reported":15983.4995,"sell_val_reported":13526.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25400PE","exchange":"NSE","type":"sell","qty":195.0,"price":13.1,"value":2554.5,"time":"11:26","expiry":"2026-02-24","pnl":-1345.5,"pnl_reported":-2457.0,"buy_val_reported":15983.4995,"sell_val_reported":13526.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25600CE","exchange":"NSE","type":"buy","qty":130.0,"price":19.4,"value":2522.0,"time":"11:26","expiry":"2026-02-24","pnl":null,"pnl_reported":-2603.25,"buy_val_reported":8615.75,"sell_val_reported":6012.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25600CE","exchange":"NSE","type":"sell","qty":130.0,"price":16.1,"value":2093.0,"time":"11:34","expiry":"2026-02-24","pnl":-429.0,"pnl_reported":-2603.25,"buy_val_reported":8615.75,"sell_val_reported":6012.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25500CE","exchange":"NSE","type":"buy","qty":65.0,"price":29.8,"value":1937.0,"time":"12:01","expiry":"2026-02-24","pnl":null,"pnl_reported":-1248.0,"buy_val_reported":6786.0,"sell_val_reported":5538.0,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25500CE","exchange":"NSE","type":"sell","qty":65.0,"price":15.2,"value":988.0,"time":"12:26","expiry":"2026-02-24","pnl":-949.0,"pnl_reported":-1248.0,"buy_val_reported":6786.0,"sell_val_reported":5538.0,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25100PE","exchange":"NSE","type":"buy","qty":975.0,"price":1.25,"value":1218.75,"time":"12:36","expiry":"2026-02-24","pnl":null,"pnl_reported":0.0,"buy_val_reported":1218.75,"sell_val_reported":1218.75,"index":"NIFTY","opt":"PE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25100PE","exchange":"NSE","type":"sell","qty":975.0,"price":1.25,"value":1218.75,"time":"12:42","expiry":"2026-02-24","pnl":0.0,"pnl_reported":0.0,"buy_val_reported":1218.75,"sell_val_reported":1218.75,"index":"NIFTY","opt":"PE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25400CE","exchange":"NSE","type":"buy","qty":65.0,"price":13.9,"value":903.5,"time":"14:47","expiry":"2026-02-24","pnl":null,"pnl_reported":4940.0,"buy_val_reported":4517.5,"sell_val_reported":9457.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25400CE","exchange":"NSE","type":"buy","qty":65.0,"price":13.9,"value":903.5,"time":"14:47","expiry":"2026-02-24","pnl":null,"pnl_reported":4940.0,"buy_val_reported":4517.5,"sell_val_reported":9457.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25400CE","exchange":"NSE","type":"buy","qty":65.0,"price":13.9,"value":903.5,"time":"14:47","expiry":"2026-02-24","pnl":null,"pnl_reported":4940.0,"buy_val_reported":4517.5,"sell_val_reported":9457.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25400CE","exchange":"NSE","type":"buy","qty":130.0,"price":13.9,"value":1807.0,"time":"14:47","expiry":"2026-02-24","pnl":null,"pnl_reported":4940.0,"buy_val_reported":4517.5,"sell_val_reported":9457.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25400CE","exchange":"NSE","type":"sell","qty":130.0,"price":29.1,"value":3783.0,"time":"14:50","expiry":"2026-02-24","pnl":1976.0,"pnl_reported":4940.0,"buy_val_reported":4517.5,"sell_val_reported":9457.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25400CE","exchange":"NSE","type":"sell","qty":65.0,"price":29.1,"value":1891.5,"time":"14:50","expiry":"2026-02-24","pnl":988.0,"pnl_reported":4940.0,"buy_val_reported":4517.5,"sell_val_reported":9457.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25400CE","exchange":"NSE","type":"sell","qty":65.0,"price":29.1,"value":1891.5,"time":"14:50","expiry":"2026-02-24","pnl":988.0,"pnl_reported":4940.0,"buy_val_reported":4517.5,"sell_val_reported":9457.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25400CE","exchange":"NSE","type":"sell","qty":65.0,"price":29.1,"value":1891.5,"time":"14:50","expiry":"2026-02-24","pnl":988.0,"pnl_reported":4940.0,"buy_val_reported":4517.5,"sell_val_reported":9457.5,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25400PE","exchange":"NSE","type":"buy","qty":910.0,"price":10.3,"value":9373.0,"time":"14:53","expiry":"2026-02-24","pnl":null,"pnl_reported":-2457.0,"buy_val_reported":15983.4995,"sell_val_reported":13526.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25400PE","exchange":"NSE","type":"sell","qty":910.0,"price":11.35,"value":10328.5,"time":"14:53","expiry":"2026-02-24","pnl":955.5,"pnl_reported":-2457.0,"buy_val_reported":15983.4995,"sell_val_reported":13526.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25450CE","exchange":"NSE","type":"buy","qty":520.0,"price":15.95,"value":8294.0,"time":"15:00","expiry":"2026-02-24","pnl":null,"pnl_reported":-8567.0,"buy_val_reported":9268.9997,"sell_val_reported":701.9995,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25450CE","exchange":"NSE","type":"sell","qty":390.0,"price":0.85,"value":331.5,"time":"15:02","expiry":"2026-02-24","pnl":-5889.0,"pnl_reported":-8567.0,"buy_val_reported":9268.9997,"sell_val_reported":701.9995,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25450CE","exchange":"NSE","type":"sell","qty":130.0,"price":0.85,"value":110.5,"time":"15:02","expiry":"2026-02-24","pnl":-1963.0,"pnl_reported":-8567.0,"buy_val_reported":9268.9997,"sell_val_reported":701.9995,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25400PE","exchange":"NSE","type":"buy","qty":325.0,"price":6.95,"value":2258.75,"time":"15:03","expiry":"2026-02-24","pnl":null,"pnl_reported":-2457.0,"buy_val_reported":15983.4995,"sell_val_reported":13526.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25400PE","exchange":"NSE","type":"buy","qty":65.0,"price":6.95,"value":451.75,"time":"15:03","expiry":"2026-02-24","pnl":null,"pnl_reported":-2457.0,"buy_val_reported":15983.4995,"sell_val_reported":13526.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25400PE","exchange":"NSE","type":"sell","qty":390.0,"price":1.65,"value":643.5,"time":"15:06","expiry":"2026-02-24","pnl":-2067.0,"pnl_reported":-2457.0,"buy_val_reported":15983.4995,"sell_val_reported":13526.4999,"index":"NIFTY","opt":"PE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25450CE","exchange":"NSE","type":"buy","qty":975.0,"price":0.75,"value":731.25,"time":"15:07","expiry":"2026-02-24","pnl":null,"pnl_reported":-8567.0,"buy_val_reported":9268.9997,"sell_val_reported":701.9995,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25450CE","exchange":"NSE","type":"buy","qty":325.0,"price":0.75,"value":243.75,"time":"15:07","expiry":"2026-02-24","pnl":null,"pnl_reported":-8567.0,"buy_val_reported":9268.9997,"sell_val_reported":701.9995,"index":"NIFTY","opt":"CE"},{"date":"2026-02-24","symbol":"NIFTY26FEB25450CE","exchange":"NSE","type":"sell","qty":1300.0,"price":0.2,"value":260.0,"time":"15:14","expiry":"2026-02-24","pnl":-715.0,"pnl_reported":-8567.0,"buy_val_reported":9268.9997,"sell_val_reported":701.9995,"index":"NIFTY","opt":"CE"},{"date":"2026-02-26","symbol":"SENSEX26FEB82400CE","exchange":"BSE","type":"buy","qty":240.0,"price":20.1,"value":4824.0,"time":"13:09","expiry":"2026-02-26","pnl":null,"pnl_reported":-1320.0,"buy_val_reported":4824.0,"sell_val_reported":3504.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-26","symbol":"SENSEX26FEB82400CE","exchange":"BSE","type":"sell","qty":240.0,"price":14.6,"value":3504.0,"time":"13:15","expiry":"2026-02-26","pnl":-1320.0,"pnl_reported":-1320.0,"buy_val_reported":4824.0,"sell_val_reported":3504.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-26","symbol":"SENSEX26FEB81500PE","exchange":"BSE","type":"buy","qty":260.0,"price":13.25,"value":3445.0,"time":"13:17","expiry":"2026-02-26","pnl":null,"pnl_reported":-1599.0,"buy_val_reported":3445.0,"sell_val_reported":1846.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-26","symbol":"SENSEX26FEB81500PE","exchange":"BSE","type":"sell","qty":260.0,"price":7.1,"value":1846.0,"time":"13:26","expiry":"2026-02-26","pnl":-1599.0,"pnl_reported":-1599.0,"buy_val_reported":3445.0,"sell_val_reported":1846.0,"index":"SENSEX","opt":"PE"},{"date":"2026-02-26","symbol":"SENSEX26FEB82500CE","exchange":"BSE","type":"buy","qty":600.0,"price":3.2,"value":1920.0,"time":"14:24","expiry":"2026-02-26","pnl":null,"pnl_reported":3450.0,"buy_val_reported":1920.0,"sell_val_reported":5370.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-26","symbol":"SENSEX26FEB82500CE","exchange":"BSE","type":"sell","qty":600.0,"price":8.95,"value":5370.0,"time":"14:35","expiry":"2026-02-26","pnl":3450.0,"pnl_reported":3450.0,"buy_val_reported":1920.0,"sell_val_reported":5370.0,"index":"SENSEX","opt":"CE"},{"date":"2026-02-27","symbol":"NIFTY2630225400CE","exchange":"NSE","type":"buy","qty":65.0,"price":78.0,"value":5070.0,"time":"10:30","expiry":"2026-03-02","pnl":null,"pnl_reported":601.25,"buy_val_reported":9698.0,"sell_val_reported":10299.25,"index":"NIFTY","opt":"CE"},{"date":"2026-02-27","symbol":"NIFTY2630225400CE","exchange":"NSE","type":"sell","qty":65.0,"price":80.7,"value":5245.5,"time":"10:33","expiry":"2026-03-02","pnl":175.5,"pnl_reported":601.25,"buy_val_reported":9698.0,"sell_val_reported":10299.25,"index":"NIFTY","opt":"CE"},{"date":"2026-02-27","symbol":"NIFTY2630225400CE","exchange":"NSE","type":"buy","qty":65.0,"price":71.2,"value":4628.0,"time":"12:05","expiry":"2026-03-02","pnl":null,"pnl_reported":601.25,"buy_val_reported":9698.0,"sell_val_reported":10299.25,"index":"NIFTY","opt":"CE"},{"date":"2026-02-27","symbol":"NIFTY2630225400CE","exchange":"NSE","type":"sell","qty":65.0,"price":77.75,"value":5053.75,"time":"13:56","expiry":"2026-03-02","pnl":425.75,"pnl_reported":601.25,"buy_val_reported":9698.0,"sell_val_reported":10299.25,"index":"NIFTY","opt":"CE"},{"date":"2026-02-27","symbol":"NIFTY2630225100PE","exchange":"NSE","type":"buy","qty":65.0,"price":69.65,"value":4527.25,"time":"15:13","expiry":"2026-03-02","pnl":null,"pnl_reported":-923.0,"buy_val_reported":4527.25,"sell_val_reported":3604.25,"index":"NIFTY","opt":"PE"},{"date":"2026-02-27","symbol":"NIFTY2630225100PE","exchange":"NSE","type":"sell","qty":65.0,"price":55.45,"value":3604.25,"time":"15:28","expiry":"2026-03-02","pnl":-923.0,"pnl_reported":-923.0,"buy_val_reported":4527.25,"sell_val_reported":3604.25,"index":"NIFTY","opt":"PE"},{"date":"2026-03-02","symbol":"NIFTY2630224750PE","exchange":"NSE","type":"buy","qty":65.0,"price":65.65,"value":4267.25,"time":"09:17","expiry":"2026-03-02","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-03-02","symbol":"NIFTY2630224750PE","exchange":"NSE","type":"sell","qty":65.0,"price":30.35,"value":1972.75,"time":"09:46","expiry":"2026-03-02","pnl":-2294.5,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-03-02","symbol":"NIFTY2630225400CE","exchange":"NSE","type":"buy","qty":130.0,"price":3.95,"value":513.5,"time":"09:47","expiry":"2026-03-02","pnl":null,"pnl_reported":601.25,"buy_val_reported":9698.0,"sell_val_reported":10299.25,"index":"NIFTY","opt":"CE"},{"date":"2026-03-02","symbol":"NIFTY2630225400CE","exchange":"NSE","type":"buy","qty":390.0,"price":3.95,"value":1540.5,"time":"09:47","expiry":"2026-03-02","pnl":null,"pnl_reported":601.25,"buy_val_reported":9698.0,"sell_val_reported":10299.25,"index":"NIFTY","opt":"CE"},{"date":"2026-03-02","symbol":"NIFTY2630225400CE","exchange":"NSE","type":"sell","qty":65.0,"price":2.8,"value":182.0,"time":"09:51","expiry":"2026-03-02","pnl":-74.75,"pnl_reported":601.25,"buy_val_reported":9698.0,"sell_val_reported":10299.25,"index":"NIFTY","opt":"CE"},{"date":"2026-03-02","symbol":"NIFTY2630225400CE","exchange":"NSE","type":"sell","qty":455.0,"price":2.8,"value":1274.0,"time":"09:51","expiry":"2026-03-02","pnl":-523.25,"pnl_reported":601.25,"buy_val_reported":9698.0,"sell_val_reported":10299.25,"index":"NIFTY","opt":"CE"},{"date":"2026-03-02","symbol":"NIFTY2630225000CE","exchange":"NSE","type":"buy","qty":65.0,"price":24.75,"value":1608.75,"time":"10:11","expiry":"2026-03-02","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-02","symbol":"NIFTY2630225000CE","exchange":"NSE","type":"sell","qty":65.0,"price":18.1,"value":1176.5,"time":"10:21","expiry":"2026-03-02","pnl":-432.25,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-02","symbol":"NIFTY2630224300PE","exchange":"NSE","type":"buy","qty":455.0,"price":2.6,"value":1183.0,"time":"13:57","expiry":"2026-03-02","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-03-02","symbol":"NIFTY2630224300PE","exchange":"NSE","type":"sell","qty":455.0,"price":1.5,"value":682.5,"time":"14:04","expiry":"2026-03-02","pnl":-500.5,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-03-02","symbol":"NIFTY2630225000CE","exchange":"NSE","type":"buy","qty":130.0,"price":3.6,"value":468.0,"time":"14:08","expiry":"2026-03-02","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-02","symbol":"NIFTY2630225000CE","exchange":"NSE","type":"buy","qty":65.0,"price":3.6,"value":234.0,"time":"14:08","expiry":"2026-03-02","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-02","symbol":"NIFTY2630225000CE","exchange":"NSE","type":"sell","qty":195.0,"price":2.0,"value":390.0,"time":"14:15","expiry":"2026-03-02","pnl":-312.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-02","symbol":"NIFTY2630224900CE","exchange":"NSE","type":"buy","qty":65.0,"price":5.65,"value":367.25,"time":"14:33","expiry":"2026-03-02","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-02","symbol":"NIFTY2630224900CE","exchange":"NSE","type":"sell","qty":65.0,"price":35.0,"value":2275.0,"time":"14:41","expiry":"2026-03-02","pnl":1907.75,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-02","symbol":"NIFTY2630224850CE","exchange":"NSE","type":"buy","qty":130.0,"price":16.1,"value":2093.0,"time":"15:04","expiry":"2026-03-02","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-02","symbol":"NIFTY2630224850CE","exchange":"NSE","type":"sell","qty":130.0,"price":18.0,"value":2340.0,"time":"15:11","expiry":"2026-03-02","pnl":247.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-02","symbol":"NIFTY2630224900CE","exchange":"NSE","type":"buy","qty":130.0,"price":1.35,"value":175.5,"time":"15:13","expiry":"2026-03-02","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-02","symbol":"NIFTY2630224900CE","exchange":"NSE","type":"buy","qty":1365.0,"price":1.35,"value":1842.75,"time":"15:13","expiry":"2026-03-02","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-02","symbol":"NIFTY2630224900CE","exchange":"NSE","type":"buy","qty":260.0,"price":1.35,"value":351.0,"time":"15:13","expiry":"2026-03-02","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-02","symbol":"NIFTY2630224900CE","exchange":"NSE","type":"sell","qty":1495.0,"price":2.6,"value":3887.0,"time":"15:14","expiry":"2026-03-02","pnl":1868.75,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-02","symbol":"NIFTY2630224900CE","exchange":"NSE","type":"sell","qty":260.0,"price":2.6,"value":676.0,"time":"15:14","expiry":"2026-03-02","pnl":325.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-04","symbol":"SENSEX2630577000PE","exchange":"BSE","type":"buy","qty":20.0,"price":204.65,"value":4093.0,"time":"09:25","expiry":"2026-03-05","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-04","symbol":"SENSEX2630577000PE","exchange":"BSE","type":"sell","qty":20.0,"price":212.95,"value":4259.0,"time":"09:27","expiry":"2026-03-05","pnl":166.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-04","symbol":"SENSEX2630579500CE","exchange":"BSE","type":"buy","qty":20.0,"price":203.9,"value":4078.0,"time":"09:47","expiry":"2026-03-05","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-04","symbol":"SENSEX2630579500CE","exchange":"BSE","type":"sell","qty":20.0,"price":272.4,"value":5448.0,"time":"10:15","expiry":"2026-03-05","pnl":1370.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-05","symbol":"SENSEX2630579600CE","exchange":"BSE","type":"buy","qty":20.0,"price":200.0,"value":4000.0,"time":"11:14","expiry":"2026-03-05","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-05","symbol":"SENSEX2630579600CE","exchange":"BSE","type":"sell","qty":20.0,"price":86.3,"value":1726.0,"time":"13:27","expiry":"2026-03-05","pnl":-2274.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-05","symbol":"SENSEX2630579300PE","exchange":"BSE","type":"buy","qty":60.0,"price":39.35,"value":2361.0,"time":"13:32","expiry":"2026-03-05","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-05","symbol":"SENSEX2630579300PE","exchange":"BSE","type":"sell","qty":60.0,"price":86.9,"value":5214.0,"time":"13:36","expiry":"2026-03-05","pnl":2853.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-05","symbol":"SENSEX2630579100PE","exchange":"BSE","type":"buy","qty":120.0,"price":37.4,"value":4488.0,"time":"13:38","expiry":"2026-03-05","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-05","symbol":"SENSEX2630579100PE","exchange":"BSE","type":"sell","qty":120.0,"price":33.85,"value":4062.0,"time":"13:42","expiry":"2026-03-05","pnl":-426.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-05","symbol":"SENSEX2630579800CE","exchange":"BSE","type":"buy","qty":300.0,"price":15.2,"value":4560.0,"time":"14:28","expiry":"2026-03-05","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-05","symbol":"SENSEX2630579800CE","exchange":"BSE","type":"sell","qty":300.0,"price":6.5,"value":1950.0,"time":"14:30","expiry":"2026-03-05","pnl":-2610.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-05","symbol":"SENSEX2630579100PE","exchange":"BSE","type":"buy","qty":100.0,"price":19.1,"value":1910.0,"time":"14:32","expiry":"2026-03-05","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-05","symbol":"SENSEX2630579100PE","exchange":"BSE","type":"sell","qty":100.0,"price":8.1,"value":810.0,"time":"14:36","expiry":"2026-03-05","pnl":-1100.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-05","symbol":"SENSEX2630579800CE","exchange":"BSE","type":"buy","qty":100.0,"price":9.45,"value":945.0,"time":"14:36","expiry":"2026-03-05","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-05","symbol":"SENSEX2630579800CE","exchange":"BSE","type":"sell","qty":20.0,"price":67.0,"value":1340.0,"time":"14:40","expiry":"2026-03-05","pnl":1151.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-05","symbol":"SENSEX2630579800CE","exchange":"BSE","type":"sell","qty":80.0,"price":66.95,"value":5356.0,"time":"14:40","expiry":"2026-03-05","pnl":4600.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-06","symbol":"NIFTY2631025100CE","exchange":"NSE","type":"buy","qty":65.0,"price":47.8,"value":3107.0,"time":"10:12","expiry":"2026-03-10","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-06","symbol":"NIFTY2631025100CE","exchange":"NSE","type":"sell","qty":65.0,"price":52.0,"value":3380.0,"time":"10:19","expiry":"2026-03-10","pnl":273.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-06","symbol":"NIFTY2631024100PE","exchange":"NSE","type":"buy","qty":65.0,"price":66.85,"value":4345.25,"time":"10:38","expiry":"2026-03-10","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-03-06","symbol":"NIFTY2631024100PE","exchange":"NSE","type":"sell","qty":65.0,"price":69.0,"value":4485.0,"time":"10:40","expiry":"2026-03-10","pnl":139.75,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-03-06","symbol":"NIFTY2631025000CE","exchange":"NSE","type":"buy","qty":65.0,"price":63.0,"value":4095.0,"time":"14:21","expiry":"2026-03-10","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-06","symbol":"NIFTY2631025000CE","exchange":"NSE","type":"sell","qty":65.0,"price":40.3,"value":2619.5,"time":"15:22","expiry":"2026-03-10","pnl":-1475.5,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-09","symbol":"NIFTY2631024350CE","exchange":"NSE","type":"buy","qty":65.0,"price":40.95,"value":2661.75,"time":"10:02","expiry":"2026-03-10","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-09","symbol":"NIFTY2631024350CE","exchange":"NSE","type":"sell","qty":65.0,"price":42.35,"value":2752.75,"time":"10:13","expiry":"2026-03-10","pnl":91.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-09","symbol":"NIFTY2631023000PE","exchange":"NSE","type":"buy","qty":65.0,"price":41.9,"value":2723.5,"time":"10:17","expiry":"2026-03-10","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-03-09","symbol":"NIFTY2631023000PE","exchange":"NSE","type":"sell","qty":65.0,"price":38.55,"value":2505.75,"time":"10:21","expiry":"2026-03-10","pnl":-217.75,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-03-09","symbol":"NIFTY2631024350CE","exchange":"NSE","type":"buy","qty":65.0,"price":42.45,"value":2759.25,"time":"10:54","expiry":"2026-03-10","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-09","symbol":"NIFTY2631024350CE","exchange":"NSE","type":"sell","qty":65.0,"price":33.8,"value":2197.0,"time":"11:10","expiry":"2026-03-10","pnl":-562.25,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-09","symbol":"NIFTY2631024350CE","exchange":"NSE","type":"buy","qty":65.0,"price":33.65,"value":2187.25,"time":"11:16","expiry":"2026-03-10","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-09","symbol":"NIFTY2631024350CE","exchange":"NSE","type":"sell","qty":65.0,"price":50.6,"value":3289.0,"time":"11:40","expiry":"2026-03-10","pnl":1101.75,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-10","symbol":"NIFTY2631024000PE","exchange":"NSE","type":"buy","qty":65.0,"price":36.65,"value":2382.25,"time":"10:06","expiry":"2026-03-10","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-03-10","symbol":"NIFTY2631024000PE","exchange":"NSE","type":"sell","qty":65.0,"price":27.35,"value":1777.75,"time":"10:14","expiry":"2026-03-10","pnl":-604.5,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-03-10","symbol":"NIFTY2631024300CE","exchange":"NSE","type":"buy","qty":65.0,"price":31.8,"value":2067.0,"time":"10:15","expiry":"2026-03-10","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-10","symbol":"NIFTY2631024300CE","exchange":"NSE","type":"sell","qty":65.0,"price":42.0,"value":2730.0,"time":"10:19","expiry":"2026-03-10","pnl":663.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-10","symbol":"NIFTY2631024300CE","exchange":"NSE","type":"buy","qty":65.0,"price":36.05,"value":2343.25,"time":"10:21","expiry":"2026-03-10","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-10","symbol":"NIFTY2631024300CE","exchange":"NSE","type":"sell","qty":65.0,"price":44.65,"value":2902.25,"time":"11:16","expiry":"2026-03-10","pnl":559.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-10","symbol":"NIFTY2631024000PE","exchange":"NSE","type":"buy","qty":325.0,"price":9.5,"value":3087.5,"time":"11:51","expiry":"2026-03-10","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-03-10","symbol":"NIFTY2631024000PE","exchange":"NSE","type":"sell","qty":325.0,"price":15.9,"value":5167.5,"time":"12:23","expiry":"2026-03-10","pnl":2080.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-03-10","symbol":"NIFTY2631024550CE","exchange":"NSE","type":"buy","qty":780.0,"price":2.05,"value":1599.0,"time":"12:56","expiry":"2026-03-10","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-10","symbol":"NIFTY2631024550CE","exchange":"NSE","type":"sell","qty":585.0,"price":1.7,"value":994.5,"time":"13:00","expiry":"2026-03-10","pnl":-204.75,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-10","symbol":"NIFTY2631024550CE","exchange":"NSE","type":"sell","qty":65.0,"price":1.7,"value":110.5,"time":"13:00","expiry":"2026-03-10","pnl":-22.75,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-10","symbol":"NIFTY2631024550CE","exchange":"NSE","type":"sell","qty":130.0,"price":1.7,"value":221.0,"time":"13:00","expiry":"2026-03-10","pnl":-45.5,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-10","symbol":"NIFTY2631024550CE","exchange":"NSE","type":"buy","qty":845.0,"price":1.95,"value":1647.75,"time":"13:02","expiry":"2026-03-10","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-10","symbol":"NIFTY2631024550CE","exchange":"NSE","type":"sell","qty":845.0,"price":1.4,"value":1183.0,"time":"13:09","expiry":"2026-03-10","pnl":-464.75,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-10","symbol":"NIFTY2631024550CE","exchange":"NSE","type":"buy","qty":975.0,"price":1.65,"value":1608.75,"time":"13:20","expiry":"2026-03-10","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-10","symbol":"NIFTY2631024550CE","exchange":"NSE","type":"sell","qty":975.0,"price":0.35,"value":341.25,"time":"14:46","expiry":"2026-03-10","pnl":-1267.5,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"CE"},{"date":"2026-03-11","symbol":"SENSEX2631276700PE","exchange":"BSE","type":"buy","qty":20.0,"price":102.15,"value":2043.0,"time":"09:42","expiry":"2026-03-12","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-11","symbol":"SENSEX2631276700PE","exchange":"BSE","type":"sell","qty":20.0,"price":112.55,"value":2251.0,"time":"09:54","expiry":"2026-03-12","pnl":208.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-11","symbol":"SENSEX2631276600PE","exchange":"BSE","type":"buy","qty":20.0,"price":101.5,"value":2030.0,"time":"10:06","expiry":"2026-03-12","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-11","symbol":"SENSEX2631276600PE","exchange":"BSE","type":"sell","qty":20.0,"price":102.95,"value":2059.0,"time":"10:07","expiry":"2026-03-12","pnl":29.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-11","symbol":"SENSEX2631276300PE","exchange":"BSE","type":"buy","qty":20.0,"price":101.0,"value":2020.0,"time":"11:05","expiry":"2026-03-12","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-11","symbol":"SENSEX2631276300PE","exchange":"BSE","type":"sell","qty":20.0,"price":105.4,"value":2108.0,"time":"11:07","expiry":"2026-03-12","pnl":88.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-11","symbol":"SENSEX2631278500CE","exchange":"BSE","type":"buy","qty":20.0,"price":100.5,"value":2010.0,"time":"13:12","expiry":"2026-03-12","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-11","symbol":"SENSEX2631278500CE","exchange":"BSE","type":"sell","qty":20.0,"price":121.95,"value":2439.0,"time":"13:36","expiry":"2026-03-12","pnl":429.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-11","symbol":"SENSEX2631275500PE","exchange":"BSE","type":"buy","qty":20.0,"price":101.0,"value":2020.0,"time":"13:48","expiry":"2026-03-12","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-11","symbol":"SENSEX2631275500PE","exchange":"BSE","type":"sell","qty":20.0,"price":91.85,"value":1837.0,"time":"13:51","expiry":"2026-03-12","pnl":-183.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-11","symbol":"SENSEX2631278600CE","exchange":"BSE","type":"buy","qty":20.0,"price":100.95,"value":2019.0,"time":"13:52","expiry":"2026-03-12","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-11","symbol":"SENSEX2631278600CE","exchange":"BSE","type":"sell","qty":20.0,"price":77.2,"value":1544.0,"time":"14:18","expiry":"2026-03-12","pnl":-475.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-11","symbol":"SENSEX2631275400PE","exchange":"BSE","type":"buy","qty":20.0,"price":101.0,"value":2020.0,"time":"14:19","expiry":"2026-03-12","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-11","symbol":"SENSEX2631275400PE","exchange":"BSE","type":"sell","qty":20.0,"price":91.8,"value":1836.0,"time":"14:24","expiry":"2026-03-12","pnl":-184.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-11","symbol":"SENSEX2631278500CE","exchange":"BSE","type":"buy","qty":20.0,"price":96.85,"value":1937.0,"time":"14:28","expiry":"2026-03-12","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-11","symbol":"SENSEX2631278500CE","exchange":"BSE","type":"sell","qty":20.0,"price":67.75,"value":1355.0,"time":"14:58","expiry":"2026-03-12","pnl":-582.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-11","symbol":"SENSEX2631275000PE","exchange":"BSE","type":"buy","qty":20.0,"price":51.65,"value":1033.0,"time":"15:21","expiry":"2026-03-12","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-12","symbol":"SENSEX2631275000PE","exchange":"BSE","type":"sell","qty":20.0,"price":21.95,"value":439.0,"time":"09:51","expiry":"2026-03-12","pnl":-594.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-12","symbol":"SENSEX2631277600CE","exchange":"BSE","type":"buy","qty":20.0,"price":20.75,"value":415.0,"time":"09:59","expiry":"2026-03-12","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-12","symbol":"SENSEX2631277600CE","exchange":"BSE","type":"sell","qty":20.0,"price":19.55,"value":391.0,"time":"11:06","expiry":"2026-03-12","pnl":-24.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-12","symbol":"SENSEX2631275500PE","exchange":"BSE","type":"buy","qty":20.0,"price":18.4,"value":368.0,"time":"12:01","expiry":"2026-03-12","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-12","symbol":"SENSEX2631275500PE","exchange":"BSE","type":"sell","qty":20.0,"price":13.55,"value":271.0,"time":"12:27","expiry":"2026-03-12","pnl":-97.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-12","symbol":"SENSEX2631277600CE","exchange":"BSE","type":"buy","qty":20.0,"price":10.35,"value":207.0,"time":"12:27","expiry":"2026-03-12","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-12","symbol":"SENSEX2631277600CE","exchange":"BSE","type":"sell","qty":20.0,"price":5.65,"value":113.0,"time":"13:14","expiry":"2026-03-12","pnl":-94.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-12","symbol":"SENSEX2631275400PE","exchange":"BSE","type":"buy","qty":20.0,"price":11.0,"value":220.0,"time":"13:15","expiry":"2026-03-12","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-12","symbol":"SENSEX2631275400PE","exchange":"BSE","type":"sell","qty":20.0,"price":3.7,"value":74.0,"time":"14:14","expiry":"2026-03-12","pnl":-146.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-12","symbol":"SENSEX2631276400CE","exchange":"BSE","type":"buy","qty":20.0,"price":135.2,"value":2704.0,"time":"14:27","expiry":"2026-03-12","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-12","symbol":"SENSEX2631276400CE","exchange":"BSE","type":"sell","qty":20.0,"price":54.45,"value":1089.0,"time":"14:40","expiry":"2026-03-12","pnl":-1615.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"CE"},{"date":"2026-03-12","symbol":"SENSEX2631275500PE","exchange":"BSE","type":"buy","qty":120.0,"price":4.9,"value":588.0,"time":"14:53","expiry":"2026-03-12","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-12","symbol":"SENSEX2631275500PE","exchange":"BSE","type":"sell","qty":120.0,"price":1.6,"value":192.0,"time":"15:02","expiry":"2026-03-12","pnl":-396.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"SENSEX","opt":"PE"},{"date":"2026-03-16","symbol":"BANKNIFTY26MAR62400CE","exchange":"NSE","type":"buy","qty":30.0,"price":19.1,"value":573.0,"time":"10:05","expiry":"2026-03-30","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"BANKNIFTY","opt":"CE"},{"date":"2026-03-16","symbol":"BANKNIFTY26MAR62400CE","exchange":"NSE","type":"sell","qty":30.0,"price":15.7,"value":471.0,"time":"10:22","expiry":"2026-03-30","pnl":-102.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"BANKNIFTY","opt":"CE"},{"date":"2026-03-16","symbol":"NIFTY2631721900PE","exchange":"NSE","type":"buy","qty":65.0,"price":7.0,"value":455.0,"time":"11:09","expiry":"2026-03-17","pnl":null,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"},{"date":"2026-03-16","symbol":"NIFTY2631721900PE","exchange":"NSE","type":"sell","qty":65.0,"price":6.6,"value":429.0,"time":"11:51","expiry":"2026-03-17","pnl":-26.0,"pnl_reported":null,"buy_val_reported":null,"sell_val_reported":null,"index":"NIFTY","opt":"PE"}];
+const EMB_PNL     = [{"symbol":"NIFTY2620324950PE","qty":65.0,"buy_val":4849.0,"sell_val":2840.5,"realized_pnl":-2008.5,"pnl_pct":-41.4209},{"symbol":"NIFTY2620325050CE","qty":65.0,"buy_val":4585.75,"sell_val":5307.25,"realized_pnl":721.5,"pnl_pct":15.7335},{"symbol":"NIFTY2620325500PE","qty":585.0,"buy_val":1755.0,"sell_val":351.0,"realized_pnl":-1404.0,"pnl_pct":-80.0},{"symbol":"NIFTY2620325700PE","qty":195.0,"buy_val":1924.0001,"sell_val":893.7499,"realized_pnl":-1030.25,"pnl_pct":-53.5473},{"symbol":"NIFTY2620325850CE","qty":65.0,"buy_val":2102.75,"sell_val":1027.0,"realized_pnl":-1075.75,"pnl_pct":-51.1592},{"symbol":"NIFTY2620325900CE","qty":65.0,"buy_val":1160.25,"sell_val":679.25,"realized_pnl":-481.0,"pnl_pct":-41.4566},{"symbol":"NIFTY2621025700CE","qty":65.0,"buy_val":11960.0,"sell_val":12512.5,"realized_pnl":552.5,"pnl_pct":4.6196},{"symbol":"NIFTY2621025700PE","qty":520.0,"buy_val":13468.0,"sell_val":12870.0,"realized_pnl":-598.0,"pnl_pct":-4.4402},{"symbol":"NIFTY2621025750PE","qty":780.0,"buy_val":27631.5,"sell_val":27378.0,"realized_pnl":-253.5,"pnl_pct":-0.9174},{"symbol":"NIFTY2621025900CE","qty":520.0,"buy_val":12922.0,"sell_val":15600.0,"realized_pnl":2678.0,"pnl_pct":20.7243},{"symbol":"NIFTY2621025900PE","qty":1885.0,"buy_val":38008.7498,"sell_val":38785.4999,"realized_pnl":776.75,"pnl_pct":2.0436},{"symbol":"NIFTY2621025950CE","qty":3900.0,"buy_val":46166.25,"sell_val":49822.5,"realized_pnl":3656.25,"pnl_pct":7.9197},{"symbol":"NIFTY2621026000CE","qty":975.0,"buy_val":23221.2503,"sell_val":24342.5003,"realized_pnl":1121.25,"pnl_pct":4.8286},{"symbol":"NIFTY2621725200PE","qty":65.0,"buy_val":1202.5,"sell_val":1820.0,"realized_pnl":617.5,"pnl_pct":51.3514},{"symbol":"NIFTY2621725300PE","qty":65.0,"buy_val":1586.0,"sell_val":1231.75,"realized_pnl":-354.25,"pnl_pct":-22.3361},{"symbol":"NIFTY2621725550PE","qty":65.0,"buy_val":1781.0,"sell_val":1677.0,"realized_pnl":-104.0,"pnl_pct":-5.8394},{"symbol":"NIFTY2621725600PE","qty":975.0,"buy_val":6964.7497,"sell_val":8268.0,"realized_pnl":1303.25,"pnl_pct":18.7121},{"symbol":"NIFTY2621725650PE","qty":845.0,"buy_val":6545.5001,"sell_val":4959.5002,"realized_pnl":-1586.0,"pnl_pct":-24.2304},{"symbol":"NIFTY2621725700PE","qty":975.0,"buy_val":1608.75,"sell_val":48.75,"realized_pnl":-1560.0,"pnl_pct":-96.9697},{"symbol":"NIFTY2621725750CE","qty":2015.0,"buy_val":11573.25,"sell_val":14335.7506,"realized_pnl":2762.5,"pnl_pct":23.8697},{"symbol":"NIFTY2621725800CE","qty":910.0,"buy_val":5024.5004,"sell_val":5407.9999,"realized_pnl":383.5,"pnl_pct":7.6326},{"symbol":"NIFTY2621725900CE","qty":195.0,"buy_val":18177.25,"sell_val":18590.0,"realized_pnl":412.75,"pnl_pct":2.2707},{"symbol":"NIFTY2621725900PE","qty":65.0,"buy_val":7614.75,"sell_val":7800.0,"realized_pnl":185.25,"pnl_pct":2.4328},{"symbol":"NIFTY2621725950PE","qty":65.0,"buy_val":7322.25,"sell_val":7423.0,"realized_pnl":100.75,"pnl_pct":1.3759},{"symbol":"NIFTY2630225100PE","qty":65.0,"buy_val":4527.25,"sell_val":3604.25,"realized_pnl":-923.0,"pnl_pct":-20.3877},{"symbol":"NIFTY2630225400CE","qty":130.0,"buy_val":9698.0,"sell_val":10299.25,"realized_pnl":601.25,"pnl_pct":6.1997},{"symbol":"NIFTY26FEB25100PE","qty":975.0,"buy_val":1218.75,"sell_val":1218.75,"realized_pnl":0.0,"pnl_pct":0.0},{"symbol":"NIFTY26FEB25400CE","qty":325.0,"buy_val":4517.5,"sell_val":9457.5,"realized_pnl":4940.0,"pnl_pct":109.3525},{"symbol":"NIFTY26FEB25400PE","qty":1495.0,"buy_val":15983.4995,"sell_val":13526.4999,"realized_pnl":-2457.0,"pnl_pct":-15.3721},{"symbol":"NIFTY26FEB25450CE","qty":1820.0,"buy_val":9268.9997,"sell_val":701.9995,"realized_pnl":-8567.0,"pnl_pct":-92.4264},{"symbol":"NIFTY26FEB25500CE","qty":130.0,"buy_val":6786.0,"sell_val":5538.0,"realized_pnl":-1248.0,"pnl_pct":-18.3908},{"symbol":"NIFTY26FEB25600CE","qty":325.0,"buy_val":8615.75,"sell_val":6012.5,"realized_pnl":-2603.25,"pnl_pct":-30.215},{"symbol":"NIFTY26FEB25700PE","qty":195.0,"buy_val":17504.5001,"sell_val":19500.0,"realized_pnl":1995.5,"pnl_pct":11.3999},{"symbol":"NIFTY26FEB25800CE","qty":65.0,"buy_val":5625.75,"sell_val":5804.5,"realized_pnl":178.75,"pnl_pct":3.1774},{"symbol":"RELIANCE26FEB1360PE","qty":500.0,"buy_val":1025.0,"sell_val":1025.0,"realized_pnl":0.0,"pnl_pct":0.0},{"symbol":"SENSEX2621283700CE","qty":100.0,"buy_val":10500.0,"sell_val":9405.0,"realized_pnl":-1095.0,"pnl_pct":-10.4286},{"symbol":"SENSEX2621283800CE","qty":1120.0,"buy_val":16153.9997,"sell_val":12162.9995,"realized_pnl":-3991.0,"pnl_pct":-24.706},{"symbol":"SENSEX2621283900CE","qty":1500.0,"buy_val":19750.0005,"sell_val":14749.9995,"realized_pnl":-5000.0,"pnl_pct":-25.3165},{"symbol":"SENSEX2621283900PE","qty":100.0,"buy_val":10770.0,"sell_val":12500.0,"realized_pnl":1730.0,"pnl_pct":16.0631},{"symbol":"SENSEX2621284000CE","qty":160.0,"buy_val":18756.0,"sell_val":17607.0,"realized_pnl":-1149.0,"pnl_pct":-6.126},{"symbol":"SENSEX2621284200CE","qty":120.0,"buy_val":35240.0,"sell_val":33714.0,"realized_pnl":-1526.0,"pnl_pct":-4.3303},{"symbol":"SENSEX2621284200PE","qty":60.0,"buy_val":10140.0,"sell_val":11412.0,"realized_pnl":1272.0,"pnl_pct":12.5444},{"symbol":"SENSEX2621284300PE","qty":60.0,"buy_val":12981.0,"sell_val":11415.0,"realized_pnl":-1566.0,"pnl_pct":-12.0638},{"symbol":"SENSEX2621982600PE","qty":700.0,"buy_val":16243.0002,"sell_val":21754.9997,"realized_pnl":5512.0,"pnl_pct":33.9346},{"symbol":"SENSEX2621982700CE","qty":100.0,"buy_val":5430.0,"sell_val":6375.0,"realized_pnl":945.0,"pnl_pct":17.4033},{"symbol":"SENSEX2621982700PE","qty":100.0,"buy_val":6413.0,"sell_val":7876.0,"realized_pnl":1463.0,"pnl_pct":22.813},{"symbol":"SENSEX2621982800PE","qty":100.0,"buy_val":6475.0,"sell_val":5580.0,"realized_pnl":-895.0,"pnl_pct":-13.8224},{"symbol":"SENSEX2621983000PE","qty":480.0,"buy_val":10788.0,"sell_val":11748.0,"realized_pnl":960.0,"pnl_pct":8.8988},{"symbol":"SENSEX2621983400CE","qty":220.0,"buy_val":5280.0,"sell_val":1958.0,"realized_pnl":-3322.0,"pnl_pct":-62.9167},{"symbol":"SENSEX2621983600CE","qty":40.0,"buy_val":5400.0,"sell_val":6618.0,"realized_pnl":1218.0,"pnl_pct":22.5556},{"symbol":"SENSEX2621983600PE","qty":40.0,"buy_val":5206.0,"sell_val":5266.0,"realized_pnl":60.0,"pnl_pct":1.1525},{"symbol":"SENSEX2621983700CE","qty":40.0,"buy_val":5360.0,"sell_val":4324.0,"realized_pnl":-1036.0,"pnl_pct":-19.3284},{"symbol":"SENSEX2621983700PE","qty":40.0,"buy_val":5400.0,"sell_val":7380.0,"realized_pnl":1980.0,"pnl_pct":36.6667},{"symbol":"SENSEX2621983800CE","qty":160.0,"buy_val":6818.0,"sell_val":6693.0,"realized_pnl":-125.0,"pnl_pct":-1.8334},{"symbol":"SENSEX2621983900CE","qty":20.0,"buy_val":1229.0,"sell_val":1015.0,"realized_pnl":-214.0,"pnl_pct":-17.4125},{"symbol":"SENSEX2621984200CE","qty":20.0,"buy_val":1007.0,"sell_val":477.0,"realized_pnl":-530.0,"pnl_pct":-52.6316},{"symbol":"SENSEX26FEB81500PE","qty":260.0,"buy_val":3445.0,"sell_val":1846.0,"realized_pnl":-1599.0,"pnl_pct":-46.4151},{"symbol":"SENSEX26FEB82400CE","qty":240.0,"buy_val":4824.0,"sell_val":3504.0,"realized_pnl":-1320.0,"pnl_pct":-27.3632},{"symbol":"SENSEX26FEB82500CE","qty":600.0,"buy_val":1920.0,"sell_val":5370.0,"realized_pnl":3450.0,"pnl_pct":179.6875}];
+const EMB_SUMMARY = {"summary":{"total_charges":5945.2981,"other_credit_debit":-59.0,"realized_pnl":-8044.25,"unrealized_pnl":0.0,"brokerage":4160.0,"etc":384.8514,"gst":818.8929,"stt":561.0,"sebi":1.1309,"stamp":16.0},"other_debits":[{"desc":"Call and Trade charges(Auto Square Off) for 2026-02-02","date":"2026-02-02","debit":59.0,"credit":0.0}]};
+
+// ── State ──────────────────────────────────────────────────────────────────
+let TRADES=[], PNL_MAP={}, SUMMARY={}, OTHER_DEBITS=[];
+let filtered=[], charts={}, activeTab='overview';
+let pendingCSV=null, pendingXLSX=null;
+
+// ── Colors ─────────────────────────────────────────────────────────────────
+const G='#00c896', R='#f05252', B='#4f8ef7', A='#f5a623', P='#a78bfa';
+const GD='rgba(0,200,150,.15)', RD='rgba(240,82,82,.15)';
+const BD='rgba(79,142,247,.15)', AD='rgba(245,166,35,.15)';
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+const inr  = v=>'₹'+Math.abs(v).toLocaleString('en-IN',{maximumFractionDigits:0});
+const inr2 = v=>'₹'+Math.abs(v).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const sign = v=>(v>=0?'+':'-');
+const cls  = v=>(v>0?'g':v<0?'r':'');
+
+function optOf(sym){
+  if(/CE$/.test(sym)) return 'CE';
+  if(/PE$/.test(sym)) return 'PE';
+  if(/FUT/.test(sym)) return 'FUT';
+  return 'EQ';
+}
+function idxOf(sym){
+  if(sym.startsWith('BANKNIFTY')) return 'BANKNIFTY';
+  if(sym.startsWith('NIFTY'))     return 'NIFTY';
+  if(sym.startsWith('SENSEX'))    return 'SENSEX';
+  return 'OTHER';
+}
+
+// ── CSV parser (Zerodha tradebook) ──────────────────────────────────────────
+function parseCSV(text){
+  const lines=text.split(/?\n/).filter(l=>l.trim());
+  const hdr=lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,'').toLowerCase());
+  const ci=n=>{const i=hdr.indexOf(n);return i};
+  const cols={
+    sym:  ci('symbol')>=0?ci('symbol'):ci('tradingsymbol'),
+    dt:   ci('trade_date')>=0?ci('trade_date'):ci('date'),
+    exch: ci('exchange'), seg:ci('segment'),
+    tp:   ci('trade_type')>=0?ci('trade_type'):ci('transaction_type'),
+    qty:  ci('quantity')>=0?ci('quantity'):ci('qty'),
+    pr:   ci('price')>=0?ci('price'):ci('average_price'),
+    time: ci('order_execution_time')>=0?ci('order_execution_time'):ci('time'),
+    exp:  ci('expiry_date')>=0?ci('expiry_date'):ci('expiry'),
+  };
+  const rows=[];
+  for(let i=1;i<lines.length;i++){
+    const c=lines[i].split(',').map(x=>x.trim().replace(/^"|"$/g,''));
+    if(c.length<5)continue;
+    const sym=(c[cols.sym]||'').toUpperCase();
+    const qty=parseFloat(c[cols.qty]||0), pr=parseFloat(c[cols.pr]||0);
+    if(!sym||!qty||!pr)continue;
+    const rawT=c[cols.time]||'';
+    rows.push({
+      date:c[cols.dt]||'',symbol:sym,
+      exchange:(c[cols.exch]||'NSE').toUpperCase(),
+      segment:(c[cols.seg]||'FO').toUpperCase(),
+      type:(c[cols.tp]||'').toLowerCase().includes('buy')?'buy':'sell',
+      qty,price:pr,value:parseFloat((qty*pr).toFixed(2)),
+      time:rawT.includes('T')?rawT.split('T')[1].slice(0,5):rawT.slice(0,5)||'--',
+      expiry:cols.exp>=0?c[cols.exp]:'',
+      opt:optOf(sym), index:idxOf(sym), pnl:null
+    });
+  }
+  return computeFIFO(rows);
+}
+
+// ── XLSX parser (Zerodha P&L) ───────────────────────────────────────────────
+function parsePnlXLSX(buf){
+  const wb=XLSX.read(buf,{type:'array'});
+  const ws=wb.Sheets['F&O']||wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+  let pnlSyms=[], summary={}, inSymbols=false;
+  for(const row of rows){
+    if(!row||row.every(v=>v==null))continue;
+    const r=row.map(v=>v==null?null:String(v).trim());
+    if(r[1]==='Charges'&&r[2]!=null)summary.total_charges=parseFloat(r[2]);
+    if(r[1]==='Realized P&L')summary.realized_pnl=parseFloat(r[2]);
+    if(r[1]==='Unrealized P&L')summary.unrealized_pnl=parseFloat(r[2]);
+    if(r[1]==='Brokerage - Z')summary.brokerage=parseFloat(r[2]);
+    if(r[1]==='Exchange Transaction Charges - Z')summary.etc=parseFloat(r[2]);
+    if(r[1]==='Integrated GST - Z')summary.gst=parseFloat(r[2]);
+    if(r[1]==='Securities Transaction Tax - Z')summary.stt=parseFloat(r[2]);
+    if(r[1]==='Stamp Duty - Z')summary.stamp=parseFloat(r[2]);
+    if(r[1]==='SEBI Turnover Fees - Z')summary.sebi=parseFloat(r[2]);
+    if(r[1]==='Other Credit & Debit')summary.other_credit_debit=parseFloat(r[2]);
+    if(r[1]==='Symbol'){inSymbols=true;continue;}
+    if(inSymbols&&r[1]&&r[1]!==''){
+      pnlSyms.push({symbol:r[1],qty:parseFloat(r[3]||0),buy_val:parseFloat(r[4]||0),
+        sell_val:parseFloat(r[5]||0),realized_pnl:parseFloat(r[6]||0),pnl_pct:parseFloat(r[7]||0)});
+    }
+  }
+  return {pnlSyms, summary};
+}
+
+// ── FIFO P&L ─────────────────────────────────────────────────────────────────
+function computeFIFO(rows){
+  rows.sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  const h={};
+  rows.forEach(t=>{
+    const k=t.symbol;
+    if(t.type==='buy'){
+      if(!h[k])h[k]=[];
+      h[k].push({price:t.price,qty:t.qty});
+    } else {
+      let rem=t.qty, pnl=0;
+      if(h[k]&&h[k].length){
+        while(rem>0&&h[k].length){
+          const l=h[k][0], u=Math.min(l.qty,rem);
+          pnl+=u*(t.price-l.price); l.qty-=u; rem-=u;
+          if(l.qty===0)h[k].shift();
+        }
+      }
+      t.pnl=parseFloat(pnl.toFixed(2));
+    }
+  });
+  return rows;
+}
+
+// ── File handlers ────────────────────────────────────────────────────────────
+function handleUpload(inp){
+  Array.from(inp.files).forEach(f=>{
+    if(f.name.endsWith('.csv')) {
+      const r=new FileReader(); r.onload=e=>{pendingCSV=parseCSV(e.target.result); document.getElementById('tb-fname').textContent='✓ '+f.name; document.getElementById('zone-tb').classList.add('done'); tryMerge();}; r.readAsText(f);
+    } else {
+      const r=new FileReader(); r.onload=e=>{const {pnlSyms,summary}=parsePnlXLSX(new Uint8Array(e.target.result)); pendingXLSX={pnlSyms,summary}; document.getElementById('pnl-fname').textContent='✓ '+f.name; document.getElementById('zone-pnl').classList.add('done'); tryMerge();}; r.readAsArrayBuffer(f);
+    }
+  });
+}
+function loadTradebook(inp){
+  const f=inp.files[0]; if(!f)return;
+  const r=new FileReader(); r.onload=e=>{pendingCSV=parseCSV(e.target.result); document.getElementById('tb-fname').textContent='✓ '+f.name; document.getElementById('zone-tb').classList.add('done'); tryMerge();}; r.readAsText(f);
+}
+function loadPnlXLSX(inp){
+  const f=inp.files[0]; if(!f)return;
+  const r=new FileReader(); r.onload=e=>{const {pnlSyms,summary}=parsePnlXLSX(new Uint8Array(e.target.result)); pendingXLSX={pnlSyms,summary}; document.getElementById('pnl-fname').textContent='✓ '+f.name; document.getElementById('zone-pnl').classList.add('done'); tryMerge();}; r.readAsArrayBuffer(f);
+}
+function tryMerge(){
+  if(pendingCSV&&pendingXLSX){
+    TRADES=pendingCSV; PNL_MAP={}; pendingXLSX.pnlSyms.forEach(p=>{PNL_MAP[p.symbol]=p;});
+    SUMMARY=pendingXLSX.summary; mergePnlIntoTrades(); showDash();
+  } else if(pendingCSV) {
+    TRADES=pendingCSV; mergePnlIntoTrades(); showDash();
+  }
+}
+function mergePnlIntoTrades(){
+  TRADES.forEach(t=>{
+    const p=PNL_MAP[t.symbol];
+    t.sym_pnl   = p?p.realized_pnl:null;
+    t.sym_pct   = p?p.pnl_pct:null;
+    t.buy_val_r = p?p.buy_val:null;
+    t.sell_val_r= p?p.sell_val:null;
+  });
+}
+
+// ── Init with embedded data ──────────────────────────────────────────────────
+function initDash(){
+  TRADES = EMB_TRADES.map(t=>({...t, opt:optOf(t.symbol), index:idxOf(t.symbol)}));
+  const pnlArr = EMB_PNL;
+  PNL_MAP = {};
+  pnlArr.forEach(p=>{ PNL_MAP[p.symbol]=p; });
+  SUMMARY = EMB_SUMMARY.summary;
+  OTHER_DEBITS = EMB_SUMMARY.other_debits||[];
+  mergePnlIntoTrades();
+  showDash();
+}
+
+function showDash(){
+  document.getElementById('upload-page').style.display='none';
+  document.getElementById('dash').style.display='block';
+  document.getElementById('chip-tb-info').textContent = TRADES.length+' trades';
+  document.getElementById('chip-pnl-info').textContent = Object.keys(PNL_MAP).length+' symbols · Feb 2026';
+  filtered=[...TRADES];
+  renderMetrics(); renderCharts(); renderTrades(); renderPnlTable(); renderCharges(); renderInsights();
+}
+
+// ── Filters ─────────────────────────────────────────────────────────────────
+function applyF(){
+  const idx=document.getElementById('f-idx').value;
+  const opt=document.getElementById('f-opt').value;
+  const exch=document.getElementById('f-exch').value;
+  const per=document.getElementById('f-per').value;
+  filtered=TRADES.filter(t=>{
+    if(idx&&t.index!==idx)return false;
+    if(opt&&t.opt!==opt)return false;
+    if(exch&&t.exchange!==exch)return false;
+    if(per!=='all'){
+      const m=per==='jan'?'2026-01':per==='feb'?'2026-02':'2026-03';
+      if(!t.date.startsWith(m))return false;
+    }
+    return true;
+  });
+  renderMetrics(); renderCharts();
+}
+function resetF(){
+  ['f-idx','f-opt','f-exch'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-per').value='all';
+  applyF();
+}
+
+// ── Tab switch ────────────────────────────────────────────────────────────────
+function switchTab(tab){
+  activeTab=tab;
+  ['overview','pnl','trades','charges','insights'].forEach((t,i)=>{
+    document.getElementById('tab-'+t).style.display=t===tab?'block':'none';
+    document.querySelectorAll('.tab')[i].classList.toggle('active',t===tab);
+  });
+  if(tab==='overview')setTimeout(renderCharts,20);
+}
+
+// ── Metrics ──────────────────────────────────────────────────────────────────
+function renderMetrics(){
+  const sells=filtered.filter(t=>t.type==='sell'&&t.pnl!=null);
+  const tot=sells.reduce((s,t)=>s+t.pnl,0);
+  const vol=filtered.reduce((s,t)=>s+t.value,0);
+  const win=sells.filter(t=>t.pnl>0), loss=sells.filter(t=>t.pnl<0);
+  const wr=sells.length?(win.length/sells.length*100).toFixed(1):0;
+  const aw=win.length?(win.reduce((s,t)=>s+t.pnl,0)/win.length).toFixed(0):0;
+  const al=loss.length?Math.abs(loss.reduce((s,t)=>s+t.pnl,0)/loss.length).toFixed(0):0;
+  const pf=al>0?(aw/al).toFixed(2):'∞';
+  const repPnl=SUMMARY.realized_pnl||0;
+  const charges=SUMMARY.total_charges||0;
+  const net=repPnl-(charges||0);
+  document.getElementById('metrics').innerHTML=[
+    {l:'Reported P&L',v:`${sign(repPnl)}${inr(repPnl)}`,c:cls(repPnl),n:'From P&L statement (Feb 26)'},
+    {l:'Computed P&L',v:`${sign(tot)}${inr(tot)}`,c:cls(tot),n:`FIFO · ${sells.length} closed trades`},
+    {l:'Total Charges',v:`-${inr(charges)}`,c:'r',n:'Brokerage + taxes + fees'},
+    {l:'Net After Charges',v:`${sign(net)}${inr(net)}`,c:cls(net),n:'P&L minus all charges'},
+    {l:'Win Rate',v:`${wr}%`,c:parseFloat(wr)>=50?'g':'r',n:`${win.length}W / ${loss.length}L`},
+    {l:'Profit Factor',v:pf,c:parseFloat(pf)>=1?'g':'r',n:'Avg win ÷ avg loss'},
+    {l:'Turnover',v:`₹${(vol/100000).toFixed(1)}L`,c:'b',n:`${TRADES.length} orders placed`},
+  ].map(m=>`<div class="metric"><div class="m-lbl">${m.l}</div><div class="m-val ${m.c}">${m.v}</div><div class="m-note">${m.n}</div></div>`).join('');
+}
+
+// ── Charts ────────────────────────────────────────────────────────────────────
+function dc(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+const GRID={color:'rgba(255,255,255,.04)'};
+const TX={color:'#5a6078',font:{size:10}};
+
+function renderCharts(){
+  cumChart(); symChart(); hourChart(); dayChart(); optChart(); idxChart(); exchChart(); histChart();
+}
+
+function cumChart(){
+  dc('cum');
+  const sells=filtered.filter(t=>t.type==='sell'&&t.pnl!=null)
+    .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  let cum=0, labels=[], data=[], dates=[];
+  sells.forEach(t=>{cum+=t.pnl; labels.push(t.date); data.push(+cum.toFixed(2)); dates.push(t.date);});
+  if(!labels.length){labels=['—'];data=[0];}
+  const up=data[data.length-1]>=0;
+  const ctx=document.getElementById('c-cum').getContext('2d');
+  charts['cum']=new Chart(ctx,{type:'line',data:{labels,datasets:[{data,fill:true,tension:.35,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:up?G:R,borderColor:up?G:R,backgroundColor:up?GD:RD,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>`${sign(v.raw)}${inr(v.raw)}`},mode:'index',intersect:false}},onClick:(e,els)=>{if(els.length){const d=dates[els[0].index];filterByDate(d);}},scales:{x:{ticks:{maxTicksLimit:10,...TX},grid:GRID,border:{display:false}},y:{ticks:{...TX,callback:v=>inr(v)},grid:GRID,border:{display:false}}}}});
+}
+
+function symChart(){
+  dc('sym');
+  const map={};
+  filtered.filter(t=>t.type==='sell'&&t.pnl!=null).forEach(t=>{map[t.symbol]=(map[t.symbol]||0)+t.pnl;});
+  let ent=Object.entries(map).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])).slice(0,14);
+  ent.sort((a,b)=>b[1]-a[1]);
+  const labels=ent.map(e=>e[0]), data=ent.map(e=>+e[1].toFixed(2));
+  const h=Math.max(320, ent.length*24+60);
+  document.getElementById('c-sym-wrap').style.height=h+'px';
+  const ctx=document.getElementById('c-sym').getContext('2d');
+  charts['sym']=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data,backgroundColor:data.map(v=>v>=0?'rgba(0,200,150,.7)':'rgba(240,82,82,.7)'),borderRadius:4,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>`${sign(v.raw)}${inr(v.raw)}`}}},onClick:(e,els)=>{if(els.length){filterBySym(labels[els[0].index]);}},scales:{x:{ticks:{...TX,callback:v=>inr(v)},grid:GRID,border:{display:false}},y:{ticks:{...TX,font:{size:10}},grid:{display:false},border:{display:false}}}}});
+}
+
+function hourChart(){
+  dc('hour');
+  const hm={};for(let h=9;h<=15;h++)hm[h]=0;
+  filtered.forEach(t=>{const h=parseInt((t.time||'09').split(':')[0]);if(h>=9&&h<=15)hm[h]++;});
+  const data=Object.values(hm), mx=Math.max(...data);
+  const ctx=document.getElementById('c-hour').getContext('2d');
+  charts['hour']=new Chart(ctx,{type:'bar',data:{labels:Object.keys(hm).map(h=>h+':00'),datasets:[{data,backgroundColor:data.map(v=>v===mx?B:'rgba(79,142,247,.35)'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>v.raw+' trades'}}},scales:{x:{ticks:{...TX,autoSkip:false,maxRotation:0},grid:GRID,border:{display:false}},y:{ticks:{...TX,stepSize:1},grid:GRID,border:{display:false}}}}});
+}
+
+function dayChart(){
+  dc('day');
+  const dp={Mon:0,Tue:0,Wed:0,Thu:0,Fri:0};
+  filtered.filter(t=>t.type==='sell'&&t.pnl!=null).forEach(t=>{const d=new Date(t.date),dn=['Mon','Tue','Wed','Thu','Fri'][d.getDay()-1];if(dn)dp[dn]+=t.pnl;});
+  const data=Object.values(dp).map(v=>+v.toFixed(2));
+  const ctx=document.getElementById('c-day').getContext('2d');
+  charts['day']=new Chart(ctx,{type:'bar',data:{labels:Object.keys(dp),datasets:[{data,backgroundColor:data.map(v=>v>=0?'rgba(0,200,150,.7)':'rgba(240,82,82,.7)'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>`${sign(v.raw)}${inr(v.raw)}`}}},scales:{x:{ticks:{...TX,autoSkip:false},grid:GRID,border:{display:false}},y:{ticks:{...TX,callback:v=>inr(v)},grid:GRID,border:{display:false}}}}});
+}
+
+function optChart(){
+  dc('opt');
+  const om={CE:0,PE:0};
+  filtered.filter(t=>t.type==='sell'&&t.pnl!=null).forEach(t=>{if(om[t.opt]!==undefined)om[t.opt]+=t.pnl;});
+  const entries=Object.entries(om), labels=entries.map(e=>e[0]), data=entries.map(e=>+e[1].toFixed(2));
+  const COLS={CE:P, PE:A};
+  const ctx=document.getElementById('c-opt').getContext('2d');
+  charts['opt']=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data,backgroundColor:labels.map(l=>COLS[l]||B),borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>`${sign(v.raw)}${inr(v.raw)}`}}},scales:{x:{ticks:{...TX,autoSkip:false},grid:{display:false},border:{display:false}},y:{ticks:{...TX,callback:v=>inr(v)},grid:GRID,border:{display:false}}}}});
+  document.getElementById('l-opt').innerHTML=labels.map((l,i)=>`<span><span class="ld" style="background:${COLS[l]}"></span>${l}: ${sign(data[i])}${inr(data[i])}</span>`).join('');
+}
+
+function idxChart(){
+  dc('idx');
+  const im={};
+  filtered.forEach(t=>{im[t.index]=(im[t.index]||0)+1;});
+  const labels=Object.keys(im), data=Object.values(im);
+  const COLS=[B,P,A,G];
+  const ctx=document.getElementById('c-idx').getContext('2d');
+  charts['idx']=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:COLS.slice(0,labels.length),borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>v.label+': '+v.raw}}}}});
+  document.getElementById('l-idx').innerHTML=labels.map((l,i)=>`<span><span class="ld" style="background:${COLS[i]}"></span>${l} ${data[i]}</span>`).join('');
+}
+
+function exchChart(){
+  dc('exch');
+  const em={};
+  filtered.forEach(t=>{em[t.exchange]=(em[t.exchange]||0)+1;});
+  const labels=Object.keys(em), data=Object.values(em);
+  const COLS=[B,A];
+  const ctx=document.getElementById('c-exch').getContext('2d');
+  charts['exch']=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:COLS.slice(0,labels.length),borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>v.label+': '+v.raw}}}}});
+  document.getElementById('l-exch').innerHTML=labels.map((l,i)=>`<span><span class="ld" style="background:${COLS[i]}"></span>${l} ${data[i]}</span>`).join('');
+}
+
+function histChart(){
+  dc('hist');
+  const dayPnl={};
+  filtered.filter(t=>t.type==='sell'&&t.pnl!=null).forEach(t=>{dayPnl[t.date]=(dayPnl[t.date]||0)+t.pnl;});
+  const vals=Object.values(dayPnl);
+  if(!vals.length)return;
+  const mn=Math.min(...vals), mx=Math.max(...vals);
+  const bins=8, step=(mx-mn)/bins||1;
+  const counts=new Array(bins).fill(0);
+  vals.forEach(v=>{const i=Math.min(Math.floor((v-mn)/step),bins-1);counts[i]++;});
+  const labels=counts.map((_,i)=>`${Math.round(mn+i*step)}`);
+  const ctx=document.getElementById('c-hist').getContext('2d');
+  charts['hist']=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data:counts,backgroundColor:labels.map((_,i)=>(mn+i*step)>=0?'rgba(0,200,150,.6)':'rgba(240,82,82,.6)'),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:v=>'≥₹'+v[0].label,label:v=>v.raw+' days'}}},scales:{x:{ticks:{...TX,maxRotation:40,font:{size:9}},grid:{display:false},border:{display:false}},y:{ticks:{...TX,stepSize:1},grid:GRID,border:{display:false}}}}});
+}
+
+// ── P&L Symbol table ──────────────────────────────────────────────────────────
+let pnlSortKey='pnl-d';
+function sortPnl(k){pnlSortKey=k;renderPnlTable();}
+function renderPnlTable(){
+  const srch=(document.getElementById('ps-search').value||'').toUpperCase();
+  const idx=document.getElementById('ps-idx').value;
+  const opt=document.getElementById('ps-opt').value;
+  const sort=document.getElementById('ps-sort').value||pnlSortKey;
+  let rows=Object.values(PNL_MAP);
+  if(!rows.length){document.getElementById('pnl-tbody').innerHTML='<tr><td colspan="9" class="no-data">No P&L data – upload your P&L XLSX file</td></tr>';return;}
+  rows=rows.map(r=>({...r,opt:optOf(r.symbol),idx:idxOf(r.symbol)}));
+  if(srch)rows=rows.filter(r=>r.symbol.includes(srch));
+  if(idx) rows=rows.filter(r=>r.idx===idx);
+  if(opt) rows=rows.filter(r=>r.opt===opt);
+  rows.sort((a,b)=>{
+    if(sort==='pnl-d')return b.realized_pnl-a.realized_pnl;
+    if(sort==='pnl-a')return a.realized_pnl-b.realized_pnl;
+    if(sort==='sym')  return a.symbol.localeCompare(b.symbol);
+    if(sort==='buy')  return b.buy_val-a.buy_val;
+    if(sort==='sell') return b.sell_val-a.sell_val;
+    if(sort==='qty-d')return b.qty-a.qty;
+    return 0;
+  });
+  const maxAbs=Math.max(...rows.map(r=>Math.abs(r.realized_pnl)),1);
+  const tbody=document.getElementById('pnl-tbody');
+  tbody.innerHTML=rows.map(r=>{
+    const pct=Math.abs(r.realized_pnl)/maxAbs*100;
+    const barCls=r.realized_pnl>=0?'pnl-bar-pos':'pnl-bar-neg';
+    const cnt=TRADES.filter(t=>t.symbol===r.symbol).length;
+    return `<tr onclick="filterBySym('${r.symbol}')" style="cursor:pointer" title="Click to view trades for ${r.symbol}">
+      <td style="font-weight:600;font-size:12px">${r.symbol}</td>
+      <td><span class="badge b-${r.opt.toLowerCase()}">${r.opt}</span></td>
+      <td>${r.qty.toLocaleString('en-IN')}</td>
+      <td style="color:var(--text2)">${inr2(r.buy_val)}</td>
+      <td style="color:var(--text2)">${inr2(r.sell_val)}</td>
+      <td class="${r.realized_pnl>=0?'pnl-g':'pnl-r'}">${sign(r.realized_pnl)}${inr(r.realized_pnl)}</td>
+      <td class="${r.realized_pnl>=0?'pnl-g':'pnl-r'}">${r.pnl_pct>=0?'+':''}${r.pnl_pct.toFixed(1)}%</td>
+      <td><span class="${barCls}" style="width:${pct.toFixed(0)}%"></span></td>
+      <td><button class="fbtn" style="font-size:10px;padding:3px 8px" onclick="event.stopPropagation();filterBySym('${r.symbol}')">View ${cnt}</button></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('pnl-count').textContent=`${rows.length} symbols`;
+}
+
+// ── Trade table ───────────────────────────────────────────────────────────────
+function renderTrades(symFilter){
+  const srch=(document.getElementById('ts-sym').value||'').toUpperCase();
+  const idx=document.getElementById('ts-idx').value;
+  const opt=document.getElementById('ts-opt').value;
+  const tp=document.getElementById('ts-tp').value;
+  const exch=document.getElementById('ts-exch').value;
+  const sort=document.getElementById('ts-sort').value;
+  let rows=[...TRADES];
+  if(symFilter){rows=rows.filter(t=>t.symbol===symFilter); document.getElementById('ts-sym').value=symFilter;}
+  if(srch&&!symFilter)rows=rows.filter(t=>t.symbol.includes(srch));
+  if(idx) rows=rows.filter(t=>t.index===idx);
+  if(opt) rows=rows.filter(t=>t.opt===opt);
+  if(tp)  rows=rows.filter(t=>t.type===tp);
+  if(exch)rows=rows.filter(t=>t.exchange===exch);
+  rows.sort((a,b)=>{
+    if(sort==='dt-d') return (b.date+b.time).localeCompare(a.date+a.time);
+    if(sort==='dt-a') return (a.date+a.time).localeCompare(b.date+b.time);
+    if(sort==='pnl-d')return (b.pnl||0)-(a.pnl||0);
+    if(sort==='pnl-a')return (a.pnl||0)-(b.pnl||0);
+    if(sort==='val-d')return b.value-a.value;
+    return 0;
+  });
+  const tbody=document.getElementById('trades-tbody');
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="12" class="no-data">No trades found</td></tr>';document.getElementById('trades-count').textContent='';return;}
+  tbody.innerHTML=rows.slice(0,300).map(t=>{
+    const pnlCell=t.pnl!=null?`<span class="${t.pnl>=0?'pnl-g':'pnl-r'}">${sign(t.pnl)}${inr(t.pnl)}</span>`:'<span style="color:var(--text3)">Open</span>';
+    const symPnl=t.sym_pnl!=null?`<span class="${t.sym_pnl>=0?'pnl-g':'pnl-r'}">${sign(t.sym_pnl)}${inr(t.sym_pnl)}</span>`:'<span style="color:var(--text3)">—</span>';
+    return `<tr>
+      <td style="color:var(--text3)">${t.date}</td>
+      <td style="font-weight:600;font-size:11px">${t.symbol}</td>
+      <td><span class="badge b-${t.exchange.toLowerCase()}">${t.exchange}</span></td>
+      <td><span class="badge b-${t.type}">${t.type.toUpperCase()}</span></td>
+      <td><span class="badge b-${(t.opt||'eq').toLowerCase()}">${t.opt}</span></td>
+      <td>${t.qty.toLocaleString('en-IN')}</td>
+      <td>${inr2(t.price)}</td>
+      <td>₹${(t.value/1000).toFixed(1)}K</td>
+      <td>${pnlCell}</td>
+      <td>${symPnl}</td>
+      <td><span class="exp">${t.expiry||'—'}</span></td>
+      <td style="color:var(--text3);font-size:11px">${t.time}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('trades-count').textContent=`Showing ${Math.min(300,rows.length)} of ${rows.length} trades`;
+}
+
+// ── Filter helpers ─────────────────────────────────────────────────────────
+function filterBySym(sym){
+  switchTab('trades');
+  setTimeout(()=>renderTrades(sym),30);
+}
+function filterByDate(dt){
+  switchTab('trades');
+  setTimeout(()=>{
+    document.getElementById('ts-sym').value='';
+    const rows=TRADES.filter(t=>t.date===dt);
+    const tbody=document.getElementById('trades-tbody');
+    tbody.innerHTML=rows.map(t=>{
+      const pnlCell=t.pnl!=null?`<span class="${t.pnl>=0?'pnl-g':'pnl-r'}">${sign(t.pnl)}${inr(t.pnl)}</span>`:'<span style="color:var(--text3)">Open</span>';
+      const symPnl=t.sym_pnl!=null?`<span class="${t.sym_pnl>=0?'pnl-g':'pnl-r'}">${sign(t.sym_pnl)}${inr(t.sym_pnl)}</span>`:'<span style="color:var(--text3)">—</span>';
+      return `<tr><td style="color:var(--text3)">${t.date}</td><td style="font-weight:600;font-size:11px">${t.symbol}</td><td><span class="badge b-${t.exchange.toLowerCase()}">${t.exchange}</span></td><td><span class="badge b-${t.type}">${t.type.toUpperCase()}</span></td><td><span class="badge b-${(t.opt||'eq').toLowerCase()}">${t.opt}</span></td><td>${t.qty.toLocaleString('en-IN')}</td><td>${inr2(t.price)}</td><td>₹${(t.value/1000).toFixed(1)}K</td><td>${pnlCell}</td><td>${symPnl}</td><td><span class="exp">${t.expiry||'—'}</span></td><td style="color:var(--text3);font-size:11px">${t.time}</td></tr>`;
+    }).join('');
+    document.getElementById('trades-count').textContent=`${rows.length} trades on ${dt}`;
+  },30);
+}
+
+// ── Charges tab ───────────────────────────────────────────────────────────────
+function renderCharges(){
+  const S=SUMMARY;
+  const items=[
+    {l:'Brokerage',v:S.brokerage||0,d:'₹20/order flat fee'},
+    {l:'Exchange Trans. Charges',v:S.etc||0,d:'NSE/BSE transaction fees'},
+    {l:'Integrated GST',v:S.gst||0,d:'18% on brokerage + charges'},
+    {l:'Securities Transaction Tax',v:S.stt||0,d:'0.1% on sell side'},
+    {l:'Stamp Duty',v:S.stamp||0,d:'State government levy'},
+    {l:'SEBI Turnover Fees',v:S.sebi||0,d:'₹10/crore turnover'},
+  ];
+  const total=items.reduce((s,i)=>s+i.v,0);
+  let html=`<div class="sec-hd">Cost Breakdown · Feb 2026</div>`;
+  html+=`<div class="charge-grid">${items.map(i=>`<div class="charge-item"><div class="charge-lbl">${i.l}</div><div class="charge-val">-${inr2(i.v)}</div><div style="font-size:10px;color:var(--text3);margin-top:3px">${i.d}</div></div>`).join('')}</div>`;
+  html+=`<div class="card" style="margin-bottom:12px;display:flex;gap:28px;align-items:center;flex-wrap:wrap">
+    <div><div class="m-lbl">Total Charges</div><div class="m-val r">-${inr(total)}</div></div>
+    <div><div class="m-lbl">Reported P&L</div><div class="m-val ${cls(S.realized_pnl||0)}">${sign(S.realized_pnl||0)}${inr(S.realized_pnl||0)}</div></div>
+    <div><div class="m-lbl">P&L after Charges</div><div class="m-val ${cls((S.realized_pnl||0)-(total))}">${sign((S.realized_pnl||0)-total)}${inr((S.realized_pnl||0)-total)}</div></div>
+    <div><div class="m-lbl">Charges % of Turnover</div><div class="m-val a">${(total/TRADES.reduce((s,t)=>s+t.value,0)*100).toFixed(2)}%</div></div>
+  </div>`;
+  if(OTHER_DEBITS.length){
+    html+=`<div class="sec-hd" style="margin-top:16px">Other Debits & Credits</div>`;
+    html+=`<div class="tbox"><table><thead><tr><th style="width:320px">Particulars</th><th>Date</th><th>Debit</th><th>Credit</th></tr></thead><tbody>`;
+    html+=OTHER_DEBITS.map(d=>`<tr><td>${d.desc}</td><td style="color:var(--text3)">${d.date}</td><td class="pnl-r">-${inr2(d.debit)}</td><td class="pnl-g">${d.credit>0?inr2(d.credit):'—'}</td></tr>`).join('');
+    html+=`</tbody></table></div>`;
+  }
+  document.getElementById('charges-content').innerHTML=html;
+}
+
+// ── Insights tab ──────────────────────────────────────────────────────────────
+function renderInsights(){
+  const sells=TRADES.filter(t=>t.type==='sell'&&t.pnl!=null);
+  const win=sells.filter(t=>t.pnl>0), loss=sells.filter(t=>t.pnl<0);
+  const wr=sells.length?(win.length/sells.length*100).toFixed(1):0;
+  const gw=win.reduce((s,t)=>s+t.pnl,0), gl=Math.abs(loss.reduce((s,t)=>s+t.pnl,0));
+  const pf=gl>0?(gw/gl).toFixed(2):'∞';
+  const best=sells.reduce((b,t)=>t.pnl>=(b?.pnl||-Infinity)?t:b,null);
+  const worst=sells.reduce((b,t)=>t.pnl<=(b?.pnl||Infinity)?t:b,null);
+  const symMap={};sells.forEach(t=>{symMap[t.symbol]=(symMap[t.symbol]||0)+t.pnl;});
+  const sE=Object.entries(symMap).sort((a,b)=>b[1]-a[1]);
+  const hm={};sells.forEach(t=>{const h=parseInt((t.time||'09').split(':')[0]);hm[h]=(hm[h]||0)+t.pnl;});
+  const bestH=Object.entries(hm).sort((a,b)=>b[1]-a[1])[0];
+  const dayPnl={};sells.forEach(t=>{dayPnl[t.date]=(dayPnl[t.date]||0)+t.pnl;});
+  const dv=Object.values(dayPnl);
+  const profD=dv.filter(v=>v>0).length, lossD=dv.filter(v=>v<0).length;
+  const avgD=dv.length?dv.reduce((s,v)=>s+v,0)/dv.length:0;
+  const maxDD=(()=>{let pk=0,dd=0,c=0;sells.sort((a,b)=>a.date.localeCompare(b.date)).forEach(t=>{c+=t.pnl;if(c>pk)pk=c;if(pk-c>dd)dd=pk-c;});return dd;})();
+  const cePnl=sells.filter(t=>t.opt==='CE').reduce((s,t)=>s+t.pnl,0);
+  const pePnl=sells.filter(t=>t.opt==='PE').reduce((s,t)=>s+t.pnl,0);
+  const nsePnl=sells.filter(t=>t.exchange==='NSE').reduce((s,t)=>s+t.pnl,0);
+  const bsePnl=sells.filter(t=>t.exchange==='BSE').reduce((s,t)=>s+t.pnl,0);
+
+  const cards=[
+    {l:'Best Single Trade',  v:best?`${sign(best.pnl)}${inr(best.pnl)}`:'—',  c:cls(best?.pnl||0), d:best?`${best.symbol} · ${best.date}`:''},
+    {l:'Worst Single Trade', v:worst?`${sign(worst.pnl)}${inr(worst.pnl)}`:'—',c:cls(worst?.pnl||0),d:worst?`${worst.symbol} · ${worst.date}`:''},
+    {l:'Best Symbol',  v:sE[0]?sE[0][0]:'—', c:cls(sE[0]?sE[0][1]:0), d:sE[0]?`${sign(sE[0][1])}${inr(sE[0][1])} P&L`:''},
+    {l:'Worst Symbol', v:sE[sE.length-1]?sE[sE.length-1][0]:'—', c:cls(sE[sE.length-1]?sE[sE.length-1][1]:0), d:sE[sE.length-1]?`${sign(sE[sE.length-1][1])}${inr(sE[sE.length-1][1])} P&L`:''},
+    {l:'Best Trading Hour',v:bestH?`${bestH[0]}:00 – ${(+bestH[0]+1)}:00`:'—',c:cls(bestH?bestH[1]:0),d:bestH?`${sign(bestH[1])}${inr(bestH[1])} net P&L`:''},
+    {l:'Profit Factor', v:pf,  c:parseFloat(pf)>=1?'g':'r',   d:'Gross profit ÷ gross loss'},
+    {l:'Win Rate',      v:`${wr}%`, c:parseFloat(wr)>=50?'g':'r', d:`${win.length}W / ${loss.length}L of ${sells.length} closed`},
+    {l:'Max Drawdown',  v:`-${inr(maxDD)}`, c:'r', d:'Peak-to-trough unrealized drop'},
+    {l:'CE P&L',  v:`${sign(cePnl)}${inr(cePnl)}`, c:cls(cePnl), d:'All Call options combined'},
+    {l:'PE P&L',  v:`${sign(pePnl)}${inr(pePnl)}`, c:cls(pePnl), d:'All Put options combined'},
+    {l:'NSE P&L', v:`${sign(nsePnl)}${inr(nsePnl)}`, c:cls(nsePnl), d:'NSE exchange P&L'},
+    {l:'BSE P&L', v:`${sign(bsePnl)}${inr(bsePnl)}`, c:cls(bsePnl), d:'BSE exchange P&L'},
+  ];
+
+  let html='<div class="sec-hd">Performance Insights</div><div class="ins-grid">';
+  html+=cards.map(c=>`<div class="ins-card"><div class="ins-lbl">${c.l}</div><div class="ins-val ${c.c}">${c.v}</div><div class="ins-desc">${c.d}</div></div>`).join('');
+  html+='</div>';
+
+  html+=`<div class="sec-hd" style="margin-top:20px">Trading Consistency</div>
+  <div class="grid4" style="margin-bottom:0">
+    <div class="card"><div class="m-lbl">Profit Days</div><div class="m-val g">${profD}</div><div class="m-note">${profD+lossD} total trading days</div></div>
+    <div class="card"><div class="m-lbl">Loss Days</div><div class="m-val r">${lossD}</div><div class="m-note">${(profD/(profD+lossD)*100||0).toFixed(0)}% profitable days</div></div>
+    <div class="card"><div class="m-lbl">Avg Daily P&L</div><div class="m-val ${cls(avgD)}">${sign(avgD)}${inr(avgD)}</div><div class="m-note">per trading day</div></div>
+    <div class="card"><div class="m-lbl">Avg Trade P&L</div><div class="m-val ${cls(sells.length?(gw-gl)/sells.length:0)}">${sign(sells.length?(gw-gl)/sells.length:0)}${inr(sells.length?(gw-gl)/sells.length:0)}</div><div class="m-note">per closed position</div></div>
+  </div>`;
+
+  // Top 5 winners and losers table
+  const top5w=sE.slice(0,5), top5l=[...sE].reverse().slice(0,5);
+  html+=`<div class="grid2" style="margin-top:12px">
+    <div><div class="sec-hd">Top 5 Winners</div><div class="tbox"><table><thead><tr><th>Symbol</th><th>P&L</th><th>Opt</th></tr></thead><tbody>
+    ${top5w.map(([s,p])=>`<tr onclick="filterBySym('${s}')" style="cursor:pointer"><td style="font-weight:600;font-size:11px">${s}</td><td class="pnl-g">+${inr(p)}</td><td><span class="badge b-${optOf(s).toLowerCase()}">${optOf(s)}</span></td></tr>`).join('')}
+    </tbody></table></div></div>
+    <div><div class="sec-hd">Top 5 Losers</div><div class="tbox"><table><thead><tr><th>Symbol</th><th>P&L</th><th>Opt</th></tr></thead><tbody>
+    ${top5l.map(([s,p])=>`<tr onclick="filterBySym('${s}')" style="cursor:pointer"><td style="font-weight:600;font-size:11px">${s}</td><td class="pnl-r">-${inr(Math.abs(p))}</td><td><span class="badge b-${optOf(s).toLowerCase()}">${optOf(s)}</span></td></tr>`).join('')}
+    </tbody></table></div></div>
+  </div>`;
+
+  document.getElementById('insights-content').innerHTML=html;
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+initDash();
+</script>
+</body>
+</html>

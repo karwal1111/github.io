@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CyberSec Academy — Interactive Learning Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;600;700;800&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080b10;--bg2:#0d1117;--bg3:#111620;--bg4:#161c28;--bg5:#1c2333;
+  --bd:#1e2738;--bd2:#263045;
+  --tx:#e2e8f0;--tx2:#8899b4;--tx3:#4a5872;
+  --gr:#00ff9d;--gr2:#00cc7a;--grm:rgba(0,255,157,.08);
+  --re:#ff4757;--rem:rgba(255,71,87,.08);
+  --bl:#4f9eff;--blm:rgba(79,158,255,.08);
+  --am:#ffb830;--amm:rgba(255,184,48,.08);
+  --pu:#a78bfa;--pum:rgba(167,139,250,.08);
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+  --display:'Syne',sans-serif;
+}
+html{background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:14px;min-height:100vh;scroll-behavior:smooth}
+body{min-height:100vh;overflow-x:hidden}
+
+/* SCANLINE OVERLAY */
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:999}
+
+/* LAYOUT */
+.shell{display:flex;height:100vh}
+.sidebar{width:260px;background:var(--bg2);border-right:1px solid var(--bd);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;position:fixed;top:0;left:0;height:100vh;z-index:100}
+.main{flex:1;overflow-y:auto;margin-left:260px}
+
+/* SIDEBAR */
+.sb-brand{padding:20px 18px 16px;border-bottom:1px solid var(--bd)}
+.sb-logo{font-family:var(--display);font-size:17px;font-weight:800;color:var(--gr);letter-spacing:-.3px}
+.sb-logo-sub{font-family:var(--mono);font-size:9px;color:var(--tx3);letter-spacing:2px;text-transform:uppercase;margin-top:3px}
+.sb-section{padding:12px 18px 6px;font-family:var(--mono);font-size:9px;color:var(--tx3);letter-spacing:1.5px;text-transform:uppercase;border-top:1px solid var(--bd)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 14px;margin:1px 8px;border-radius:6px;cursor:pointer;color:var(--tx2);font-size:12px;font-family:var(--sans);font-weight:400;border:none;background:none;width:calc(100% - 16px);text-align:left;transition:background .12s,color .12s;position:relative}
+.nav-item:hover{background:var(--bg3);color:var(--tx)}
+.nav-item.active{background:var(--grm);color:var(--gr);border:1px solid rgba(0,255,157,.15)}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.5;flex-shrink:0}
+.nav-item.active .nav-dot{opacity:1}
+.nav-tag{font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:3px;margin-left:auto;flex-shrink:0}
+.tag-lab{background:var(--amm);color:var(--am);border:1px solid rgba(255,184,48,.2)}
+.tag-sim{background:var(--grm);color:var(--gr);border:1px solid rgba(0,255,157,.2)}
+.tag-viz{background:var(--blm);color:var(--bl);border:1px solid rgba(79,158,255,.2)}
+.tag-game{background:var(--rem);color:var(--re);border:1px solid rgba(255,71,87,.2)}
+.sb-stats{padding:14px 18px;border-top:1px solid var(--bd);margin-top:auto}
+.sb-stat-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.sb-stat-label{font-family:var(--mono);font-size:10px;color:var(--tx3)}
+.sb-stat-val{font-family:var(--mono);font-size:11px;color:var(--gr);font-weight:600}
+.sb-prog{height:3px;background:var(--bg5);border-radius:2px;margin-top:8px;overflow:hidden}
+.sb-prog-fill{height:100%;background:var(--gr);border-radius:2px;transition:width .6s;width:0%}
+
+/* TOPBAR */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--bd);padding:14px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50}
+.tb-title{font-family:var(--display);font-size:16px;font-weight:700;color:var(--tx)}
+.tb-meta{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:2px}
+.tb-r{margin-left:auto;display:flex;gap:8px;align-items:center}
+.badge{font-family:var(--mono);font-size:9px;font-weight:600;padding:3px 8px;border-radius:4px;letter-spacing:.5px;text-transform:uppercase}
+.badge-gr{background:var(--grm);color:var(--gr);border:1px solid rgba(0,255,157,.2)}
+.badge-bl{background:var(--blm);color:var(--bl);border:1px solid rgba(79,158,255,.2)}
+.badge-am{background:var(--amm);color:var(--am);border:1px solid rgba(255,184,48,.2)}
+.badge-re{background:var(--rem);color:var(--re);border:1px solid rgba(255,71,87,.2)}
+.badge-pu{background:var(--pum);color:var(--pu);border:1px solid rgba(167,139,250,.2)}
+
+/* VIEWS */
+.view{display:none;padding:28px;max-width:1200px}
+.view.active{display:block}
+
+/* HOME */
+.home-hero{padding:48px 28px 0;max-width:1200px}
+.hero-eyebrow{font-family:var(--mono);font-size:10px;color:var(--gr);letter-spacing:3px;text-transform:uppercase;margin-bottom:16px}
+.hero-title{font-family:var(--display);font-size:48px;font-weight:800;line-height:1.05;color:var(--tx);margin-bottom:16px}
+.hero-title span{color:var(--gr)}
+.hero-sub{font-size:15px;color:var(--tx2);line-height:1.7;max-width:540px;margin-bottom:32px}
+.hero-stats{display:flex;gap:32px;margin-bottom:48px}
+.hs-item{text-align:left}
+.hs-num{font-family:var(--display);font-size:36px;font-weight:800;color:var(--gr);line-height:1}
+.hs-label{font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.tool-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:0 28px 48px;max-width:1200px}
+.tool-card{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:18px;cursor:pointer;transition:border-color .15s,transform .12s,background .12s;position:relative;overflow:hidden}
+.tool-card:hover{border-color:var(--bd2);transform:translateY(-2px);background:var(--bg3)}
+.tool-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s}
+.tool-card:hover::before{opacity:1}
+.tc-accent{position:absolute;top:0;left:0;right:0;height:2px;border-radius:10px 10px 0 0}
+.tc-num{font-family:var(--mono);font-size:9px;color:var(--tx3);letter-spacing:1px;margin-bottom:10px}
+.tc-title{font-family:var(--display);font-size:14px;font-weight:700;color:var(--tx);margin-bottom:6px;line-height:1.3}
+.tc-desc{font-size:12px;color:var(--tx2);line-height:1.65;margin-bottom:14px}
+.tc-footer{display:flex;align-items:center;justify-content:space-between}
+.tc-topic{font-family:var(--mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px}
+.tc-btn{font-family:var(--mono);font-size:10px;color:var(--gr);background:var(--grm);border:1px solid rgba(0,255,157,.2);padding:4px 10px;border-radius:4px;cursor:pointer;transition:all .12s}
+.tc-btn:hover{background:rgba(0,255,157,.15)}
+
+/* SHARED PANELS */
+.panel{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:20px}
+.panel-title{font-family:var(--display);font-size:13px;font-weight:700;color:var(--tx);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.panel-title-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.divider{height:1px;background:var(--bd);margin:16px 0}
+
+/* FORM ELEMENTS */
+input[type=text],input[type=password],textarea,select{background:var(--bg);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-family:var(--mono);font-size:12px;padding:8px 12px;width:100%;outline:none;transition:border-color .12s}
+input[type=text]:focus,input[type=password]:focus,textarea:focus,select:focus{border-color:var(--gr)}
+input[type=range]{width:100%;accent-color:var(--gr);cursor:pointer}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:6px;border:1px solid var(--bd2);background:var(--bg3);color:var(--tx2);cursor:pointer;font-family:var(--mono);font-size:11px;transition:all .12s}
+.btn:hover{border-color:var(--gr);color:var(--gr);background:var(--grm)}
+.btn-gr{background:var(--gr);color:#000;border-color:var(--gr);font-weight:600}
+.btn-gr:hover{opacity:.85}
+.btn-re{background:var(--re);color:#fff;border-color:var(--re)}
+.btn-re:hover{opacity:.85}
+.btn-bl{background:var(--bl);color:#fff;border-color:var(--bl)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.label{font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;display:block}
+
+/* CODE BLOCK */
+.code-block{background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:12px 14px;font-family:var(--mono);font-size:12px;line-height:1.8;word-break:break-all;min-height:44px}
+.hl-inj{background:rgba(255,71,87,.25);color:#ff6b7a;border-radius:2px;padding:1px 2px}
+.hl-safe{background:rgba(0,255,157,.15);color:var(--gr);border-radius:2px;padding:1px 2px}
+.hl-kw{color:#c792ea}
+.hl-str{color:#c3e88d}
+.hl-fn{color:#82aaff}
+.hl-num{color:#f78c6c}
+.hl-cm{color:#546e7a}
+
+/* STATUS BOXES */
+.status-box{border-radius:6px;padding:10px 14px;font-family:var(--mono);font-size:12px;line-height:1.6;margin-top:10px;border:1px solid}
+.status-ok{background:var(--grm);border-color:rgba(0,255,157,.25);color:var(--gr)}
+.status-err{background:var(--rem);border-color:rgba(255,71,87,.25);color:var(--re)}
+.status-warn{background:var(--amm);border-color:rgba(255,184,48,.25);color:var(--am)}
+.status-info{background:var(--blm);border-color:rgba(79,158,255,.25);color:var(--bl)}
+
+/* TOGGLE SWITCH */
+.toggle-wrap{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg3);border:1px solid var(--bd);border-radius:6px}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;inset:0;background:var(--bg5);border-radius:11px;cursor:pointer;transition:background .2s}
+.toggle-slider::before{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .2s}
+.toggle input:checked+.toggle-slider{background:var(--gr)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(18px)}
+.toggle-label{font-family:var(--mono);font-size:11px;color:var(--tx2)}
+
+/* TABLE */
+.data-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px}
+.data-table th{padding:7px 10px;text-align:left;color:var(--tx3);border-bottom:1px solid var(--bd);font-weight:500;text-transform:uppercase;letter-spacing:.5px;font-size:9px}
+.data-table td{padding:7px 10px;border-bottom:1px solid var(--bd);color:var(--tx2)}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr.highlight td{background:var(--rem);color:var(--re)}
+
+/* PROGRESS RING */
+.ring-wrap{display:flex;flex-direction:column;align-items:center;gap:6px}
+.ring-val{font-family:var(--display);font-size:24px;font-weight:800;color:var(--gr)}
+.ring-label{font-family:var(--mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px}
+
+/* FREQ CHART */
+.freq-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.freq-letter{font-family:var(--mono);font-size:11px;color:var(--tx3);width:14px;text-align:right;flex-shrink:0}
+.freq-bar{height:14px;border-radius:2px;transition:width .3s;min-width:1px}
+.freq-val{font-family:var(--mono);font-size:10px;color:var(--tx3);width:36px;text-align:right;flex-shrink:0}
+
+/* NETWORK NODE */
+.net-diagram{display:flex;align-items:center;justify-content:center;gap:0;padding:20px 0;flex-wrap:nowrap;overflow-x:auto}
+.net-node{display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0}
+.net-box{background:var(--bg3);border:1px solid var(--bd2);border-radius:8px;padding:10px 14px;text-align:center;min-width:90px;position:relative}
+.net-box-label{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--tx);display:block}
+.net-box-sub{font-family:var(--mono);font-size:9px;color:var(--tx3);display:block;margin-top:2px}
+.net-arrow{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:60px}
+.net-line{height:2px;width:100%;border-radius:1px;position:relative;overflow:hidden}
+.net-line-inner{height:100%;border-radius:1px;transition:background .3s}
+.net-pkt{height:8px;width:12px;border-radius:2px;margin:4px auto;transition:all .3s}
+
+/* PACKET HEADER */
+.pkt-header{display:flex;overflow:hidden;border-radius:5px;margin:8px 0;height:28px}
+.pkt-seg{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:600;transition:flex .3s,opacity .3s}
+
+/* STACK */
+.stack-frame{background:var(--bg3);border:1px solid var(--bd);border-radius:4px;padding:8px 12px;margin-bottom:3px;display:flex;align-items:center;justify-content:space-between;font-family:var(--mono);font-size:11px;transition:background .2s,border-color .2s}
+.sf-addr{color:var(--tx3);font-size:9px}
+.sf-content{color:var(--tx);flex:1;margin:0 12px;text-align:center}
+.sf-label{color:var(--tx3);font-size:9px;text-align:right}
+.sf-overflow{background:rgba(255,71,87,.2);border-color:rgba(255,71,87,.4)}
+.sf-overflow .sf-content{color:var(--re)}
+.sf-smash{background:rgba(255,71,87,.4);border-color:var(--re)}
+.sf-smash .sf-content{color:#fff;font-weight:600}
+
+/* CIA */
+.cia-card{background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:all .15s}
+.cia-card:hover{transform:translateY(-2px)}
+.cia-card.selected{transform:translateY(-2px)}
+.cia-letter{font-family:var(--display);font-size:36px;font-weight:800;line-height:1;margin-bottom:4px}
+.cia-name{font-size:11px;color:var(--tx2);margin-bottom:6px}
+.cia-desc{font-size:10px;color:var(--tx3);line-height:1.5}
+
+/* QUIZ */
+.quiz-opt{width:100%;padding:10px 14px;border-radius:6px;border:1px solid var(--bd2);background:var(--bg3);color:var(--tx);cursor:pointer;font-family:var(--sans);font-size:13px;text-align:left;transition:all .12s;margin-bottom:7px;line-height:1.5}
+.quiz-opt:hover{border-color:var(--bl);background:var(--blm)}
+.quiz-opt.correct{border-color:var(--gr);background:var(--grm);color:var(--gr);pointer-events:none}
+.quiz-opt.wrong{border-color:var(--re);background:var(--rem);color:var(--re);pointer-events:none}
+.quiz-opt.dim{opacity:.4;pointer-events:none}
+
+/* ANIMATIONS */
+@keyframes pulse-gr{0%,100%{box-shadow:0 0 0 0 rgba(0,255,157,.3)}50%{box-shadow:0 0 0 8px rgba(0,255,157,0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes slide-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes packet-flow{from{transform:translateX(-100%)}to{transform:translateX(200%)}}
+.anim-slide{animation:slide-in .25s ease}
+.blink{animation:blink 1s step-end infinite}
+.pulse-gr{animation:pulse-gr 2s infinite}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<nav class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo">CyberSec<br>Academy</div>
+    <div class="sb-logo-sub">Interactive Lab</div>
+  </div>
+
+  <div class="sb-section">Authentication</div>
+  <button class="nav-item active" onclick="nav('home')"><span class="nav-dot"></span>Home<span class="nav-tag tag-sim">hub</span></button>
+  <button class="nav-item" onclick="nav('password')"><span class="nav-dot"></span>Password Analyser<span class="nav-tag tag-viz">viz</span></button>
+
+  <div class="sb-section">Cryptography</div>
+  <button class="nav-item" onclick="nav('cipher')"><span class="nav-dot"></span>Caesar / Vigenère<span class="nav-tag tag-lab">lab</span></button>
+  <button class="nav-item" onclick="nav('rsa')"><span class="nav-dot"></span>RSA Key Gen<span class="nav-tag tag-viz">viz</span></button>
+  <button class="nav-item" onclick="nav('hash')"><span class="nav-dot"></span>Hash Explorer<span class="nav-tag tag-viz">viz</span></button>
+  <button class="nav-item" onclick="nav('encmodes')"><span class="nav-dot"></span>Encryption Modes<span class="nav-tag tag-lab">lab</span></button>
+
+  <div class="sb-section">Network Security</div>
+  <button class="nav-item" onclick="nav('tcpip')"><span class="nav-dot"></span>TCP/IP Journey<span class="nav-tag tag-viz">viz</span></button>
+  <button class="nav-item" onclick="nav('firewall')"><span class="nav-dot"></span>Firewall Simulator<span class="nav-tag tag-sim">sim</span></button>
+  <button class="nav-item" onclick="nav('mitm')"><span class="nav-dot"></span>MITM Attack<span class="nav-tag tag-sim">sim</span></button>
+
+  <div class="sb-section">Application Security</div>
+  <button class="nav-item" onclick="nav('sqli')"><span class="nav-dot"></span>SQL Injection<span class="nav-tag tag-lab">lab</span></button>
+  <button class="nav-item" onclick="nav('buffer')"><span class="nav-dot"></span>Buffer Overflow<span class="nav-tag tag-viz">viz</span></button>
+
+  <div class="sb-section">Fundamentals</div>
+  <button class="nav-item" onclick="nav('phishing')"><span class="nav-dot"></span>Phishing Detector<span class="nav-tag tag-game">game</span></button>
+  <button class="nav-item" onclick="nav('cia')"><span class="nav-dot"></span>CIA Triad Game<span class="nav-tag tag-game">game</span></button>
+
+  <div class="sb-stats">
+    <div class="sb-stat-row"><span class="sb-stat-label">Tools visited</span><span class="sb-stat-val" id="sb-visited">0 / 12</span></div>
+    <div class="sb-stat-row"><span class="sb-stat-label">Score</span><span class="sb-stat-val" id="sb-score">0 pts</span></div>
+    <div class="sb-prog"><div class="sb-prog-fill" id="sb-prog"></div></div>
+  </div>
+</nav>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<main class="main">
+
+<!-- HOME -->
+<div class="view active" id="view-home">
+  <div class="home-hero">
+    <div class="hero-eyebrow">University Cybersecurity Lab · 2025</div>
+    <h1 class="hero-title">Learn Security<br>by <span>Breaking</span> Things</h1>
+    <p class="hero-sub">12 fully interactive tools covering cryptography, network attacks, application security, and fundamentals — built for hands-on teaching.</p>
+    <div class="hero-stats">
+      <div class="hs-item"><div class="hs-num">12</div><div class="hs-label">Interactive tools</div></div>
+      <div class="hs-item"><div class="hs-num">5</div><div class="hs-label">Topic areas</div></div>
+      <div class="hs-item"><div class="hs-num">100%</div><div class="hs-label">Browser-based</div></div>
+    </div>
+  </div>
+  <div class="tool-grid">
+    <div class="tool-card" onclick="nav('password')"><div class="tc-accent" style="background:var(--bl)"></div><div class="tc-num">01 · Authentication</div><div class="tc-title">Password Strength Analyser</div><div class="tc-desc">Live entropy score, crack-time estimates, and pattern detection as you type.</div><div class="tc-footer"><span class="tc-topic">Auth</span><span class="badge badge-bl">Visualiser</span></div></div>
+    <div class="tool-card" onclick="nav('cipher')"><div class="tc-accent" style="background:var(--pu)"></div><div class="tc-num">02 · Cryptography</div><div class="tc-title">Caesar / Vigenère Playground</div><div class="tc-desc">Encrypt text, analyse frequency, and crack ciphers using letter statistics.</div><div class="tc-footer"><span class="tc-topic">Crypto</span><span class="badge badge-am">Lab</span></div></div>
+    <div class="tool-card" onclick="nav('rsa')"><div class="tc-accent" style="background:var(--pu)"></div><div class="tc-num">03 · Cryptography</div><div class="tc-title">RSA Key Generation</div><div class="tc-desc">Choose primes p and q, watch the algorithm compute n, φ(n), e, and d live.</div><div class="tc-footer"><span class="tc-topic">Crypto</span><span class="badge badge-bl">Visualiser</span></div></div>
+    <div class="tool-card" onclick="nav('hash')"><div class="tc-accent" style="background:var(--pu)"></div><div class="tc-num">04 · Cryptography</div><div class="tc-title">Hash Function Explorer</div><div class="tc-desc">MD5, SHA-1, SHA-256, SHA-512 side-by-side with avalanche effect demo.</div><div class="tc-footer"><span class="tc-topic">Crypto</span><span class="badge badge-bl">Visualiser</span></div></div>
+    <div class="tool-card" onclick="nav('encmodes')"><div class="tc-accent" style="background:var(--pu)"></div><div class="tc-num">05 · Cryptography</div><div class="tc-title">Encryption Modes</div><div class="tc-desc">ECB vs CBC vs CTR — see why ECB leaks structure with a visual block demo.</div><div class="tc-footer"><span class="tc-topic">Crypto</span><span class="badge badge-am">Lab</span></div></div>
+    <div class="tool-card" onclick="nav('tcpip')"><div class="tc-accent" style="background:var(--gr)"></div><div class="tc-num">06 · Network</div><div class="tc-title">TCP/IP Packet Journey</div><div class="tc-desc">Animated step-through of a packet across DNS, firewall, and server hops.</div><div class="tc-footer"><span class="tc-topic">Network</span><span class="badge badge-bl">Visualiser</span></div></div>
+    <div class="tool-card" onclick="nav('firewall')"><div class="tc-accent" style="background:var(--gr)"></div><div class="tc-num">07 · Network</div><div class="tc-title">Firewall Rule Simulator</div><div class="tc-desc">Write ACL rules, send test packets, trace which rule matches first.</div><div class="tc-footer"><span class="tc-topic">Network</span><span class="badge badge-gr">Simulation</span></div></div>
+    <div class="tool-card" onclick="nav('mitm')"><div class="tc-accent" style="background:var(--gr)"></div><div class="tc-num">08 · Network</div><div class="tc-title">MITM Attack Simulator</div><div class="tc-desc">Alice, Mallory, Bob — watch HTTP intercept, then toggle TLS to block it.</div><div class="tc-footer"><span class="tc-topic">Network</span><span class="badge badge-gr">Simulation</span></div></div>
+    <div class="tool-card" onclick="nav('sqli')"><div class="tc-accent" style="background:var(--am)"></div><div class="tc-num">09 · App Security</div><div class="tc-title">SQL Injection Sandbox</div><div class="tc-desc">Live query builder, classic payloads, and parameterised query fix-it mode.</div><div class="tc-footer"><span class="tc-topic">AppSec</span><span class="badge badge-am">Lab</span></div></div>
+    <div class="tool-card" onclick="nav('buffer')"><div class="tc-accent" style="background:var(--am)"></div><div class="tc-num">10 · App Security</div><div class="tc-title">Buffer Overflow Visualiser</div><div class="tc-desc">Fill the stack byte-by-byte and watch the return address get smashed.</div><div class="tc-footer"><span class="tc-topic">AppSec</span><span class="badge badge-bl">Visualiser</span></div></div>
+    <div class="tool-card" onclick="nav('phishing')"><div class="tc-accent" style="background:var(--re)"></div><div class="tc-num">11 · Fundamentals</div><div class="tc-title">Phishing Email Detector</div><div class="tc-desc">Click the red flags in 6 realistic emails. Score and explanations at the end.</div><div class="tc-footer"><span class="tc-topic">Social Eng.</span><span class="badge badge-re">Game</span></div></div>
+    <div class="tool-card" onclick="nav('cia')"><div class="tc-accent" style="background:var(--re)"></div><div class="tc-num">12 · Fundamentals</div><div class="tc-title">CIA Triad Classifier</div><div class="tc-desc">20 breach scenarios. Classify each by which CIA pillar is violated.</div><div class="tc-footer"><span class="tc-topic">Fundamentals</span><span class="badge badge-re">Game</span></div></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TOOL 1: PASSWORD ANALYSER
+════════════════════════════════════════════ -->
+<div class="view" id="view-password">
+  <div class="topbar"><div><div class="tb-title">Password Strength Analyser</div><div class="tb-meta">Authentication · Visualiser</div></div><div class="tb-r"><span class="badge badge-bl">Tool 01</span></div></div>
+  <div style="padding:24px">
+    <div class="two-col">
+      <div>
+        <div class="panel">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--bl)"></span>Enter a password</div>
+          <div class="label">Password</div>
+          <input type="text" id="pw-input" placeholder="Type any password..." oninput="analysePassword(this.value)" autocomplete="off" spellcheck="false">
+          <div style="margin-top:12px">
+            <div class="label">Strength</div>
+            <div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden;margin-bottom:6px">
+              <div id="pw-bar" style="height:100%;border-radius:4px;transition:width .3s,background .3s;width:0%;background:var(--re)"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--tx3)">
+              <span>Very Weak</span><span>Weak</span><span>Fair</span><span>Strong</span><span>Very Strong</span>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:6px;padding:12px;text-align:center">
+              <div style="font-family:var(--display);font-size:22px;font-weight:800;color:var(--gr)" id="pw-entropy">0</div>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-top:3px">Bits of entropy</div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:6px;padding:12px;text-align:center">
+              <div style="font-family:var(--display);font-size:14px;font-weight:800;color:var(--am)" id="pw-crack">instant</div>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-top:3px">Crack time</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:14px">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--re)"></span>Pattern Detection</div>
+          <div id="pw-patterns" style="font-family:var(--mono);font-size:11px;color:var(--tx3)">Type a password to detect patterns…</div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--am)"></span>Character Composition</div>
+          <div id="pw-composition" style="display:flex;flex-direction:column;gap:8px">
+            <div class="freq-bar-row"><span class="freq-letter">A-Z</span><div style="flex:1;height:14px;background:var(--bg);border-radius:2px"><div id="pw-upper" style="height:100%;background:var(--bl);border-radius:2px;transition:width .3s;width:0%"></div></div><span class="freq-val" id="pw-upper-n">0</span></div>
+            <div class="freq-bar-row"><span class="freq-letter">a-z</span><div style="flex:1;height:14px;background:var(--bg);border-radius:2px"><div id="pw-lower" style="height:100%;background:var(--gr);border-radius:2px;transition:width .3s;width:0%"></div></div><span class="freq-val" id="pw-lower-n">0</span></div>
+            <div class="freq-bar-row"><span class="freq-letter">0-9</span><div style="flex:1;height:14px;background:var(--bg);border-radius:2px"><div id="pw-digit" style="height:100%;background:var(--am);border-radius:2px;transition:width .3s;width:0%"></div></div><span class="freq-val" id="pw-digit-n">0</span></div>
+            <div class="freq-bar-row"><span class="freq-letter">!@#</span><div style="flex:1;height:14px;background:var(--bg);border-radius:2px"><div id="pw-sym" style="height:100%;background:var(--pu);border-radius:2px;transition:width .3s;width:0%"></div></div><span class="freq-val" id="pw-sym-n">0</span></div>
+          </div>
+          <div class="divider"></div>
+          <div class="panel-title" style="margin-bottom:10px"><span class="panel-title-dot" style="background:var(--pu)"></span>Crack Time at Different Attack Rates</div>
+          <table class="data-table">
+            <tr><th>Scenario</th><th>Rate</th><th>Time</th></tr>
+            <tr><td>Online (throttled)</td><td>100/hr</td><td id="ct-online">—</td></tr>
+            <tr><td>Fast GPU (bcrypt)</td><td>10K/s</td><td id="ct-gpu">—</td></tr>
+            <tr><td>ASIC (MD5)</td><td>100B/s</td><td id="ct-asic">—</td></tr>
+          </table>
+        </div>
+        <div class="panel" style="margin-top:14px">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--gr)"></span>Try These</div>
+          <div class="btn-row">
+            <button class="btn" onclick="document.getElementById('pw-input').value='password';analysePassword('password')">password</button>
+            <button class="btn" onclick="document.getElementById('pw-input').value='P@ssw0rd';analysePassword('P@ssw0rd')">P@ssw0rd</button>
+            <button class="btn" onclick="document.getElementById('pw-input').value='correct-horse-battery-staple';analysePassword('correct-horse-battery-staple')">passphrase</button>
+            <button class="btn" onclick="document.getElementById('pw-input').value='Tr0ub4dor&3';analysePassword('Tr0ub4dor&3')">Mixed</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TOOL 2: CAESAR / VIGENÈRE
+════════════════════════════════════════════ -->
+<div class="view" id="view-cipher">
+  <div class="topbar"><div><div class="tb-title">Caesar / Vigenère Cipher Playground</div><div class="tb-meta">Cryptography · Lab</div></div><div class="tb-r"><span class="badge badge-am">Tool 02</span></div></div>
+  <div style="padding:24px">
+    <div class="two-col">
+      <div>
+        <div class="panel">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--gr)"></span>Cipher Settings</div>
+          <div class="label">Mode</div>
+          <div class="btn-row" style="margin-bottom:14px">
+            <button class="btn btn-gr" id="mode-caesar" onclick="setCipherMode('caesar')">Caesar</button>
+            <button class="btn" id="mode-vigenere" onclick="setCipherMode('vigenere')">Vigenère</button>
+          </div>
+          <div id="caesar-ctrl">
+            <div class="label">Shift key: <span id="caesar-shift-val" style="color:var(--gr)">3</span></div>
+            <input type="range" min="1" max="25" value="3" id="caesar-shift" oninput="document.getElementById('caesar-shift-val').textContent=this.value;runCipher()">
+          </div>
+          <div id="vigenere-ctrl" style="display:none">
+            <div class="label">Keyword</div>
+            <input type="text" id="vig-key" value="KEY" oninput="runCipher()" style="text-transform:uppercase" maxlength="12">
+          </div>
+          <div class="divider"></div>
+          <div class="label">Plaintext</div>
+          <textarea id="cipher-plain" rows="3" oninput="runCipher()" placeholder="Type your message here…" style="resize:none">The quick brown fox jumps over the lazy dog</textarea>
+          <div style="margin-top:12px">
+            <div class="label">Ciphertext</div>
+            <div class="code-block" id="cipher-out" style="min-height:64px;word-break:break-all"></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:14px">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--re)"></span>Crack It — Frequency Attack</div>
+          <button class="btn btn-re" onclick="crackCipher()" style="margin-bottom:10px">Attempt auto-crack</button>
+          <div class="code-block" id="crack-result" style="color:var(--am)">Click "Attempt auto-crack" to analyse the ciphertext…</div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--bl)"></span>Letter Frequency Analysis</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--tx3);margin-bottom:10px">Ciphertext frequency vs expected English</div>
+          <div id="freq-chart"></div>
+        </div>
+        <div class="panel" style="margin-top:14px">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--am)"></span>How It Works</div>
+          <div style="font-size:12px;color:var(--tx2);line-height:1.8">
+            <strong style="color:var(--tx)">Caesar:</strong> Each letter shifts by a fixed amount.<br>
+            A→D, B→E, C→F with shift=3.<br><br>
+            <strong style="color:var(--tx)">Vigenère:</strong> Uses a keyword — each letter shifts by the keyword's letter position, cycling through.<br><br>
+            <strong style="color:var(--tx)">Frequency attack:</strong> In English, 'E' appears ~12.7%, 'T' ~9.1%. Map the most-frequent cipher letter back to 'E' to guess the key.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TOOL 3: RSA KEY GEN
+════════════════════════════════════════════ -->
+<div class="view" id="view-rsa">
+  <div class="topbar"><div><div class="tb-title">RSA Key Generation — Step by Step</div><div class="tb-meta">Cryptography · Visualiser</div></div><div class="tb-r"><span class="badge badge-bl">Tool 03</span></div></div>
+  <div style="padding:24px">
+    <div class="two-col">
+      <div>
+        <div class="panel">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--pu)"></span>Choose Two Primes</div>
+          <div class="btn-row" style="flex-wrap:wrap">
+            <button class="btn" onclick="setRSA(3,11)">p=3, q=11</button>
+            <button class="btn" onclick="setRSA(5,13)">p=5, q=13</button>
+            <button class="btn" onclick="setRSA(7,17)">p=7, q=17</button>
+            <button class="btn" onclick="setRSA(11,23)">p=11, q=23</button>
+            <button class="btn" onclick="setRSA(13,29)">p=13, q=29</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+            <div><div class="label">p (prime)</div><input type="number" id="rsa-p" value="3" min="2" max="97" oninput="computeRSA()"></div>
+            <div><div class="label">q (prime)</div><input type="number" id="rsa-q" value="11" min="2" max="97" oninput="computeRSA()"></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:14px">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--gr)"></span>Key Generation Steps</div>
+          <div id="rsa-steps" style="font-family:var(--mono);font-size:12px;line-height:2.2"></div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--am)"></span>Encrypt / Decrypt</div>
+          <div class="label">Message (number, must be &lt; n)</div>
+          <input type="number" id="rsa-msg" value="7" oninput="rsaEncDec()">
+          <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><div class="label">Encrypted (c)</div><div class="code-block" id="rsa-enc" style="min-height:40px"></div></div>
+            <div><div class="label">Decrypted</div><div class="code-block" id="rsa-dec" style="min-height:40px;color:var(--gr)"></div></div>
+          </div>
+          <div class="status-box status-info" style="margin-top:10px;font-size:11px">
+            c = m<sup>e</sup> mod n &nbsp;|&nbsp; m = c<sup>d</sup> mod n
+          </div>
+        </div>
+        <div class="panel" style="margin-top:14px">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--bl)"></span>Key Summary</div>
+          <div id="rsa-summary" style="font-family:var(--mono);font-size:12px;line-height:2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TOOL 4: HASH EXPLORER
+════════════════════════════════════════════ -->
+<div class="view" id="view-hash">
+  <div class="topbar"><div><div class="tb-title">Hash Function Explorer</div><div class="tb-meta">Cryptography · Visualiser</div></div><div class="tb-r"><span class="badge badge-bl">Tool 04</span></div></div>
+  <div style="padding:24px">
+    <div class="panel">
+      <div class="panel-title"><span class="panel-title-dot" style="background:var(--gr)"></span>Input</div>
+      <input type="text" id="hash-input" placeholder="Type anything to hash…" oninput="computeHashes()" value="Hello, World!">
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn" onclick="document.getElementById('hash-input').value='password';computeHashes()">password</button>
+        <button class="btn" onclick="document.getElementById('hash-input').value='Password';computeHashes()">Password</button>
+        <button class="btn" onclick="document.getElementById('hash-input').value='Hello, World!';computeHashes()">Hello, World!</button>
+        <button class="btn" onclick="document.getElementById('hash-input').value='';computeHashes()">(empty)</button>
+      </div>
+    </div>
+    <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
+      <div class="panel"><div class="panel-title"><span class="panel-title-dot" style="background:#ef5350"></span>MD5 <span style="font-family:var(--mono);font-size:10px;color:var(--tx3);font-weight:400">(128-bit · broken · never use for passwords)</span></div><div class="code-block" id="h-md5" style="word-break:break-all;color:#ef9a9a"></div></div>
+      <div class="panel"><div class="panel-title"><span class="panel-title-dot" style="background:#ff9800"></span>SHA-1 <span style="font-family:var(--mono);font-size:10px;color:var(--tx3);font-weight:400">(160-bit · deprecated)</span></div><div class="code-block" id="h-sha1" style="word-break:break-all;color:var(--am)"></div></div>
+      <div class="panel"><div class="panel-title"><span class="panel-title-dot" style="background:var(--gr)"></span>SHA-256 <span style="font-family:var(--mono);font-size:10px;color:var(--tx3);font-weight:400">(256-bit · recommended)</span></div><div class="code-block" id="h-sha256" style="word-break:break-all;color:var(--gr)"></div></div>
+      <div class="panel"><div class="panel-title"><span class="panel-title-dot" style="background:var(--bl)"></span>SHA-512 <span style="font-family:var(--mono);font-size:10px;color:var(--tx3);font-weight:400">(512-bit · strongest)</span></div><div class="code-block" id="h-sha512" style="word-break:break-all;color:var(--bl)"></div></div>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <div class="panel-title"><span class="panel-title-dot" style="background:var(--am)"></span>Avalanche Effect — change one character, the hash is completely different</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--tx2);margin-bottom:8px">SHA-256 of "<span id="av-a-label" style="color:var(--tx)">Hello, World!</span>" vs "<span id="av-b-label" style="color:var(--tx)">Hello, World.</span>"</div>
+      <div style="display:flex;flex-direction:column;gap:4px" id="avalanche-vis"></div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--tx3);margin-top:8px">Bits changed: <span id="av-bits" style="color:var(--am);font-weight:600">—</span> / 256</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TOOL 5: ENCRYPTION MODES
+════════════════════════════════════════════ -->
+<div class="view" id="view-encmodes">
+  <div class="topbar"><div><div class="tb-title">Encryption Modes — ECB vs CBC vs CTR</div><div class="tb-meta">Cryptography · Lab</div></div><div class="tb-r"><span class="badge badge-am">Tool 05</span></div></div>
+  <div style="padding:24px">
+    <div class="panel" style="margin-bottom:14px">
+      <div class="panel-title"><span class="panel-title-dot" style="background:var(--gr)"></span>Message Input</div>
+      <input type="text" id="em-input" value="ATTACKATDAWNATTACKATDAWN" oninput="runEncModes()" style="font-family:var(--mono);text-transform:uppercase" maxlength="32">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:6px">Message is split into 4-char blocks. Watch how each mode treats identical blocks.</div>
+    </div>
+    <div class="three-col">
+      <div class="panel">
+        <div class="panel-title" style="color:var(--re)"><span class="panel-title-dot" style="background:var(--re)"></span>ECB — Electronic Codebook</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--tx3);margin-bottom:10px">Each block encrypted independently. Identical blocks → identical ciphertext.</div>
+        <div id="ecb-blocks"></div>
+        <div class="status-box status-err" style="margin-top:10px;font-size:10px">Patterns leak! Never use ECB.</div>
+      </div>
+      <div class="panel">
+        <div class="panel-title" style="color:var(--am)"><span class="panel-title-dot" style="background:var(--am)"></span>CBC — Cipher Block Chaining</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--tx3);margin-bottom:10px">Each block XOR'd with previous ciphertext before encrypting. Uses an IV.</div>
+        <div id="cbc-blocks"></div>
+        <div class="status-box status-warn" style="margin-top:10px;font-size:10px">Good confidentiality. Vulnerable to padding oracle.</div>
+      </div>
+      <div class="panel">
+        <div class="panel-title" style="color:var(--gr)"><span class="panel-title-dot" style="background:var(--gr)"></span>CTR — Counter Mode</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--tx3);margin-bottom:10px">Encrypts a counter value, XORs result with plaintext. Turns block cipher into stream cipher.</div>
+        <div id="ctr-blocks"></div>
+        <div class="status-box status-ok" style="margin-top:10px;font-size:10px">Parallelisable, no padding. Recommended.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TOOL 6: TCP/IP PACKET JOURNEY
+════════════════════════════════════════════ -->
+<div class="view" id="view-tcpip">
+  <div class="topbar"><div><div class="tb-title">TCP/IP Packet Journey</div><div class="tb-meta">Network Security · Visualiser</div></div><div class="tb-r"><span class="badge badge-gr">Tool 06</span></div></div>
+  <div style="padding:24px">
+    <div class="panel" style="margin-bottom:14px">
+      <div class="net-diagram" id="tcpip-diagram">
+        <div class="net-node"><div class="net-box" id="nn-browser"><span class="net-box-label">Browser</span><span class="net-box-sub">Client</span></div></div>
+        <div class="net-arrow"><div style="font-family:var(--mono);font-size:9px;color:var(--tx3);text-align:center;margin-bottom:4px" id="na1-label">—</div><div class="net-line"><div class="net-line-inner" id="na1" style="height:2px;width:100%;background:var(--bd2)"></div></div><div class="net-pkt" id="np1" style="background:var(--bd2);width:0"></div></div>
+        <div class="net-node"><div class="net-box" id="nn-dns"><span class="net-box-label">DNS</span><span class="net-box-sub">Resolver</span></div></div>
+        <div class="net-arrow"><div style="font-family:var(--mono);font-size:9px;color:var(--tx3);text-align:center;margin-bottom:4px" id="na2-label">—</div><div class="net-line"><div class="net-line-inner" id="na2" style="height:2px;width:100%;background:var(--bd2)"></div></div><div class="net-pkt" id="np2" style="background:var(--bd2);width:0"></div></div>
+        <div class="net-node"><div class="net-box" id="nn-router"><span class="net-box-label">Router</span><span class="net-box-sub">ISP</span></div></div>
+        <div class="net-arrow"><div style="font-family:var(--mono);font-size:9px;color:var(--tx3);text-align:center;margin-bottom:4px" id="na3-label">—</div><div class="net-line"><div class="net-line-inner" id="na3" style="height:2px;width:100%;background:var(--bd2)"></div></div><div class="net-pkt" id="np3" style="background:var(--bd2);width:0"></div></div>
+        <div class="net-node"><div class="net-box" id="nn-fw"><span class="net-box-label">Firewall</span><span class="net-box-sub">Perimeter</span></div></div>
+        <div class="net-arrow"><div style="font-family:var(--mono);font-size:9px;color:var(--tx3);text-align:center;margin-bottom:4px" id="na4-label">—</div><div class="net-line"><div class="net-line-inner" id="na4" style="height:2px;width:100%;background:var(--bd2)"></div></div><div class="net-pkt" id="np4" style="background:var(--bd2);width:0"></div></div>
+        <div class="net-node"><div class="net-box" id="nn-server"><span class="net-box-label">Server</span><span class="net-box-sub">Web App</span></div></div>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="btn btn-gr" id="tcpip-play-btn" onclick="runTcpip()">▶ Simulate Request</button>
+        <button class="btn" onclick="resetTcpip()">Reset</button>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--tx2)" id="tcpip-status">Click simulate to start the packet journey</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><span class="panel-title-dot" style="background:var(--bl)"></span>Packet Headers at Current Hop</div>
+      <div class="pkt-header" id="pkt-header-vis">
+        <div class="pkt-seg" style="flex:1.5;background:#1c2333;color:var(--tx3)">—</div>
+      </div>
+      <div style="font-size:12px;color:var(--tx2);line-height:1.7" id="tcpip-detail">Select a step above to see its layer details.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TOOL 7: FIREWALL SIMULATOR
+════════════════════════════════════════════ -->
+<div class="view" id="view-firewall">
+  <div class="topbar"><div><div class="tb-title">Firewall Rule Simulator</div><div class="tb-meta">Network Security · Simulation</div></div><div class="tb-r"><span class="badge badge-gr">Tool 07</span></div></div>
+  <div style="padding:24px">
+    <div class="two-col">
+      <div>
+        <div class="panel">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--gr)"></span>ACL Rules <span style="font-family:var(--mono);font-size:10px;color:var(--tx3);font-weight:400">(evaluated top-down, first match wins)</span></div>
+          <div id="fw-rules-list" style="margin-bottom:10px"></div>
+          <button class="btn btn-gr" onclick="addFwRule()">+ Add Rule</button>
+          <div class="btn-row" style="margin-top:8px">
+            <button class="btn" onclick="loadFwPreset('web')">Web server preset</button>
+            <button class="btn" onclick="loadFwPreset('ssh')">SSH only</button>
+            <button class="btn" onclick="loadFwPreset('deny')">Default deny</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--bl)"></span>Send a Test Packet</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+            <div><div class="label">Source IP</div><input type="text" id="fw-src" value="192.168.1.50"></div>
+            <div><div class="label">Dest IP</div><input type="text" id="fw-dst" value="10.0.0.1"></div>
+            <div><div class="label">Port</div><input type="number" id="fw-port" value="80" min="1" max="65535"></div>
+            <div><div class="label">Protocol</div><select id="fw-proto"><option>TCP</option><option>UDP</option><option>ICMP</option></select></div>
+          </div>
+          <button class="btn btn-gr" onclick="testFwPacket()">Send packet</button>
+          <div id="fw-result" style="margin-top:10px"></div>
+        </div>
+        <div class="panel" style="margin-top:14px">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--am)"></span>Decision Log</div>
+          <div id="fw-log" style="font-family:var(--mono);font-size:11px;line-height:1.8;min-height:60px;color:var(--tx3)">No packets sent yet…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TOOL 8: MITM
+════════════════════════════════════════════ -->
+<div class="view" id="view-mitm">
+  <div class="topbar"><div><div class="tb-title">Man-in-the-Middle Attack Simulator</div><div class="tb-meta">Network Security · Simulation</div></div><div class="tb-r"><span class="badge badge-gr">Tool 08</span></div></div>
+  <div style="padding:24px">
+    <div class="panel" style="margin-bottom:14px">
+      <div style="display:flex;gap:14px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+        <div class="toggle-wrap">
+          <label class="toggle"><input type="checkbox" id="mitm-tls" onchange="updateMITM()"><div class="toggle-slider"></div></label>
+          <span class="toggle-label">TLS / HTTPS enabled</span>
+        </div>
+        <div class="toggle-wrap">
+          <label class="toggle"><input type="checkbox" id="mitm-active" onchange="updateMITM()"><div class="toggle-slider"></div></label>
+          <span class="toggle-label">Mallory is intercepting</span>
+        </div>
+        <button class="btn btn-gr" onclick="sendMITMMessage()">Send message</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:0;align-items:center;min-height:180px">
+        <div style="text-align:center">
+          <div style="background:var(--bg3);border:1px solid var(--bd2);border-radius:8px;padding:14px;display:inline-block;min-width:100px">
+            <div style="font-family:var(--mono);font-size:20px;margin-bottom:4px">👩</div>
+            <div style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--gr)">Alice</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--tx3)">Client</div>
+          </div>
+          <div id="mitm-alice-msg" style="font-family:var(--mono);font-size:11px;color:var(--tx2);margin-top:8px;max-width:120px;word-break:break-all"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;width:80px">
+          <div id="mitm-wire1" style="height:3px;width:100%;background:var(--bd2);border-radius:2px;position:relative;overflow:hidden"><div id="mitm-pkt1" style="position:absolute;top:0;left:-20px;width:20px;height:100%;border-radius:2px;transition:left .5s"></div></div>
+        </div>
+        <div style="text-align:center">
+          <div id="mitm-mallory-box" style="background:var(--bg3);border:1px solid var(--bd2);border-radius:8px;padding:14px;display:inline-block;min-width:100px;transition:border-color .3s">
+            <div style="font-family:var(--mono);font-size:20px;margin-bottom:4px">😈</div>
+            <div style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--re)">Mallory</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--tx3)">Attacker</div>
+          </div>
+          <div id="mitm-mallory-sees" style="font-family:var(--mono);font-size:10px;color:var(--re);margin-top:8px;max-width:120px;word-break:break-all"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;width:80px">
+          <div id="mitm-wire2" style="height:3px;width:100%;background:var(--bd2);border-radius:2px;position:relative;overflow:hidden"><div id="mitm-pkt2" style="position:absolute;top:0;left:-20px;width:20px;height:100%;border-radius:2px;transition:left .5s"></div></div>
+        </div>
+        <div style="text-align:center">
+          <div style="background:var(--bg3);border:1px solid var(--bd2);border-radius:8px;padding:14px;display:inline-block;min-width:100px">
+            <div style="font-family:var(--mono);font-size:20px;margin-bottom:4px">🖥️</div>
+            <div style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--bl)">Bob</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--tx3)">Server</div>
+          </div>
+          <div id="mitm-bob-msg" style="font-family:var(--mono);font-size:11px;color:var(--tx2);margin-top:8px;max-width:120px;word-break:break-all"></div>
+        </div>
+      </div>
+      <div id="mitm-status-box" class="status-box status-err" style="margin-top:12px">HTTP mode: Mallory can read and modify all traffic.</div>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><span class="panel-title-dot" style="background:var(--bl)"></span>Message Log</div>
+      <div id="mitm-log" style="font-family:var(--mono);font-size:11px;line-height:1.9;max-height:160px;overflow-y:auto;color:var(--tx3)">Toggle the switches above and send messages to see what Mallory intercepts.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TOOL 9: SQL INJECTION
+════════════════════════════════════════════ -->
+<div class="view" id="view-sqli">
+  <div class="topbar"><div><div class="tb-title">SQL Injection Sandbox</div><div class="tb-meta">Application Security · Lab</div></div><div class="tb-r"><span class="badge badge-am">Tool 09</span></div></div>
+  <div style="padding:24px">
+    <div style="margin-bottom:14px">
+      <div class="toggle-wrap">
+        <label class="toggle"><input type="checkbox" id="sqli-safe" onchange="updateSQLi()"><div class="toggle-slider"></div></label>
+        <span class="toggle-label">Fix It Mode — Parameterised Query (safe)</span>
+        <span id="sqli-mode-badge" class="badge badge-re" style="margin-left:auto">Vulnerable</span>
+      </div>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="panel">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--re)"></span>Login Form</div>
+          <div class="label">Username</div>
+          <input type="text" id="sqli-user" placeholder="admin" oninput="updateSQLi()" value="admin">
+          <div class="label" style="margin-top:10px">Password</div>
+          <input type="text" id="sqli-pass" placeholder="hunter2" oninput="updateSQLi()" value="hunter2">
+          <div class="btn-row" style="margin-top:12px">
+            <button class="btn btn-gr" onclick="runSQLi()">Login</button>
+          </div>
+          <div class="divider"></div>
+          <div class="panel-title" style="margin-bottom:8px"><span class="panel-title-dot" style="background:var(--am)"></span>Classic Payloads</div>
+          <div class="btn-row" style="flex-wrap:wrap">
+            <button class="btn" onclick="setSQLi(0)">OR 1=1</button>
+            <button class="btn" onclick="setSQLi(1)">Comment bypass</button>
+            <button class="btn" onclick="setSQLi(2)">Full bypass</button>
+            <button class="btn" onclick="setSQLi(3)">UNION dump</button>
+            <button class="btn" onclick="setSQLi(4)">Pass injection</button>
+            <button class="btn" onclick="setSQLi(5)">Reset</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--bl)"></span>SQL Query (live)</div>
+          <div class="code-block" id="sqli-query" style="min-height:80px;line-height:1.9"></div>
+          <div id="sqli-result" style="margin-top:10px"></div>
+        </div>
+        <div class="panel" style="margin-top:14px">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--am)"></span>Database (simulated)</div>
+          <table class="data-table" id="sqli-db-table">
+            <tr><th>id</th><th>username</th><th>password</th><th>role</th></tr>
+            <tr><td>1</td><td>admin</td><td>hunter2</td><td>admin</td></tr>
+            <tr><td>2</td><td>alice</td><td>p@ssw0rd</td><td>user</td></tr>
+            <tr><td>3</td><td>bob</td><td>qwerty123</td><td>user</td></tr>
+            <tr><td>4</td><td>carol</td><td>s3cret!</td><td>mod</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TOOL 10: BUFFER OVERFLOW
+════════════════════════════════════════════ -->
+<div class="view" id="view-buffer">
+  <div class="topbar"><div><div class="tb-title">Buffer Overflow Visualiser</div><div class="tb-meta">Application Security · Visualiser</div></div><div class="tb-r"><span class="badge badge-am">Tool 10</span></div></div>
+  <div style="padding:24px">
+    <div class="two-col">
+      <div>
+        <div class="panel">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--re)"></span>Input to strcpy()</div>
+          <div class="label">Enter input (buffer capacity = 8 chars)</div>
+          <input type="text" id="buf-input" placeholder="Type here…" oninput="updateBuffer()" maxlength="20" value="HELLO">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:6px" id="buf-status">5 / 8 bytes used — safe</div>
+          <div class="divider"></div>
+          <div class="toggle-wrap">
+            <label class="toggle"><input type="checkbox" id="buf-canary" onchange="updateBuffer()"><div class="toggle-slider"></div></label>
+            <span class="toggle-label">Stack canary protection</span>
+          </div>
+          <div class="toggle-wrap" style="margin-top:8px">
+            <label class="toggle"><input type="checkbox" id="buf-aslr" onchange="updateBuffer()"><div class="toggle-slider"></div></label>
+            <span class="toggle-label">ASLR (address randomisation)</span>
+          </div>
+          <div class="btn-row" style="margin-top:12px">
+            <button class="btn" onclick="document.getElementById('buf-input').value='HELLO';updateBuffer()">Safe input</button>
+            <button class="btn btn-re" onclick="document.getElementById('buf-input').value='AAAAAAAAAAAAAAAAAAAA';updateBuffer()">Overflow!</button>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:14px">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--am)"></span>Defence Explanation</div>
+          <div id="buf-defence" style="font-size:12px;color:var(--tx2);line-height:1.8">Enable defences above to see how they block overflow attacks.</div>
+        </div>
+      </div>
+      <div>
+        <div class="panel" style="height:100%">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--pu)"></span>Memory Stack (grows downward)</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--tx3);display:flex;justify-content:space-between;margin-bottom:6px"><span>Address</span><span>Content</span><span>Region</span></div>
+          <div id="stack-vis"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TOOL 11: PHISHING DETECTOR
+════════════════════════════════════════════ -->
+<div class="view" id="view-phishing">
+  <div class="topbar"><div><div class="tb-title">Phishing Email Detector</div><div class="tb-meta">Social Engineering · Game</div></div><div class="tb-r"><span id="ph-badge" class="badge badge-re">Email 1 of 6</span></div></div>
+  <div style="padding:24px">
+    <div class="two-col">
+      <div>
+        <div class="panel">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--re)"></span>Spot the red flags — click suspicious elements</div>
+          <div id="phishing-email" style="background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:16px;font-size:13px;line-height:1.8"></div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--am)"></span>Score</div>
+          <div style="display:flex;gap:16px;margin-bottom:14px">
+            <div style="text-align:center;flex:1;background:var(--bg3);border:1px solid var(--bd);border-radius:6px;padding:12px">
+              <div style="font-family:var(--display);font-size:28px;font-weight:800;color:var(--gr)" id="ph-found">0</div>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--tx3)">FLAGS FOUND</div>
+            </div>
+            <div style="text-align:center;flex:1;background:var(--bg3);border:1px solid var(--bd);border-radius:6px;padding:12px">
+              <div style="font-family:var(--display);font-size:28px;font-weight:800;color:var(--am)" id="ph-score">0</div>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--tx3)">SCORE</div>
+            </div>
+          </div>
+          <button class="btn btn-gr" onclick="nextPhishingEmail()" id="ph-next-btn" style="width:100%;justify-content:center">Next email →</button>
+        </div>
+        <div class="panel" style="margin-top:14px">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--bl)"></span>Indicators Found</div>
+          <div id="ph-indicators" style="font-family:var(--mono);font-size:11px;color:var(--tx3);line-height:2">Click elements in the email to identify phishing indicators…</div>
+        </div>
+        <div class="panel" style="margin-top:14px">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--pu)"></span>What to look for</div>
+          <div style="font-size:12px;color:var(--tx2);line-height:1.9">
+            • Mismatched / spoofed sender domain<br>
+            • Urgency / threat language<br>
+            • Hover URL ≠ display text<br>
+            • Generic greetings<br>
+            • Suspicious attachments<br>
+            • Requests for credentials
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TOOL 12: CIA TRIAD GAME
+════════════════════════════════════════════ -->
+<div class="view" id="view-cia">
+  <div class="topbar"><div><div class="tb-title">CIA Triad Scenario Classifier</div><div class="tb-meta">Fundamentals · Game</div></div><div class="tb-r"><span id="cia-badge" class="badge badge-re">Scenario 1 of 10</span></div></div>
+  <div style="padding:24px">
+    <div class="two-col">
+      <div>
+        <div class="panel">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--re)"></span>Scenario</div>
+          <div id="cia-scenario" style="font-size:14px;color:var(--tx);line-height:1.8;padding:16px;background:var(--bg3);border:1px solid var(--bd);border-radius:6px;min-height:80px"></div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:8px">Which CIA pillar is <strong style="color:var(--tx)">primarily</strong> violated?</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px">
+            <div class="cia-card" id="cia-c" onclick="answerCIA('C')" style="border-color:rgba(79,158,255,.3)">
+              <div class="cia-letter" style="color:var(--bl)">C</div>
+              <div class="cia-name" style="color:var(--bl)">Confidentiality</div>
+              <div class="cia-desc">Preventing unauthorised access to information</div>
+            </div>
+            <div class="cia-card" id="cia-i" onclick="answerCIA('I')" style="border-color:rgba(255,184,48,.3)">
+              <div class="cia-letter" style="color:var(--am)">I</div>
+              <div class="cia-name" style="color:var(--am)">Integrity</div>
+              <div class="cia-desc">Ensuring data is accurate and untampered</div>
+            </div>
+            <div class="cia-card" id="cia-a" onclick="answerCIA('A')" style="border-color:rgba(0,255,157,.3)">
+              <div class="cia-letter" style="color:var(--gr)">A</div>
+              <div class="cia-name" style="color:var(--gr)">Availability</div>
+              <div class="cia-desc">Keeping systems accessible when needed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--gr)"></span>Progress</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+            <div style="text-align:center;background:var(--bg3);border:1px solid var(--bd);border-radius:6px;padding:12px"><div style="font-family:var(--display);font-size:24px;font-weight:800;color:var(--gr)" id="cia-score">0</div><div style="font-family:var(--mono);font-size:9px;color:var(--tx3)">CORRECT</div></div>
+            <div style="text-align:center;background:var(--bg3);border:1px solid var(--bd);border-radius:6px;padding:12px"><div style="font-family:var(--display);font-size:24px;font-weight:800;color:var(--re)" id="cia-wrong">0</div><div style="font-family:var(--mono);font-size:9px;color:var(--tx3)">WRONG</div></div>
+            <div style="text-align:center;background:var(--bg3);border:1px solid var(--bd);border-radius:6px;padding:12px"><div style="font-family:var(--display);font-size:24px;font-weight:800;color:var(--am)" id="cia-q">1</div><div style="font-family:var(--mono);font-size:9px;color:var(--tx3)">QUESTION</div></div>
+          </div>
+          <div id="cia-feedback" style="font-size:12px;color:var(--tx2);line-height:1.7;min-height:60px"></div>
+          <button class="btn btn-gr" onclick="nextCIA()" id="cia-next" style="display:none;margin-top:10px;width:100%;justify-content:center">Next →</button>
+        </div>
+        <div class="panel" style="margin-top:14px">
+          <div class="panel-title"><span class="panel-title-dot" style="background:var(--bl)"></span>CIA Triad Reference</div>
+          <div style="font-size:12px;color:var(--tx2);line-height:1.9">
+            <span style="color:var(--bl);font-weight:500">Confidentiality:</span> Encryption, access control, data classification.<br>
+            <span style="color:var(--am);font-weight:500">Integrity:</span> Hashing, digital signatures, checksums, audit logs.<br>
+            <span style="color:var(--gr);font-weight:500">Availability:</span> Redundancy, DDoS protection, backups, uptime SLAs.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+/* ════════════════════════════════════════════
+   STATE & NAV
+════════════════════════════════════════════ */
+var visited=new Set(),totalScore=0;
+function nav(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  var v=document.getElementById('view-'+id);
+  if(v){v.classList.add('active');v.scrollIntoView?window.scrollTo(0,0):null}
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'"))n.classList.add('active')});
+  if(id!=='home'){visited.add(id);updateSidebar()}
+  initTool(id);
+}
+function initTool(id){
+  if(id==='cipher'){setCipherMode('caesar');runCipher()}
+  if(id==='rsa'){computeRSA()}
+  if(id==='hash'){computeHashes()}
+  if(id==='encmodes'){runEncModes()}
+  if(id==='tcpip'){resetTcpip()}
+  if(id==='firewall'){loadFwPreset('web')}
+  if(id==='sqli'){updateSQLi()}
+  if(id==='buffer'){updateBuffer()}
+  if(id==='phishing'){initPhishing()}
+  if(id==='cia'){initCIA()}
+  if(id==='mitm'){updateMITM()}
+}
+function updateSidebar(){
+  document.getElementById('sb-visited').textContent=visited.size+' / 12';
+  document.getElementById('sb-score').textContent=totalScore+' pts';
+  document.getElementById('sb-prog').style.width=(visited.size/12*100)+'%';
+}
+function addScore(n){totalScore+=n;updateSidebar()}
+
+/* ════════════════════════════════════════════
+   TOOL 1 — PASSWORD ANALYSER
+════════════════════════════════════════════ */
+function analysePassword(pw){
+  var upper=(pw.match(/[A-Z]/g)||[]).length;
+  var lower=(pw.match(/[a-z]/g)||[]).length;
+  var digit=(pw.match(/[0-9]/g)||[]).length;
+  var sym=(pw.match(/[^A-Za-z0-9]/g)||[]).length;
+  var pool=0;
+  if(upper)pool+=26;if(lower)pool+=26;if(digit)pool+=10;if(sym)pool+=32;
+  var entropy=pw.length*(pool>0?Math.log2(pool):0);
+  var ent=Math.round(entropy);
+  document.getElementById('pw-entropy').textContent=ent;
+  var maxE=pw.length*Math.max(pool>0?Math.log2(pool):0,5);
+  var pct=Math.min(100,entropy/(90)*100);
+  var col=entropy<20?'var(--re)':entropy<40?'var(--am)':entropy<60?'var(--bl)':'var(--gr)';
+  document.getElementById('pw-bar').style.width=pct+'%';
+  document.getElementById('pw-bar').style.background=col;
+  var n=pw.length;var total=pool>0?Math.pow(2,entropy):0;
+  function crackTime(rate){if(!total)return'instant';var s=total/2/rate;if(s<1)return'<1 sec';if(s<60)return Math.round(s)+' sec';if(s<3600)return Math.round(s/60)+' min';if(s<86400)return Math.round(s/3600)+' hr';if(s<31536000)return Math.round(s/86400)+' days';if(s<3153600000)return Math.round(s/31536000)+' yrs';return'centuries'}
+  document.getElementById('pw-crack').textContent=crackTime(1e9);
+  document.getElementById('ct-online').textContent=crackTime(100/3600);
+  document.getElementById('ct-gpu').textContent=crackTime(10000);
+  document.getElementById('ct-asic').textContent=crackTime(1e11);
+  var total=pw.length||1;
+  document.getElementById('pw-upper').style.width=(upper/total*100)+'%';document.getElementById('pw-upper-n').textContent=upper;
+  document.getElementById('pw-lower').style.width=(lower/total*100)+'%';document.getElementById('pw-lower-n').textContent=lower;
+  document.getElementById('pw-digit').style.width=(digit/total*100)+'%';document.getElementById('pw-digit-n').textContent=digit;
+  document.getElementById('pw-sym').style.width=(sym/total*100)+'%';document.getElementById('pw-sym-n').textContent=sym;
+  var patterns=[];
+  if(/^[a-z]+$/i.test(pw))patterns.push('<span style="color:var(--re)">⚠ Letters only</span>');
+  if(/(.)\1{2,}/.test(pw))patterns.push('<span style="color:var(--re)">⚠ Repeated characters</span>');
+  if(/password|letmein|qwerty|123456|abc123/i.test(pw))patterns.push('<span style="color:var(--re)">⚠ Common word/pattern</span>');
+  if(/^[0-9]+$/.test(pw))patterns.push('<span style="color:var(--re)">⚠ Numbers only</span>');
+  if(pw.length>=12)patterns.push('<span style="color:var(--gr)">✓ Good length (12+)</span>');
+  if(upper&&lower&&digit&&sym)patterns.push('<span style="color:var(--gr)">✓ Uses all character classes</span>');
+  if(pw.split(' ').length>=3)patterns.push('<span style="color:var(--gr)">✓ Passphrase detected</span>');
+  document.getElementById('pw-patterns').innerHTML=patterns.length?patterns.join('<br>'):'<span style="color:var(--tx3)">No specific patterns detected</span>';
+}
+
+/* ════════════════════════════════════════════
+   TOOL 2 — CAESAR / VIGENÈRE
+════════════════════════════════════════════ */
+var cipherMode='caesar';
+function setCipherMode(m){
+  cipherMode=m;
+  document.getElementById('caesar-ctrl').style.display=m==='caesar'?'block':'none';
+  document.getElementById('vigenere-ctrl').style.display=m==='vigenere'?'block':'none';
+  document.getElementById('mode-caesar').className='btn'+(m==='caesar'?' btn-gr':'');
+  document.getElementById('mode-vigenere').className='btn'+(m==='vigenere'?' btn-gr':'');
+  runCipher();
+}
+function encCaesar(text,shift){return text.replace(/[a-z]/gi,c=>{var base=c<='Z'?65:97;return String.fromCharCode((c.charCodeAt(0)-base+shift)%26+base)})}
+function encVigenere(text,key){key=key.toUpperCase().replace(/[^A-Z]/g,'');if(!key.length)return text;var ki=0;return text.replace(/[a-z]/gi,c=>{var base=c<='Z'?65:97;var shift=key.charCodeAt(ki%key.length)-65;ki++;return String.fromCharCode((c.charCodeAt(0)-base+shift)%26+base)})}
+function runCipher(){
+  var plain=document.getElementById('cipher-plain').value;
+  var out;
+  if(cipherMode==='caesar'){
+    var shift=parseInt(document.getElementById('caesar-shift').value);
+    out=encCaesar(plain,shift);
+  }else{
+    var key=document.getElementById('vig-key').value;
+    out=encVigenere(plain,key);
+  }
+  document.getElementById('cipher-out').textContent=out;
+  drawFreqChart(out);
+}
+function drawFreqChart(text){
+  var freq={};var total=0;
+  for(var c of text.toUpperCase()){if(c>='A'&&c<='Z'){freq[c]=(freq[c]||0)+1;total++}}
+  var english={E:12.7,T:9.1,A:8.2,O:7.5,I:7.0,N:6.7,S:6.3,H:6.1,R:6.0,D:4.3};
+  var el=document.getElementById('freq-chart');
+  el.innerHTML='';
+  'ETAOINSHRD'.split('').forEach(c=>{
+    var pct=freq[c]?Math.round(freq[c]/total*100):0;
+    var exp=english[c]||0;
+    el.innerHTML+=`<div class="freq-bar-row"><span class="freq-letter">${c}</span><div style="flex:1;height:14px;background:var(--bg);border-radius:2px;position:relative"><div style="height:100%;background:var(--bl);border-radius:2px;width:${pct*4}px;max-width:100%;transition:width .3s"></div><div style="position:absolute;top:0;left:${exp*4}px;width:1px;height:100%;background:var(--am)"></div></div><span class="freq-val">${pct}%</span></div>`;
+  });
+}
+function crackCipher(){
+  var ct=document.getElementById('cipher-out').textContent;
+  var freq={};var total=0;
+  for(var c of ct.toUpperCase()){if(c>='A'&&c<='Z'){freq[c]=(freq[c]||0)+1;total++}}
+  var mostFreq=Object.entries(freq).sort((a,b)=>b[1]-a[1])[0];
+  if(!mostFreq){document.getElementById('crack-result').textContent='No letters in ciphertext';return}
+  var shift=(mostFreq[0].charCodeAt(0)-69+26)%26;
+  var decrypted=encCaesar(ct,-shift);
+  document.getElementById('crack-result').innerHTML=`Most frequent: <span style="color:var(--am)">${mostFreq[0]}</span> → assuming it maps to E<br>Guessed shift: <span style="color:var(--gr)">${shift}</span><br>Decrypted: <span style="color:var(--tx)">${decrypted.slice(0,80)}</span>`;
+}
+
+/* ════════════════════════════════════════════
+   TOOL 3 — RSA
+════════════════════════════════════════════ */
+function isPrime(n){if(n<2)return false;for(var i=2;i<=Math.sqrt(n);i++)if(n%i===0)return false;return true}
+function gcd(a,b){return b===0?a:gcd(b,a%b)}
+function modPow(base,exp,mod){var result=1;base=base%mod;while(exp>0){if(exp%2===1)result=result*base%mod;exp=Math.floor(exp/2);base=base*base%mod}return result}
+function extGCD(a,b){if(a===0)return[0,1];var[x1,y1]=extGCD(b%a,a);return[y1-Math.floor(b/a)*x1,x1]}
+function setRSA(p,q){document.getElementById('rsa-p').value=p;document.getElementById('rsa-q').value=q;computeRSA()}
+function computeRSA(){
+  var p=parseInt(document.getElementById('rsa-p').value);
+  var q=parseInt(document.getElementById('rsa-q').value);
+  var steps=document.getElementById('rsa-steps');
+  if(!isPrime(p)||!isPrime(q)){steps.innerHTML='<span style="color:var(--re)">Both p and q must be prime numbers</span>';return}
+  if(p===q){steps.innerHTML='<span style="color:var(--re)">p and q must be different primes</span>';return}
+  var n=p*q;var phi=(p-1)*(q-1);
+  var e=3;while(e<phi&&gcd(e,phi)!==1)e++;
+  var d_=extGCD(e,phi);var d=((d_[0]%phi)+phi)%phi;
+  var html=`<span style="color:var(--tx3)">Step 1:</span> n = p × q = ${p} × ${q} = <span style="color:var(--gr)">${n}</span><br>`;
+  html+=`<span style="color:var(--tx3)">Step 2:</span> φ(n) = (p-1)(q-1) = ${p-1} × ${q-1} = <span style="color:var(--am)">${phi}</span><br>`;
+  html+=`<span style="color:var(--tx3)">Step 3:</span> Choose e = <span style="color:var(--bl)">${e}</span> (coprime with φ(n))<br>`;
+  html+=`<span style="color:var(--tx3)">Step 4:</span> d = e⁻¹ mod φ(n) = <span style="color:var(--pu)">${d}</span>`;
+  steps.innerHTML=html;
+  document.getElementById('rsa-summary').innerHTML=
+    `<span style="color:var(--tx3)">Public key:</span>  (e=<span style="color:var(--bl)">${e}</span>, n=<span style="color:var(--gr)">${n}</span>)<br>`+
+    `<span style="color:var(--tx3)">Private key:</span> (d=<span style="color:var(--pu)">${d}</span>, n=<span style="color:var(--gr)">${n}</span>)`;
+  window._rsa={p,q,n,phi,e,d};
+  rsaEncDec();
+}
+function rsaEncDec(){
+  if(!window._rsa)return;
+  var{e,d,n}=window._rsa;
+  var m=parseInt(document.getElementById('rsa-msg').value)||1;
+  if(m>=n){document.getElementById('rsa-enc').textContent='Message must be < n='+n;document.getElementById('rsa-dec').textContent='';return}
+  var c=modPow(m,e,n);
+  var m2=modPow(c,d,n);
+  document.getElementById('rsa-enc').textContent=c;
+  document.getElementById('rsa-dec').innerHTML='<span style="color:var(--gr)">'+m2+'</span>'+(m2===m?' ✓':'');
+}
+
+/* ════════════════════════════════════════════
+   TOOL 4 — HASH EXPLORER
+════════════════════════════════════════════ */
+async function sha(txt,algo){
+  var buf=await crypto.subtle.digest(algo,new TextEncoder().encode(txt));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function md5(str){
+  function safeAdd(x,y){var lsw=(x&0xFFFF)+(y&0xFFFF);return((x>>16)+(y>>16)+(lsw>>16))<<16|lsw&0xFFFF}
+  function bitRotateLeft(num,cnt){return num<<cnt|num>>>32-cnt}
+  function md5cmn(q,a,b,x,s,t){return safeAdd(bitRotateLeft(safeAdd(safeAdd(a,q),safeAdd(x,t)),s),b)}
+  function md5ff(a,b,c,d,x,s,t){return md5cmn(b&c|~b&d,a,b,x,s,t)}
+  function md5gg(a,b,c,d,x,s,t){return md5cmn(b&d|c&~d,a,b,x,s,t)}
+  function md5hh(a,b,c,d,x,s,t){return md5cmn(b^c^d,a,b,x,s,t)}
+  function md5ii(a,b,c,d,x,s,t){return md5cmn(c^(b|~d),a,b,x,s,t)}
+  function strToArray(str){var arr=[];for(var i=0;i<str.length;i++)arr.push(str.charCodeAt(i));return arr}
+  var x8=strToArray(unescape(encodeURIComponent(str)));
+  var x32=[];
+  for(var i=0;i<x8.length;i+=4){x32[i>>2]=(x8[i])+(x8[i+1]<<8)+(x8[i+2]<<16)+(x8[i+3]<<24)}
+  var orig_len=x8.length*8;
+  x8.push(0x80);
+  while(x8.length%64!==56)x8.push(0);
+  for(var i=0;i<8;i++)x8.push((orig_len>>>(i*8))&0xFF);
+  var x32_2=[];for(var i=0;i<x8.length;i+=4)x32_2[i>>2]=(x8[i])+(x8[i+1]<<8)+(x8[i+2]<<16)+(x8[i+3]<<24);
+  var a=1732584193,b=-271733879,c=-1732584194,d=271733878;
+  for(var i=0;i<x32_2.length;i+=16){
+    var A=a,B=b,C=c,D=d;
+    a=md5ff(a,b,c,d,x32_2[i+0],7,-680876936);d=md5ff(d,a,b,c,x32_2[i+1],12,-389564586);c=md5ff(c,d,a,b,x32_2[i+2],17,606105819);b=md5ff(b,c,d,a,x32_2[i+3],22,-1044525330);
+    a=md5ff(a,b,c,d,x32_2[i+4],7,-176418897);d=md5ff(d,a,b,c,x32_2[i+5],12,1200080426);c=md5ff(c,d,a,b,x32_2[i+6],17,-1473231341);b=md5ff(b,c,d,a,x32_2[i+7],22,-45705983);
+    a=md5ff(a,b,c,d,x32_2[i+8],7,1770035416);d=md5ff(d,a,b,c,x32_2[i+9],12,-1958414417);c=md5ff(c,d,a,b,x32_2[i+10],17,-42063);b=md5ff(b,c,d,a,x32_2[i+11],22,-1990404162);
+    a=md5ff(a,b,c,d,x32_2[i+12],7,1804603682);d=md5ff(d,a,b,c,x32_2[i+13],12,-40341101);c=md5ff(c,d,a,b,x32_2[i+14],17,-1502002290);b=md5ff(b,c,d,a,x32_2[i+15],22,1236535329);
+    a=md5gg(a,b,c,d,x32_2[i+1],5,-165796510);d=md5gg(d,a,b,c,x32_2[i+6],9,-1069501632);c=md5gg(c,d,a,b,x32_2[i+11],14,643717713);b=md5gg(b,c,d,a,x32_2[i+0],20,-373897302);
+    a=md5gg(a,b,c,d,x32_2[i+5],5,-701558691);d=md5gg(d,a,b,c,x32_2[i+10],9,38016083);c=md5gg(c,d,a,b,x32_2[i+15],14,-660478335);b=md5gg(b,c,d,a,x32_2[i+4],20,-405537848);
+    a=md5gg(a,b,c,d,x32_2[i+9],5,568446438);d=md5gg(d,a,b,c,x32_2[i+14],9,-1019803690);c=md5gg(c,d,a,b,x32_2[i+3],14,-187363961);b=md5gg(b,c,d,a,x32_2[i+8],20,1163531501);
+    a=md5gg(a,b,c,d,x32_2[i+13],5,-1444681467);d=md5gg(d,a,b,c,x32_2[i+2],9,-51403784);c=md5gg(c,d,a,b,x32_2[i+7],14,1735328473);b=md5gg(b,c,d,a,x32_2[i+12],20,-1926607734);
+    a=md5hh(a,b,c,d,x32_2[i+5],4,-378558);d=md5hh(d,a,b,c,x32_2[i+8],11,-2022574463);c=md5hh(c,d,a,b,x32_2[i+11],16,1839030562);b=md5hh(b,c,d,a,x32_2[i+14],23,-35309556);
+    a=md5hh(a,b,c,d,x32_2[i+1],4,-1530992060);d=md5hh(d,a,b,c,x32_2[i+4],11,1272893353);c=md5hh(c,d,a,b,x32_2[i+7],16,-155497632);b=md5hh(b,c,d,a,x32_2[i+10],23,-1094730640);
+    a=md5hh(a,b,c,d,x32_2[i+13],4,681279174);d=md5hh(d,a,b,c,x32_2[i+0],11,-358537222);c=md5hh(c,d,a,b,x32_2[i+3],16,-722521979);b=md5hh(b,c,d,a,x32_2[i+6],23,76029189);
+    a=md5hh(a,b,c,d,x32_2[i+9],4,-640364487);d=md5hh(d,a,b,c,x32_2[i+12],11,-421815835);c=md5hh(c,d,a,b,x32_2[i+15],16,530742520);b=md5hh(b,c,d,a,x32_2[i+2],23,-995338651);
+    a=md5ii(a,b,c,d,x32_2[i+0],6,-198630844);d=md5ii(d,a,b,c,x32_2[i+7],10,1126891415);c=md5ii(c,d,a,b,x32_2[i+14],15,-1416354905);b=md5ii(b,c,d,a,x32_2[i+5],21,-57434055);
+    a=md5ii(a,b,c,d,x32_2[i+12],6,1700485571);d=md5ii(d,a,b,c,x32_2[i+3],10,-1894986606);c=md5ii(c,d,a,b,x32_2[i+10],15,-1051523);b=md5ii(b,c,d,a,x32_2[i+1],21,-2054922799);
+    a=md5ii(a,b,c,d,x32_2[i+8],6,1873313359);d=md5ii(d,a,b,c,x32_2[i+15],10,-30611744);c=md5ii(c,d,a,b,x32_2[i+6],15,-1560198380);b=md5ii(b,c,d,a,x32_2[i+13],21,1309151649);
+    a=md5ii(a,b,c,d,x32_2[i+4],6,-145523070);d=md5ii(d,a,b,c,x32_2[i+11],10,-1120210379);c=md5ii(c,d,a,b,x32_2[i+2],15,718787259);b=md5ii(b,c,d,a,x32_2[i+9],21,-343485551);
+    a=safeAdd(a,A);b=safeAdd(b,B);c=safeAdd(c,C);d=safeAdd(d,D);
+  }
+  function int32ToHex(n){var s='';for(var i=0;i<4;i++)s+=('0'+((n>>(i*8))&0xFF).toString(16)).slice(-2);return s}
+  return int32ToHex(a)+int32ToHex(b)+int32ToHex(c)+int32ToHex(d);
+}
+async function computeHashes(){
+  var txt=document.getElementById('hash-input').value;
+  document.getElementById('h-md5').textContent=md5(txt)||'(computing…)';
+  try{
+    var s1=await sha(txt,'SHA-1');document.getElementById('h-sha1').textContent=s1;
+    var s256=await sha(txt,'SHA-256');document.getElementById('h-sha256').textContent=s256;
+    var s512=await sha(txt,'SHA-512');document.getElementById('h-sha512').textContent=s512;
+    var altTxt=txt.slice(0,-1)+(txt.slice(-1)==='!'?'.':'!');
+    document.getElementById('av-a-label').textContent=txt.slice(0,20);
+    document.getElementById('av-b-label').textContent=altTxt.slice(0,20);
+    var s256b=await sha(altTxt,'SHA-256');
+    drawAvalanche(s256,s256b);
+  }catch(e){}
+}
+function drawAvalanche(h1,h2){
+  var vis=document.getElementById('avalanche-vis');vis.innerHTML='';
+  var bits1=h1.split('').map(c=>parseInt(c,16).toString(2).padStart(4,'0')).join('');
+  var bits2=h2.split('').map(c=>parseInt(c,16).toString(2).padStart(4,'0')).join('');
+  var changed=0;var row='';
+  for(var i=0;i<bits1.length;i++){
+    var diff=bits1[i]!==bits2[i];if(diff)changed++;
+    row+=`<span style="display:inline-block;width:5px;height:12px;background:${diff?'var(--re)':'var(--bg4)'};margin:0 0 1px;border-radius:1px"></span>`;
+    if((i+1)%64===0){vis.innerHTML+=`<div>${row}</div>`;row=''}
+  }
+  if(row)vis.innerHTML+=`<div>${row}</div>`;
+  document.getElementById('av-bits').textContent=changed;
+}
+
+/* ════════════════════════════════════════════
+   TOOL 5 — ENCRYPTION MODES
+════════════════════════════════════════════ */
+function pseudoEncrypt(block,key){
+  var h=0;for(var i=0;i<block.length;i++)h=(h*31+block.charCodeAt(i))>>>0;
+  h=(h^key)>>>0;return h.toString(16).padStart(8,'0').toUpperCase().slice(0,4);
+}
+function runEncModes(){
+  var msg=document.getElementById('em-input').value.toUpperCase().replace(/[^A-Z]/g,'').padEnd(24,'X').slice(0,24);
+  var blocks=[];for(var i=0;i<msg.length;i+=4)blocks.push(msg.slice(i,i+4));
+  function renderBlocks(id,mode){
+    var el=document.getElementById(id);el.innerHTML='';var prev=0x1234;
+    blocks.forEach((b,i)=>{
+      var enc;var inputBlock=b;
+      if(mode==='ecb'){enc=pseudoEncrypt(b,0xDEAD)}
+      else if(mode==='cbc'){enc=pseudoEncrypt(b,(prev^0xDEAD).toString(16));prev=parseInt(enc,16)||0}
+      else{enc=pseudoEncrypt((0xDEAD^i).toString(16),(0xBEEF^i));enc=(parseInt(enc,16)^parseInt(b.split('').map(c=>c.charCodeAt(0)).reduce((a,v)=>a*31+v,0),10)).toString(16).slice(0,4).toUpperCase()}
+      var dupeECB=mode==='ecb'&&i>0&&pseudoEncrypt(blocks[i-1],0xDEAD)===enc;
+      el.innerHTML+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div style="background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:4px 8px;font-family:var(--mono);font-size:11px;width:52px;text-align:center;color:var(--tx2)">${b}</div>
+        <span style="color:var(--tx3);font-size:12px">→</span>
+        <div style="background:${dupeECB?'rgba(255,71,87,.2)':mode==='cbc'?'rgba(255,184,48,.1)':'rgba(0,255,157,.1)'};border:1px solid ${dupeECB?'rgba(255,71,87,.4)':mode==='cbc'?'rgba(255,184,48,.3)':'rgba(0,255,157,.3)'};border-radius:4px;padding:4px 8px;font-family:var(--mono);font-size:11px;flex:1;color:${dupeECB?'var(--re)':mode==='cbc'?'var(--am)':'var(--gr)'}">${enc}${dupeECB?' ← DUPE!':''}</div>
+      </div>`;
+    });
+  }
+  renderBlocks('ecb-blocks','ecb');renderBlocks('cbc-blocks','cbc');renderBlocks('ctr-blocks','ctr');
+}
+
+/* ════════════════════════════════════════════
+   TOOL 6 — TCP/IP PACKET JOURNEY
+════════════════════════════════════════════ */
+var tcpipStep=0;var tcpipTimer=null;
+var tcpipSteps=[
+  {node:'nn-browser',arrow:'na1',label:'DNS query',pkt:'np1',col:'var(--pu)',detail:'<strong style="color:var(--pu)">DNS Resolution</strong><br>Browser checks its cache, then asks the OS resolver. A UDP packet is sent to the DNS server on port 53 to resolve the domain to an IP address.',header:[{label:'UDP',flex:1,col:'#6b5b95'},{label:'DNS Query',flex:2,col:'#3d3560'}]},
+  {node:'nn-dns',arrow:'na2',label:'IP resolved',pkt:'np2',col:'var(--bl)',detail:'<strong style="color:var(--bl)">TCP SYN Handshake</strong><br>Now the IP is known, a 3-way handshake begins: SYN → SYN-ACK → ACK. This establishes a reliable TCP connection before any data is sent.',header:[{label:'ETH',flex:.8,col:'#1a3a5c'},{label:'IP',flex:.8,col:'#1c4a7c'},{label:'TCP SYN',flex:1.5,col:'#2a5f9e'}]},
+  {node:'nn-router',arrow:'na3',label:'Routed to server',pkt:'np3',col:'var(--am)',detail:'<strong style="color:var(--am)">Routing / NAT</strong><br>The ISP router uses its routing table to forward packets toward the destination. NAT may translate private IPs to public IPs at this layer.',header:[{label:'ETH',flex:.8,col:'#5c4400'},{label:'IP + TTL',flex:1.2,col:'#7a5c00'},{label:'TCP',flex:1,col:'#4a5872'}]},
+  {node:'nn-fw',arrow:'na4',label:'Firewall check',pkt:'np4',col:'var(--re)',detail:'<strong style="color:var(--re)">Firewall Inspection</strong><br>The perimeter firewall checks the packet against its ACL rules: source IP, destination port (443), protocol (TCP). If allowed, the packet passes to the server.',header:[{label:'ETH',flex:.8,col:'#5c1414'},{label:'IP',flex:.8,col:'#7a1c1c'},{label:'TCP',flex:.8,col:'#4a5872'},{label:'TLS',flex:1,col:'#6b2020'},{label:'HTTPS',flex:1.5,col:'#4a1515'}]},
+  {node:'nn-server',arrow:null,label:'Request served',pkt:null,col:'var(--gr)',detail:'<strong style="color:var(--gr)">Server Receives Request</strong><br>The web server decrypts the TLS payload, processes the HTTP request, queries the database, and sends back a 200 OK response following the same path in reverse.',header:[{label:'HTTP/2',flex:2,col:'#0a3d20'},{label:'Response',flex:3,col:'#0a4a20'}]},
+];
+function resetTcpip(){
+  clearTimeout(tcpipTimer);tcpipStep=0;
+  ['nn-browser','nn-dns','nn-router','nn-fw','nn-server'].forEach(id=>{
+    var el=document.getElementById(id);if(el){el.style.borderColor='';el.style.background=''}
+  });
+  ['na1','na2','na3','na4'].forEach(id=>{var el=document.getElementById(id);if(el)el.style.background='var(--bd2)'});
+  ['np1','np2','np3','np4'].forEach(id=>{var el=document.getElementById(id);if(el){el.style.background='var(--bd2)';el.style.width='0'}});
+  document.getElementById('pkt-header-vis').innerHTML='<div class="pkt-seg" style="flex:1;background:var(--bg4);color:var(--tx3)">—</div>';
+  document.getElementById('tcpip-detail').textContent='Click simulate to start the packet journey.';
+  document.getElementById('tcpip-status').textContent='Ready';
+  document.getElementById('tcpip-play-btn').disabled=false;
+}
+function runTcpip(){
+  resetTcpip();document.getElementById('tcpip-play-btn').disabled=true;
+  function step(i){
+    if(i>=tcpipSteps.length)return;
+    var s=tcpipSteps[i];
+    var node=document.getElementById(s.node);
+    if(node){node.style.borderColor=s.col;node.style.background='rgba(0,0,0,.3)'}
+    if(s.arrow){
+      var arr=document.getElementById(s.arrow);if(arr)arr.style.background=s.col;
+      var pkt=document.getElementById(s.pkt);if(pkt){pkt.style.background=s.col;pkt.style.width='12px'}
+      var lbl=document.getElementById(s.arrow.replace('na','na')+'l'+s.arrow.slice(-1));
+    }
+    document.getElementById('tcpip-detail').innerHTML=s.detail;
+    document.getElementById('tcpip-status').innerHTML='<span style="color:'+s.col+'">▶ '+s.label+'</span>';
+    var hdr=document.getElementById('pkt-header-vis');
+    hdr.innerHTML=s.header.map(h=>`<div class="pkt-seg" style="flex:${h.flex};background:${h.col};color:rgba(255,255,255,.8);font-family:var(--mono);font-size:9px;font-weight:600;justify-content:center">${h.label}</div>`).join('');
+    tcpipTimer=setTimeout(()=>step(i+1),2000);
+  }
+  step(0);
+}
+
+/* ════════════════════════════════════════════
+   TOOL 7 — FIREWALL
+════════════════════════════════════════════ */
+var fwRules=[];
+function addFwRule(action,srcIP,dstIP,port,proto){
+  fwRules.push({id:Date.now(),action:action||'allow',srcIP:srcIP||'any',dstIP:dstIP||'any',port:port||'any',proto:proto||'TCP'});
+  renderFwRules();
+}
+function delFwRule(id){fwRules=fwRules.filter(r=>r.id!==id);renderFwRules()}
+function renderFwRules(){
+  var el=document.getElementById('fw-rules-list');
+  if(!fwRules.length){el.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--tx3)">No rules — default deny all</div>';return}
+  el.innerHTML=fwRules.map((r,i)=>`
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;background:var(--bg3);border:1px solid var(--bd);border-radius:6px;padding:7px 10px;font-family:var(--mono);font-size:11px">
+      <span style="color:var(--tx3);width:16px">${i+1}</span>
+      <span class="${r.action==='allow'?'badge badge-gr':'badge badge-re'}">${r.action.toUpperCase()}</span>
+      <span style="color:var(--tx2)">${r.srcIP}→${r.dstIP}</span>
+      <span style="color:var(--am)">:${r.port}</span>
+      <span style="color:var(--bl)">${r.proto}</span>
+      <button onclick="delFwRule(${r.id})" style="margin-left:auto;background:none;border:none;color:var(--tx3);cursor:pointer;font-size:14px">×</button>
+    </div>`).join('');
+}
+function loadFwPreset(p){
+  fwRules=[];
+  if(p==='web'){addFwRule('allow','any','any','80','TCP');addFwRule('allow','any','any','443','TCP');addFwRule('deny','any','any','any','any')}
+  else if(p==='ssh'){addFwRule('allow','10.0.0.0/8','any','22','TCP');addFwRule('deny','any','any','any','any')}
+  else{addFwRule('deny','any','any','any','any')}
+}
+function testFwPacket(){
+  var src=document.getElementById('fw-src').value;
+  var dst=document.getElementById('fw-dst').value;
+  var port=document.getElementById('fw-port').value;
+  var proto=document.getElementById('fw-proto').value;
+  var log=[];var decision='deny (default)';var matched=false;
+  for(var i=0;i<fwRules.length;i++){
+    var r=fwRules[i];
+    var portMatch=r.port==='any'||r.port==port;
+    var protoMatch=r.proto==='any'||r.proto===proto;
+    log.push(`Rule ${i+1}: ${r.action} — port ${portMatch?'✓':'✗'} proto ${protoMatch?'✓':'✗'}`);
+    if(portMatch&&protoMatch){decision=r.action;matched=true;log.push(`→ Matched rule ${i+1}: ${r.action.toUpperCase()}`);break}
+  }
+  if(!matched)log.push('→ No match: default DENY');
+  var ok=decision==='allow';
+  document.getElementById('fw-result').innerHTML=`<div class="status-box ${ok?'status-ok':'status-err'}">${ok?'✓ ALLOWED':'✗ BLOCKED'} — ${src}:${port} → ${dst} [${proto}]</div>`;
+  document.getElementById('fw-log').innerHTML=log.map(l=>`<div>${l}</div>`).join('');
+}
+
+/* ════════════════════════════════════════════
+   TOOL 8 — MITM
+════════════════════════════════════════════ */
+var mitmLog=[];
+function updateMITM(){
+  var tls=document.getElementById('mitm-tls').checked;
+  var active=document.getElementById('mitm-active').checked;
+  var mallory=document.getElementById('mitm-mallory-box');
+  if(active&&!tls){mallory.style.borderColor='var(--re)';mallory.style.background='rgba(255,71,87,.1)'}
+  else if(active&&tls){mallory.style.borderColor='var(--am)';mallory.style.background='rgba(255,184,48,.05)'}
+  else{mallory.style.borderColor='var(--bd2)';mallory.style.background='var(--bg3)'}
+  document.getElementById('mitm-status-box').className='status-box '+(tls?'status-ok':(active?'status-err':'status-info'));
+  document.getElementById('mitm-status-box').textContent=tls
+    ?'TLS enabled: End-to-end encryption. Mallory sees only encrypted ciphertext — cannot read or modify.'
+    :(active?'HTTP mode with active interception: Mallory reads and can modify ALL traffic in plaintext.'
+    :'HTTP mode: No interception active. Mallory is present but passive.');
+}
+function sendMITMMessage(){
+  var tls=document.getElementById('mitm-tls').checked;
+  var active=document.getElementById('mitm-active').checked;
+  var msg='GET /account HTTP/1.1\nCookie: session=abc123\nHost: bank.example.com';
+  document.getElementById('mitm-alice-msg').textContent='Sending…';
+  setTimeout(()=>{
+    if(active&&!tls){
+      document.getElementById('mitm-alice-msg').textContent='[plaintext]';
+      document.getElementById('mitm-mallory-sees').textContent='⚠ INTERCEPTED:\n'+msg.slice(0,40)+'…';
+      document.getElementById('mitm-bob-msg').textContent='[modified]';
+      var entry=`<span style="color:var(--re)">⚠ INTERCEPTED</span> — Mallory read: Cookie: session=abc123`;
+      mitmLog.unshift(entry);
+    }else if(active&&tls){
+      document.getElementById('mitm-alice-msg').textContent='[TLS encrypted]';
+      document.getElementById('mitm-mallory-sees').textContent='🔒 Sees: ?????\n(encrypted blob)';
+      document.getElementById('mitm-bob-msg').textContent='[received OK]';
+      var entry=`<span style="color:var(--am)">TLS BLOCKED</span> — Mallory saw only ciphertext`;
+      mitmLog.unshift(entry);
+    }else{
+      document.getElementById('mitm-alice-msg').textContent='[sent]';
+      document.getElementById('mitm-mallory-sees').textContent='(not intercepting)';
+      document.getElementById('mitm-bob-msg').textContent='[received]';
+      var entry=`<span style="color:var(--gr)">OK</span> — Direct delivery, Mallory passive`;
+      mitmLog.unshift(entry);
+    }
+    document.getElementById('mitm-log').innerHTML=mitmLog.slice(0,8).map(e=>`<div>${e}</div>`).join('');
+  },400);
+}
+
+/* ════════════════════════════════════════════
+   TOOL 9 — SQL INJECTION
+════════════════════════════════════════════ */
+var sqliPayloads=[
+  ["' OR '1'='1","x"],
+  ["admin'--","x"],
+  ["' OR '1'='1' --","x"],
+  ["' UNION SELECT 1,username,password FROM users--","x"],
+  ["admin","' OR '1'='1"],
+  ["admin","hunter2"]
+];
+function setSQLi(idx){
+  var pair=sqliPayloads[idx];
+  document.getElementById('sqli-user').value=pair[0];
+  document.getElementById('sqli-pass').value=pair[1];
+  updateSQLi();
+}
+var sqliDB=[
+  {id:1,username:'admin',password:'hunter2',role:'admin'},
+  {id:2,username:'alice',password:'p@ssw0rd',role:'user'},
+  {id:3,username:'bob',password:'qwerty123',role:'user'},
+  {id:4,username:'carol',password:'s3cret!',role:'mod'}
+];
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function updateSQLi(){
+  var safe=document.getElementById('sqli-safe').checked;
+  var u=document.getElementById('sqli-user').value;
+  var p=document.getElementById('sqli-pass').value;
+  document.getElementById('sqli-mode-badge').textContent=safe?'Safe (Parameterised)':'Vulnerable';
+  document.getElementById('sqli-mode-badge').className='badge '+(safe?'badge-gr':'badge-re');
+  var el=document.getElementById('sqli-query');
+  var uS=esc(u); var pS=esc(p);
+  var isInj=u.includes("'") || p.includes("'") || u.toLowerCase().includes('union') || p.toLowerCase().includes('union') || u.toLowerCase().includes(' or ') || p.toLowerCase().includes(' or ');
+  if(safe){
+    el.innerHTML=
+      '<span class="hl-kw">SELECT</span> * <span class="hl-kw">FROM</span> users\n'+
+      '<span class="hl-kw">WHERE</span> username = <span class="hl-safe">?</span> '+
+      '<span class="hl-kw">AND</span> password = <span class="hl-safe">?</span>\n\n'+
+      '<span class="hl-cm">-- Parameters bound separately (never concatenated):</span>\n'+
+      '<span class="hl-cm">-- [1]</span> <span class="hl-str">"'+uS+'"</span>\n'+
+      '<span class="hl-cm">-- [2]</span> <span class="hl-str">"'+pS+'"</span>\n\n'+
+      '<span class="hl-cm">-- Injection characters treated as literal data ✓</span>';
+  }else{
+    var uPart = isInj ? '<span class="hl-inj">'+uS+'</span>' : '<span class="hl-str">'+uS+'</span>';
+    var pPart = isInj ? '<span class="hl-inj">'+pS+'</span>' : '<span class="hl-str">'+pS+'</span>';
+    el.innerHTML=
+      '<span class="hl-kw">SELECT</span> * <span class="hl-kw">FROM</span> users\n'+
+      '<span class="hl-kw">WHERE</span> username = \''+uPart+'\'\n'+
+      '<span class="hl-kw">AND</span> password = \''+pPart+'\''+
+      (isInj ? '\n\n<span class="hl-inj">-- ⚠ Injection detected! User input breaks out of string context</span>' : '');
+  }
+  document.getElementById('sqli-result').innerHTML='';
+}
+function runSQLi(){
+  var safe=document.getElementById('sqli-safe').checked;
+  var u=document.getElementById('sqli-user').value;
+  var p=document.getElementById('sqli-pass').value;
+  var rows=[],msg='';
+  var uL=u.toLowerCase(); var pL=p.toLowerCase();
+
+  if(safe){
+    // Parameterised: only exact match works
+    rows=sqliDB.filter(r=>r.username===u&&r.password===p);
+    if(rows.length){
+      msg='<div class="status-box status-ok">✓ Login successful — Welcome '+esc(rows[0].username)+' ('+rows[0].role+')</div>';
+    }else{
+      msg='<div class="status-box status-err">✗ Invalid credentials</div>';
+    }
+    var hadInj=u.includes("'")||p.includes("'")||uL.includes('union')||pL.includes('union');
+    msg+='<div class="status-box status-info" style="margin-top:8px;font-size:11px">'
+      +(hadInj
+        ? '🛡 Parameterised query: injection characters treated as literal data — attack blocked.'
+        : 'Parameterised query: inputs bound as data, never concatenated into SQL.')
+      +'</div>';
+  }else{
+    // Vulnerable: simulate raw string concatenation
+    var isUnion = uL.includes('union') || pL.includes('union');
+    var isOR    = uL.includes("or '1'='1") || pL.includes("or '1'='1")
+               || uL.includes('or 1=1') || pL.includes('or 1=1');
+    var isComment = u.includes("'--") || u.includes("'#") || u.includes("' --");
+
+    if(isUnion){
+      rows=sqliDB;
+      msg='<div class="status-box status-err">⚠ UNION ATTACK — Query merged with second SELECT. All '+rows.length+' database rows returned!</div>';
+    }else if(isOR){
+      rows=sqliDB;
+      msg='<div class="status-box status-err">⚠ INJECTED — OR 1=1 always evaluates to TRUE. Authentication completely bypassed! All '+rows.length+' rows returned.</div>';
+    }else if(isComment){
+      var uname=u.split("'")[0].replace(/\s+$/,'');
+      rows=sqliDB.filter(r=>r.username===uname);
+      if(rows.length){
+        msg='<div class="status-box status-err">⚠ INJECTED — Comment (--) ignores the password check entirely. Logged in as <strong>'+esc(rows[0].username)+'</strong> with no password!</div>';
+      }else{
+        msg='<div class="status-box status-warn">Injection attempted but username "'+esc(uname)+'" not found in database.</div>';
+      }
+    }else{
+      rows=sqliDB.filter(r=>r.username===u&&r.password===p);
+      if(rows.length){
+        msg='<div class="status-box status-ok">✓ Login successful — '+esc(rows[0].username)+' ('+rows[0].role+')</div>';
+      }else{
+        msg='<div class="status-box status-err">✗ Invalid credentials</div>';
+      }
+    }
+  }
+
+  // Highlight matched rows in the DB table
+  var tbl=document.getElementById('sqli-db-table');
+  tbl.querySelectorAll('tr').forEach((tr,i)=>{if(i>0)tr.classList.remove('highlight')});
+  rows.forEach(r=>{
+    tbl.querySelectorAll('tr').forEach((tr,i)=>{
+      if(i>0&&tr.cells[1]&&tr.cells[1].textContent===r.username)tr.classList.add('highlight');
+    });
+  });
+  document.getElementById('sqli-result').innerHTML=msg;
+}
+
+/* ════════════════════════════════════════════
+   TOOL 10 — BUFFER OVERFLOW
+════════════════════════════════════════════ */
+function updateBuffer(){
+  var inp=document.getElementById('buf-input').value;
+  var canary=document.getElementById('buf-canary').checked;
+  var aslr=document.getElementById('buf-aslr').checked;
+  var bufSize=8;
+  var len=inp.length;
+  var overflow=len>bufSize;
+  var overwriteCanary=len>bufSize;
+  var overwriteEBP=len>bufSize+4;
+  var overwriteRET=len>bufSize+8;
+
+  // Status line
+  var statusEl=document.getElementById('buf-status');
+  statusEl.textContent=len+' / '+bufSize+' bytes used — '+(overflow?'OVERFLOW! (+'+( len-bufSize)+' bytes past boundary)':'safe');
+  statusEl.style.color=overflow?'var(--re)':'var(--gr)';
+
+  // Address base
+  var base=aslr?'0x????':'0x0040';
+
+  // Helper: pad/trim display content to exactly 8 chars
+  function showContent(s,max){ return s.length>max?s.slice(0,max-1)+'…':s; }
+
+  // Build frames bottom-up (stack grows down, so highest addr = oldest frame = shown first)
+  var frames=[];
+
+  // Return address (highest on stack diagram = top)
+  var retContent, retClass='';
+  if(overwriteRET&&!canary){
+    retContent=inp.slice(bufSize+8,bufSize+12)||'AAAA';
+    retClass='sf-smash';
+  } else {
+    retContent='0x'+base.slice(2)+'1234 → main()';
+    retClass='';
+  }
+  frames.push({addr:base+'1234',content:retContent,label:'return address',cls:retClass});
+
+  // Saved EBP
+  var ebpContent, ebpClass='';
+  if(overwriteEBP&&!canary){
+    ebpContent=showContent(inp.slice(bufSize+4,bufSize+8)||'AAAA',12);
+    ebpClass='sf-overflow';
+  } else {
+    ebpContent='[saved EBP]';
+    ebpClass='';
+  }
+  frames.push({addr:base+'1230',content:ebpContent,label:'saved frame ptr',cls:ebpClass});
+
+  // Stack canary
+  var canaryContent, canaryClass='';
+  if(canary){
+    if(overwriteCanary){
+      canaryContent='✗ CANARY SMASHED';
+      canaryClass='sf-smash';
+    } else {
+      canaryContent='0xDEADBEEF (canary)';
+      canaryClass='';
+    }
+  } else {
+    canaryContent='[no canary]';
+    canaryClass='';
+  }
+  frames.push({addr:base+'1220',content:canaryContent,label:'stack canary',cls:canaryClass});
+
+  // buf[4-7]
+  var buf1=inp.slice(4,8);
+  var buf1Class=len>4?(len>bufSize?'sf-overflow':''):'';
+  frames.push({addr:base+'1210',content:buf1?buf1.padEnd(4,' '):'[ empty ]',label:'buf[4–7]',cls:buf1Class});
+
+  // buf[0-3]
+  var buf0=inp.slice(0,4);
+  frames.push({addr:base+'1200',content:buf0?buf0.padEnd(4,' '):'[ empty ]',label:'buf[0–3]',cls:''});
+
+  // Local vars
+  frames.push({addr:base+'11F0',content:'[local variables]',label:'local vars',cls:''});
+
+  // Render
+  var vis=document.getElementById('stack-vis');
+  var html='';
+
+  // Overflow spill banner at top if overflowing
+  if(overflow){
+    var spill=inp.slice(bufSize);
+    html+='<div class="stack-frame" style="background:rgba(255,71,87,.18);border-color:var(--re);margin-bottom:6px">'
+      +'<span class="sf-addr" style="color:var(--re)">SPILL</span>'
+      +'<span class="sf-content" style="color:var(--re);font-family:var(--mono);font-size:11px">'
+      +esc(showContent(spill,16))+' ← '+spill.length+' byte(s) past end of buffer'
+      +'</span>'
+      +'<span class="sf-label" style="color:var(--re)">OVERFLOW</span>'
+      +'</div>';
+    if(canary&&overwriteCanary){
+      html+='<div class="status-box status-err" style="margin-bottom:8px;font-size:12px">'
+        +'🛡 Stack canary detected corruption — program would abort() before return. Attack stopped!'
+        +'</div>';
+    } else if(!canary&&overwriteRET){
+      html+='<div class="status-box status-err" style="margin-bottom:8px;font-size:12px">'
+        +'💀 Return address overwritten! Attacker controls execution flow. Arbitrary code execution possible.'
+        +'</div>';
+    } else if(!canary&&overwriteEBP){
+      html+='<div class="status-box status-warn" style="margin-bottom:8px;font-size:12px">'
+        +'⚠ Frame pointer overwritten. Stack is corrupted — may crash or be exploited further.'
+        +'</div>';
+    } else {
+      html+='<div class="status-box status-warn" style="margin-bottom:8px;font-size:12px">'
+        +'⚠ Buffer boundary exceeded. '+( len-bufSize)+' byte(s) overflowed into adjacent stack memory.'
+        +'</div>';
+    }
+  }
+
+  frames.forEach(f=>{
+    html+='<div class="stack-frame '+f.cls+'">'
+      +'<span class="sf-addr">'+(aslr&&!f.addr.includes('????')?f.addr:f.addr)+'</span>'
+      +'<span class="sf-content" style="font-family:var(--mono);font-size:11px">'+esc(f.content)+'</span>'
+      +'<span class="sf-label">'+f.label+'</span>'
+      +'</div>';
+  });
+
+  vis.innerHTML=html;
+
+  // Defence explanation
+  var defText=[];
+  if(canary) defText.push('<span style="color:var(--gr);font-weight:500">Stack canary:</span> A random sentinel value is placed between the buffer and the return address. Before the function returns, it checks the canary — if overwritten, the program calls abort() instead of jumping to the attacker\'s address.');
+  if(aslr)  defText.push('<span style="color:var(--bl);font-weight:500">ASLR (Address Space Layout Randomisation):</span> Stack, heap, and library addresses are randomised on every run. Even if the attacker overwrites the return address, they cannot predict where their shellcode lives in memory.');
+  if(!canary&&!aslr) defText.push('<span style="color:var(--tx3)">No defences active. Enable stack canary and/or ASLR above to see how each mitigates this attack.</span>');
+  document.getElementById('buf-defence').innerHTML=defText.join('<br><br>');
+}
+
+/* ════════════════════════════════════════════
+   TOOL 11 — PHISHING
+════════════════════════════════════════════ */
+var phEmails=[
+  {subject:'⚠️ Urgent: Your account will be suspended',from:'security@paypa1.com',fromReal:'spoofed (paypa1 ≠ paypal)',flags:['from-addr','urgency','link-mismatch'],body:`<div style="color:var(--tx3);font-size:11px;margin-bottom:8px">From: <span id="ph-from-0" class="ph-flag" data-flag="from-addr" onclick="clickPhFlag(this)" style="cursor:pointer;border-bottom:1px dashed var(--tx3)">security@paypa1.com</span> | To: you@email.com</div><div style="border-bottom:1px solid var(--bd);padding-bottom:8px;margin-bottom:12px;font-weight:500;font-size:14px" id="ph-sub-0" class="ph-flag" data-flag="urgency" onclick="clickPhFlag(this)" style="cursor:pointer">⚠️ Your PayPal account will be SUSPENDED in 24 hours</div><p>Dear Customer,</p><br><p id="ph-urg-0" class="ph-flag" data-flag="urgency" onclick="clickPhFlag(this)" style="cursor:pointer;color:var(--tx)">We have detected suspicious activity on your account. You MUST verify your information immediately or your account will be permanently closed.</p><br><p>Click here to verify: <span id="ph-lnk-0" class="ph-flag" data-flag="link-mismatch" onclick="clickPhFlag(this)" style="cursor:pointer;color:var(--bl);text-decoration:underline">www.paypal.com/verify</span> <span style="font-size:10px;color:var(--tx3)">(actual: http://192.168.1.1/steal)</span></p>`},
+  {subject:'Your package could not be delivered',from:'noreply@fedex-tracking.net',fromReal:'spoofed (fedex-tracking.net ≠ fedex.com)',flags:['from-addr','attachment','urgency'],body:`<div style="color:var(--tx3);font-size:11px;margin-bottom:8px">From: <span class="ph-flag" data-flag="from-addr" onclick="clickPhFlag(this)" style="cursor:pointer;border-bottom:1px dashed var(--tx3)">noreply@fedex-tracking.net</span></div><p>Dear Valued Customer,</p><br><p>We attempted to deliver your package #FL8472910 but were unable to complete delivery.</p><br><p id="ph-urg-1" class="ph-flag" data-flag="urgency" onclick="clickPhFlag(this)" style="cursor:pointer;color:var(--am)">You have 48 hours to reschedule or your package will be returned.</p><br><p>Please open the attached form to reschedule: <span class="ph-flag" data-flag="attachment" onclick="clickPhFlag(this)" style="cursor:pointer;color:var(--am)">📎 DeliveryForm.pdf.exe</span></p>`},
+  {subject:'IT Department: Password Reset Required',from:'it-support@company-helpdesk.com',fromReal:'spoofed external domain',flags:['from-addr','credential-request','urgency'],body:`<div style="color:var(--tx3);font-size:11px;margin-bottom:8px">From: <span class="ph-flag" data-flag="from-addr" onclick="clickPhFlag(this)" style="cursor:pointer;border-bottom:1px dashed var(--tx3)">it-support@company-helpdesk.com</span></div><p class="ph-flag" data-flag="credential-request" onclick="clickPhFlag(this)" style="cursor:pointer">Hello,</p><br><p>Our systems detected that your password has been compromised. <span class="ph-flag" data-flag="urgency" onclick="clickPhFlag(this)" style="cursor:pointer;color:var(--am)">You must reset it now to avoid account lockout.</span></p><br><p class="ph-flag" data-flag="credential-request" onclick="clickPhFlag(this)" style="cursor:pointer;color:var(--tx)">Please reply to this email with your current username and password so we can process the reset manually.</p>`},
+];
+var phState={email:0,found:new Set(),score:0,totalScore:0};
+var flagLabels={'from-addr':'Spoofed sender domain','urgency':'Urgency / threat language','link-mismatch':'Display URL ≠ actual URL','attachment':'Suspicious attachment (.exe)','credential-request':'Request for credentials (red flag!)','generic':'Generic greeting'};
+function initPhishing(){phState={email:0,found:new Set(),score:0,totalScore:phState.totalScore};renderPhishingEmail()}
+function renderPhishingEmail(){
+  if(phState.email>=phEmails.length){
+    document.getElementById('phishing-email').innerHTML=`<div style="text-align:center;padding:24px"><div style="font-family:var(--display);font-size:28px;font-weight:800;color:var(--gr);margin-bottom:8px">${phState.totalScore} pts</div><div style="color:var(--tx2)">All ${phEmails.length} emails completed!</div><button class="btn btn-gr" onclick="phState.totalScore=0;initPhishing()" style="margin-top:14px">Restart</button></div>`;
+    document.getElementById('ph-next-btn').style.display='none';return;
+  }
+  var em=phEmails[phState.email];
+  phState.found=new Set();
+  document.getElementById('ph-badge').textContent='Email '+(phState.email+1)+' of '+phEmails.length;
+  document.getElementById('ph-found').textContent='0';
+  document.getElementById('ph-score').textContent=phState.totalScore;
+  document.getElementById('ph-indicators').innerHTML='Click suspicious elements in the email…';
+  document.getElementById('phishing-email').innerHTML=`
+    <div style="background:var(--bg3);border-radius:6px;padding:12px 14px;margin-bottom:10px;font-size:12px">
+      <strong>Subject:</strong> ${em.subject}
+    </div>
+    ${em.body}`;
+}
+function clickPhFlag(el){
+  var flag=el.dataset.flag;
+  if(phState.found.has(flag))return;
+  phState.found.add(flag);phState.score++;phState.totalScore++;
+  el.style.background='rgba(255,71,87,.2)';el.style.borderRadius='3px';el.style.padding='1px 3px';
+  document.getElementById('ph-found').textContent=phState.found.size;
+  document.getElementById('ph-score').textContent=phState.totalScore;
+  var cur=document.getElementById('ph-indicators').innerHTML;
+  var isFirst=cur.includes('Click suspicious');
+  document.getElementById('ph-indicators').innerHTML=(isFirst?'':cur+'<br>')+`<span style="color:var(--re)">✓ ${flagLabels[flag]||flag}</span>`;
+  addScore(5);
+}
+function nextPhishingEmail(){phState.email++;phState.score=0;renderPhishingEmail()}
+window.clickPhFlag=clickPhFlag;
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('ph-found')||'';
+  document.getElementById('ph-score')||'';
+});
+
+/* ════════════════════════════════════════════
+   TOOL 12 — CIA TRIAD
+════════════════════════════════════════════ */
+var ciaScenarios=[
+  {s:'A ransomware attack encrypts all files on a hospital\'s servers, preventing doctors from accessing patient records.',a:'A',e:'Availability — the data exists but is inaccessible. The hospital cannot use it when needed.'},
+  {s:'An attacker steals a database of 10 million customer email addresses and credit card numbers.',a:'C',e:'Confidentiality — private data was accessed by an unauthorised party.'},
+  {s:'A hacker modifies financial transaction records to transfer funds to their own account.',a:'I',e:'Integrity — the accuracy and trustworthiness of the data was compromised.'},
+  {s:'A DDoS attack floods a bank\'s website with traffic, making it inaccessible to customers.',a:'A',e:'Availability — the service is overwhelmed and cannot respond to legitimate requests.'},
+  {s:'An insider shares proprietary source code with a competitor.',a:'C',e:'Confidentiality — sensitive information was disclosed to an unauthorised party.'},
+  {s:'An attacker intercepts and modifies a digitally signed document during transmission.',a:'I',e:'Integrity — the document\'s authenticity and accuracy were violated.'},
+  {s:'A backdoor allows an attacker to read encrypted messages between employees.',a:'C',e:'Confidentiality — private communications are being read without authorisation.'},
+  {s:'A misconfigured server causes 6 hours of downtime for an e-commerce platform.',a:'A',e:'Availability — the system was unavailable during a critical trading period.'},
+  {s:'An attacker poisons a DNS cache to redirect users to a fake banking website.',a:'I',e:'Integrity — the correctness of the DNS data was compromised, leading users astray.'},
+  {s:'An employee accidentally emails a salary spreadsheet to all staff instead of HR.',a:'C',e:'Confidentiality — sensitive HR data was disclosed to unauthorised recipients.'},
+];
+var ciaState={q:0,score:0,wrong:0,answered:false};
+function initCIA(){ciaState={q:0,score:0,wrong:0,answered:false};renderCIA()}
+function renderCIA(){
+  if(ciaState.q>=ciaScenarios.length){
+    document.getElementById('cia-scenario').innerHTML=`<strong style="color:var(--gr)">Complete!</strong> Score: ${ciaState.score}/${ciaScenarios.length}`;
+    document.getElementById('cia-feedback').innerHTML=`<div class="status-box status-ok">Final score: ${ciaState.score}/${ciaScenarios.length} (${Math.round(ciaState.score/ciaScenarios.length*100)}%)</div><button class="btn btn-gr" onclick="initCIA()" style="margin-top:8px">Restart</button>`;
+    document.getElementById('cia-next').style.display='none';return;
+  }
+  var sc=ciaScenarios[ciaState.q];
+  ciaState.answered=false;
+  document.getElementById('cia-badge').textContent='Scenario '+(ciaState.q+1)+' of '+ciaScenarios.length;
+  document.getElementById('cia-q').textContent=ciaState.q+1;
+  document.getElementById('cia-scenario').textContent=sc.s;
+  document.getElementById('cia-feedback').innerHTML='';
+  document.getElementById('cia-next').style.display='none';
+  ['cia-c','cia-i','cia-a'].forEach(id=>{
+    var el=document.getElementById(id);
+    el.style.opacity='1';el.style.pointerEvents='';
+    el.style.background='var(--bg3)';el.style.transform='';
+  });
+}
+function answerCIA(ans){
+  if(ciaState.answered)return;ciaState.answered=true;
+  var sc=ciaScenarios[ciaState.q];var correct=ans===sc.a;
+  if(correct){ciaState.score++;document.getElementById('cia-score').textContent=ciaState.score;addScore(10)}
+  else{ciaState.wrong++;document.getElementById('cia-wrong').textContent=ciaState.wrong}
+  var map={'C':'cia-c','I':'cia-i','A':'cia-a'};
+  document.getElementById(map[sc.a]).style.background=correct?'rgba(0,255,157,.15)':'rgba(0,255,157,.1)';
+  document.getElementById(map[sc.a]).style.transform='translateY(-2px)';
+  if(ans!==sc.a){document.getElementById(map[ans]).style.background='rgba(255,71,87,.15)'}
+  Object.values(map).forEach(id=>{document.getElementById(id).style.pointerEvents='none'});
+  document.getElementById('cia-feedback').innerHTML=`<div class="status-box ${correct?'status-ok':'status-err'}">${correct?'✓ Correct!':'✗ Incorrect.'} ${sc.e}</div>`;
+  document.getElementById('cia-next').style.display='block';
+}
+function nextCIA(){ciaState.q++;renderCIA()}
+
+/* ════════════════════════════════════════════
+   BOOT
+════════════════════════════════════════════ */
+analysePassword('');runEncModes();loadFwPreset('web');computeRSA();
+// SQL and buffer init happens on nav() — elements only exist when their view is active
+</script>
+</body>
+</html>

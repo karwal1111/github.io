@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Confluence Playbook — Interactive Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0d0f;
+    --bg-2:#111418;
+    --ink:#e8e6df;
+    --ink-dim:#9ea19a;
+    --line:#222629;
+    --accent:#d4a84b;      /* gold */
+    --up:#4ac48a;
+    --down:#e16b6b;
+    --warn:#e2b548;
+    --ifvg:#c08bff;
+    --fib:#5ec1d6;
+    --grid:#161a1d;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased}
+  body{
+    background-image:
+      radial-gradient(1100px 500px at 15% -10%, rgba(212,168,75,.08), transparent 60%),
+      radial-gradient(900px 600px at 110% 10%, rgba(94,193,214,.05), transparent 60%),
+      linear-gradient(var(--bg),var(--bg));
+    min-height:100vh;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:36px 28px 120px}
+  .mono{font-family:'JetBrains Mono',monospace}
+  .serif{font-family:'Fraunces',serif;letter-spacing:-.01em}
+
+  /* HEADER */
+  header.hero{
+    border:1px solid var(--line);
+    background:linear-gradient(180deg, #0f1214, #0b0d0f);
+    padding:28px 30px;
+    position:relative;
+    overflow:hidden;
+  }
+  header.hero::before{
+    content:"";position:absolute;inset:0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:40px 40px;
+    opacity:.35;mask-image:linear-gradient(180deg, black, transparent 85%);
+  }
+  .ticker{
+    position:relative;z-index:2;
+    display:flex;gap:18px;align-items:center;color:var(--ink-dim);
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  }
+  .dot{width:8px;height:8px;background:var(--up);border-radius:50%;box-shadow:0 0 12px var(--up);animation:pulse 2s infinite}
+  @keyframes pulse{50%{opacity:.35}}
+  h1.title{
+    position:relative;z-index:2;
+    font-family:'Fraunces',serif;
+    font-weight:300;
+    font-size:clamp(42px,6vw,76px);
+    line-height:.98;letter-spacing:-.03em;
+    margin:18px 0 8px;
+  }
+  h1.title em{font-style:italic;color:var(--accent);font-weight:400}
+  .subtitle{position:relative;z-index:2;color:var(--ink-dim);font-size:15px;max-width:640px;line-height:1.55}
+  .tags{position:relative;z-index:2;display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+  .tag{font-family:'JetBrains Mono',monospace;font-size:11px;padding:5px 10px;border:1px solid var(--line);color:var(--ink-dim);letter-spacing:.08em}
+
+  /* CAVEMAN BANNER */
+  .caveman{
+    margin:18px 0 0;
+    padding:14px 18px;
+    border-left:3px solid var(--accent);
+    background:rgba(212,168,75,.06);
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--ink);
+  }
+  .caveman b{color:var(--accent)}
+
+  /* SECTION */
+  section{margin-top:56px}
+  .sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:22px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  .sec-num{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);letter-spacing:.2em}
+  .sec-title{font-family:'Fraunces',serif;font-weight:400;font-size:28px;letter-spacing:-.02em;margin:0}
+  .sec-lead{color:var(--ink-dim);max-width:760px;line-height:1.7;font-size:15px}
+
+  /* CARDS */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media(max-width:820px){.grid-2,.grid-3{grid-template-columns:1fr}}
+  .card{
+    border:1px solid var(--line);background:var(--bg-2);
+    padding:22px;position:relative;overflow:hidden;
+  }
+  .card h3{font-family:'Fraunces',serif;font-weight:500;font-size:19px;margin:0 0 10px}
+  .card p{color:var(--ink-dim);font-size:14px;line-height:1.65;margin:0}
+  .card .kbd{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px;display:block}
+
+  /* SIM (canvas) */
+  .sim{
+    border:1px solid var(--line);background:var(--bg-2);
+    padding:20px;
+  }
+  .sim-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+  .sim-title{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim)}
+  .sim-title b{color:var(--accent)}
+  .sim canvas{width:100%;height:auto;display:block;background:#0a0c0e;border:1px solid var(--line)}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .btn{
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    padding:9px 14px;background:transparent;color:var(--ink);border:1px solid var(--line);cursor:pointer;
+    transition:all .15s;
+  }
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.primary{border-color:var(--accent);color:var(--accent)}
+  .btn.primary:hover{background:var(--accent);color:#000}
+
+  .readout{
+    margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:12px;
+    color:var(--ink-dim);line-height:1.7;padding:10px 12px;background:#0a0c0e;border:1px dashed var(--line);
+    min-height:42px;
+  }
+  .readout span.ok{color:var(--up)}
+  .readout span.bad{color:var(--down)}
+  .readout span.warn{color:var(--warn)}
+
+  /* TRAP */
+  .trap{
+    border:1px solid rgba(225,107,107,.35);
+    background:rgba(225,107,107,.04);
+    padding:16px 18px;margin-top:12px;
+    font-size:14px;line-height:1.6;color:var(--ink);
+  }
+  .trap b{color:var(--down);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;display:block;margin-bottom:6px}
+
+  .win{
+    border:1px solid rgba(74,196,138,.3);
+    background:rgba(74,196,138,.04);
+    padding:16px 18px;margin-top:12px;
+    font-size:14px;line-height:1.6;color:var(--ink);
+  }
+  .win b{color:var(--up);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;display:block;margin-bottom:6px}
+
+  /* CHECKLIST */
+  .checklist{border:1px solid var(--line);background:var(--bg-2);padding:24px}
+  .ch-row{
+    display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;
+    padding:14px 0;border-bottom:1px dashed var(--line);
+  }
+  .ch-row:last-child{border-bottom:0}
+  .ch-num{font-family:'JetBrains Mono',monospace;color:var(--ink-dim);font-size:12px;width:28px}
+  .ch-box{
+    width:22px;height:22px;border:1px solid var(--line);cursor:pointer;
+    display:grid;place-items:center;transition:all .15s;
+    user-select:none;
+  }
+  .ch-box:hover{border-color:var(--accent)}
+  .ch-box.checked{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
+  .ch-text{font-size:14px;line-height:1.5}
+  .ch-text small{display:block;color:var(--ink-dim);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.15em;margin-top:3px}
+  .ch-text small.m{color:var(--accent)}
+  .verdict{
+    margin-top:20px;padding:18px;border:1px solid var(--line);background:#0a0c0e;
+    font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:.05em;
+  }
+  .verdict.go{border-color:var(--up);color:var(--up)}
+  .verdict.no{border-color:var(--down);color:var(--down)}
+  .verdict.care{border-color:var(--warn);color:var(--warn)}
+
+  /* Position sizer */
+  .sizer{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:720px){.sizer{grid-template-columns:1fr}}
+  .field label{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:6px}
+  .field input,.field select{
+    width:100%;background:#0a0c0e;border:1px solid var(--line);color:var(--ink);
+    padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:14px;outline:none;
+  }
+  .field input:focus,.field select:focus{border-color:var(--accent)}
+  .size-out{
+    margin-top:14px;padding:16px;border:1px solid var(--accent);
+    background:rgba(212,168,75,.05);font-family:'JetBrains Mono',monospace;
+  }
+  .size-out .big{font-size:28px;color:var(--accent);letter-spacing:-.01em}
+  .size-out .lbl{font-size:10px;letter-spacing:.2em;color:var(--ink-dim);text-transform:uppercase}
+
+  /* Footer */
+  footer{margin-top:80px;padding-top:28px;border-top:1px solid var(--line);color:var(--ink-dim);font-size:12px;font-family:'JetBrains Mono',monospace;line-height:1.7}
+  footer b{color:var(--warn)}
+
+  /* Timeline */
+  .timeline{border:1px solid var(--line);background:var(--bg-2)}
+  .tl-row{display:grid;grid-template-columns:120px 1fr;gap:0;border-bottom:1px solid var(--line)}
+  .tl-row:last-child{border-bottom:0}
+  .tl-time{padding:14px;background:#0a0c0e;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--accent);border-right:1px solid var(--line)}
+  .tl-body{padding:14px 18px;font-size:13.5px;line-height:1.6}
+  .tl-body b{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);display:block;margin-bottom:4px}
+
+  /* quote strip */
+  .strip{
+    margin-top:50px;padding:30px;text-align:center;
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    font-family:'Fraunces',serif;font-style:italic;font-size:22px;color:var(--ink);font-weight:300;
+  }
+  .strip em{color:var(--accent);font-style:italic}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="ticker">
+      <span class="dot"></span>
+      <span>NIFTY · BANKNIFTY · FINNIFTY</span>
+      <span style="opacity:.4">//</span>
+      <span>SWING · 1D → 1H → 15M</span>
+      <span style="opacity:.4">//</span>
+      <span>v1.0 · AK</span>
+    </div>
+    <h1 class="title">The Confluence <em>Playbook</em></h1>
+    <div class="subtitle">Interactive companion to the multi-layer strategy. Five lenses — Momentum, Divergence, IFVG, Elliott Wave, Fibonacci — converge on one trade. Learn by simulation. See the traps before the market shows them to you.</div>
+    <div class="tags">
+      <span class="tag">01 · MOMENTUM</span>
+      <span class="tag">02 · DIVERGENCE</span>
+      <span class="tag">03 · IFVG</span>
+      <span class="tag">04 · ELLIOTT</span>
+      <span class="tag">05 · FIBONACCI</span>
+    </div>
+    <div class="caveman">
+      <b>&gt; CAVEMAN MODE ON</b> &nbsp; Five tool. Four must agree. Stop tight. Target big. Wait, not click. Rule = law. Break rule = lose money. Simple.
+    </div>
+  </header>
+
+  <!-- 1. CORE IDEA -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">01 / CORE</div>
+      <h2 class="sec-title">One trade. Five witnesses.</h2>
+    </div>
+    <div class="sec-lead">No single indicator is the strategy. Each of the five lenses answers a different question. You take the trade only when at least four say yes — the same four, at the same price, at the same time.</div>
+
+    <div class="grid-3" style="margin-top:22px">
+      <div class="card"><span class="kbd">Lens 01</span><h3>Momentum</h3><p>RSI, MACD, ADX across HTF/LTF. Is the trend alive? Is the pullback ending?</p></div>
+      <div class="card"><span class="kbd">Lens 02</span><h3>Divergence</h3><p>Price vs oscillator disagreement. Regular = exhaustion. Hidden = continuation.</p></div>
+      <div class="card"><span class="kbd">Lens 03</span><h3>IFVG</h3><p>A gap that flipped. Support that became resistance. Proof of order-flow shift.</p></div>
+      <div class="card"><span class="kbd">Lens 04</span><h3>Elliott Wave</h3><p>Are we in Wave 2/4 (buy dip) or Wave 5 done (fade trend)?</p></div>
+      <div class="card"><span class="kbd">Lens 05</span><h3>Fibonacci</h3><p>Statistical pullback zones (38.2 / 50 / 61.8 / 78.6). Where dips become opportunity.</p></div>
+      <div class="card" style="border-color:var(--accent);background:rgba(212,168,75,.04)"><span class="kbd" style="color:var(--up)">The Gate</span><h3 style="color:var(--accent)">4 of 5 agree</h3><p>Fewer than 4 lenses aligned = no trade. The edge lives in the waiting, not the clicking.</p></div>
+    </div>
+  </section>
+
+  <!-- 2. FVG → IFVG SIM -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">02 / LENS 03</div>
+      <h2 class="sec-title">Fair Value Gap → Inverse Fair Value Gap</h2>
+    </div>
+    <div class="sec-lead">A three-candle pattern leaves a price gap — an <b style="color:var(--ifvg)">imbalance</b>. When price returns and <b>closes fully through</b> the gap, its polarity flips. Support becomes resistance. That flip, when re-tested, is your entry zone.</div>
+
+    <div class="sim" style="margin-top:22px">
+      <div class="sim-head">
+        <div class="sim-title"><b>SIM_01</b> &nbsp;·&nbsp; fvg_formation.js &nbsp;·&nbsp; 1H / NIFTY</div>
+        <div class="sim-title" id="fvgStage">STAGE: <b style="color:var(--accent)">idle</b></div>
+      </div>
+      <canvas id="fvgCanvas" width="1100" height="420"></canvas>
+      <div class="controls">
+        <button class="btn primary" onclick="fvgPlay()">▶ Play formation</button>
+        <button class="btn" onclick="fvgStep()">Step</button>
+        <button class="btn" onclick="fvgReset()">Reset</button>
+      </div>
+      <div class="readout" id="fvgRead">> Press Play. Watch how a bullish FVG forms, gets tested, then <b style="color:var(--ifvg)">inverts</b> into resistance. The re-test after inversion is the trade entry.</div>
+    </div>
+
+    <div class="trap">
+      <b>// TRAP — THE MICRO-FVG</b>
+      Any gap smaller than 0.15% of price on NIFTY/BANKNIFTY is noise. On a 24,500 NIFTY that's ~37 points. Smaller than that, and random candle wicks will "invert" it hourly. You will take 12 fake trades a week. Filter aggressively — big gaps or no gap.
+    </div>
+    <div class="trap">
+      <b>// TRAP — THE WICK THROUGH</b>
+      A wick piercing the FVG is NOT an inversion. You need a full 1H <b>candle close</b> on the opposite side. If you trade wick pokes, liquidity hunters will eat you every single time.
+    </div>
+  </section>
+
+  <!-- 3. FIBONACCI SIM -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">03 / LENS 05</div>
+      <h2 class="sec-title">Fibonacci — the pullback map</h2>
+    </div>
+    <div class="sec-lead">You don't guess where the dip ends. You measure. Draw from swing low to swing high (for longs). The 38.2 / 50 / 61.8 / 78.6 lines mark statistical pullback zones. Combine with IFVG and you have a location, not a guess.</div>
+
+    <div class="sim" style="margin-top:22px">
+      <div class="sim-head">
+        <div class="sim-title"><b>SIM_02</b> &nbsp;·&nbsp; fib_pullback.js &nbsp;·&nbsp; interactive</div>
+        <div class="sim-title">drag slider → pullback depth</div>
+      </div>
+      <canvas id="fibCanvas" width="1100" height="420"></canvas>
+      <div style="margin-top:14px">
+        <input type="range" id="fibSlide" min="0" max="100" value="50" style="width:100%;accent-color:var(--accent)"/>
+      </div>
+      <div class="readout" id="fibRead">> Pullback = <b id="fibPct">50.0%</b> · Zone: <b id="fibZone">Bread & butter (50)</b> · Verdict: <b id="fibVerd" style="color:var(--up)">Valid continuation entry</b></div>
+    </div>
+
+    <div class="trap">
+      <b>// TRAP — REDRAWING TO FIT</b>
+      Bias makes you redraw. "If I anchor from last week instead of yesterday, the 61.8 lands right where I want." STOP. If you had to redraw, the setup did not exist. The chart told you no; you argued.
+    </div>
+  </section>
+
+  <!-- 4. ELLIOTT WAVE SIM -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">04 / LENS 04</div>
+      <h2 class="sec-title">Elliott Wave — Reversal or Correction?</h2>
+    </div>
+    <div class="sec-lead">The most expensive question in trading: is this pullback a Wave 2/4 (buy) or a post-Wave-5 reversal (sell)? Same chart shape, opposite trade. Use the rules — Wave 2 doesn't break Wave 1 start; Wave 3 is never shortest; Wave 4 doesn't overlap Wave 1.</div>
+
+    <div class="sim" style="margin-top:22px">
+      <div class="sim-head">
+        <div class="sim-title"><b>SIM_03</b> &nbsp;·&nbsp; elliott_trap.js</div>
+        <div class="sim-title">toggle scenarios</div>
+      </div>
+      <canvas id="waveCanvas" width="1100" height="420"></canvas>
+      <div class="controls">
+        <button class="btn primary" onclick="drawWave('correction')">Show: Wave 4 correction</button>
+        <button class="btn primary" onclick="drawWave('reversal')">Show: Post-Wave 5 reversal</button>
+        <button class="btn" onclick="drawWave('waveB')">Show: The B-wave trap</button>
+      </div>
+      <div class="readout" id="waveRead">> Toggle above. Same red zone on both — only context tells you buy or sell.</div>
+    </div>
+
+    <div class="trap">
+      <b>// TRAP — THE B-WAVE</b>
+      After a five-wave impulse, a three-wave A-B-C correction follows. Wave B often rallies almost as high as the original top. Beginners buy Wave B thinking "breakout continuation." Then Wave C crushes them. Rule: after a completed five with regular divergence, the next rally is the short, not the long.
+    </div>
+    <div class="win">
+      <b>// FILTER</b>
+      If you can't confidently label the count in 10 seconds, the structure is unclear — stand aside. Perfect counts are hindsight; tradeable counts are obvious.
+    </div>
+  </section>
+
+  <!-- 5. DIVERGENCE -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">05 / LENS 02</div>
+      <h2 class="sec-title">Divergence — the oscillator's confession</h2>
+    </div>
+    <div class="sec-lead">When price disagrees with RSI or MACD, one of them is lying. Regular divergence = trend is tiring (reversal). Hidden divergence = pullback will fail (continuation). Only trust it on 1H or higher — below that it's noise.</div>
+
+    <div class="sim" style="margin-top:22px">
+      <div class="sim-head">
+        <div class="sim-title"><b>SIM_04</b> &nbsp;·&nbsp; divergence_types.js</div>
+        <div class="sim-title" id="divType">TYPE: <b style="color:var(--accent)">regular bearish</b></div>
+      </div>
+      <canvas id="divCanvas" width="1100" height="460"></canvas>
+      <div class="controls">
+        <button class="btn primary" onclick="drawDiv('regBear')">Regular bearish</button>
+        <button class="btn primary" onclick="drawDiv('regBull')">Regular bullish</button>
+        <button class="btn" onclick="drawDiv('hidBear')">Hidden bearish</button>
+        <button class="btn" onclick="drawDiv('hidBull')">Hidden bullish</button>
+      </div>
+      <div class="readout" id="divRead">> Regular bearish: price HH, RSI LH → top likely. Trend is losing strength.</div>
+    </div>
+  </section>
+
+  <!-- 6. FULL SETUP CONFLUENCE -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">06 / SETUP</div>
+      <h2 class="sec-title">All five, one chart</h2>
+    </div>
+    <div class="sec-lead">This is what the NIFTY long worked example looks like when every lens aligns. Same pullback, seen through five eyes. This is the chart you wait weeks to see.</div>
+
+    <div class="sim" style="margin-top:22px">
+      <div class="sim-head">
+        <div class="sim-title"><b>SIM_05</b> &nbsp;·&nbsp; nifty_long_confluence.js &nbsp;·&nbsp; daily + 1H</div>
+        <div class="sim-title">toggle lenses</div>
+      </div>
+      <canvas id="confCanvas" width="1100" height="480"></canvas>
+      <div class="controls">
+        <button class="btn" onclick="toggleLens('ema')">50-EMA</button>
+        <button class="btn" onclick="toggleLens('wave')">Elliott</button>
+        <button class="btn" onclick="toggleLens('fib')">Fibonacci</button>
+        <button class="btn" onclick="toggleLens('ifvg')">IFVG</button>
+        <button class="btn" onclick="toggleLens('div')">Divergence</button>
+        <button class="btn primary" onclick="toggleAll()">Show all</button>
+      </div>
+      <div class="readout" id="confRead">> Toggle lenses one by one. The entry zone (green dashed) is where four of five overlap.</div>
+    </div>
+  </section>
+
+  <!-- 7. CHECKLIST -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">07 / GATE</div>
+      <h2 class="sec-title">The 9-point confluence checklist</h2>
+    </div>
+    <div class="sec-lead">Tap each box that is true <b>right now, on this chart</b>. Four mandatory points must all be yes. Three of five optional. The gate either opens or it doesn't — no negotiation.</div>
+
+    <div class="checklist" style="margin-top:22px" id="checklist"></div>
+    <div class="verdict" id="verdict">> Tick the conditions that are true. Verdict appears here.</div>
+  </section>
+
+  <!-- 8. POSITION SIZE -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">08 / RISK</div>
+      <h2 class="sec-title">Position sizer</h2>
+    </div>
+    <div class="sec-lead">Size is not a feeling. It's a formula: <span class="mono" style="color:var(--accent)">lots = floor( (equity × risk%) ÷ (stop_points × lot_size) )</span>. Enter your numbers. Get one answer. No margin-based sizing — margin lies.</div>
+
+    <div class="card" style="margin-top:22px">
+      <div class="sizer">
+        <div class="field"><label>Account equity (₹)</label><input type="number" id="eq" value="1000000"/></div>
+        <div class="field"><label>Risk per trade (%)</label><input type="number" id="rk" value="1" step="0.1"/></div>
+        <div class="field"><label>Stop distance (points)</label><input type="number" id="sd" value="120"/></div>
+        <div class="field"><label>Instrument / lot size</label>
+          <select id="ls" onchange="calcSize()">
+            <option value="75">NIFTY · 75</option>
+            <option value="35">BANKNIFTY · 35</option>
+            <option value="65">FINNIFTY · 65</option>
+            <option value="custom">Custom lot size</option>
+          </select>
+        </div>
+        <div class="field" id="customLotWrap" style="display:none"><label>Custom lot size</label><input type="number" id="customLot" value="50"/></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn primary" onclick="calcSize()">Calculate</button>
+      </div>
+      <div class="size-out" id="sizeOut">
+        <div class="lbl">Allowed size</div>
+        <div class="big" id="sizeLots">— lots</div>
+        <div class="lbl" id="sizeNote" style="margin-top:6px">Fill fields and calculate.</div>
+      </div>
+      <div class="trap" style="margin-top:18px">
+        <b>// REMINDER</b>
+        Lot sizes on NSE get revised. Always verify the current lot size on the exchange before sizing a live trade. The defaults above are playbook examples, not gospel.
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. SESSION TIMELINE -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">09 / SESSION</div>
+      <h2 class="sec-title">Indian market — session by session</h2>
+    </div>
+    <div class="sec-lead">The NSE day is not uniform. Different windows have different edges. The playbook respects that.</div>
+
+    <div class="timeline" style="margin-top:22px">
+      <div class="tl-row"><div class="tl-time">08:30 – 09:15</div><div class="tl-body"><b>Pre-market prep</b>Mark HTF bias, open FVGs, Fib levels, pending Elliott counts. Pick 1–2 setups worth watching today.</div></div>
+      <div class="tl-row"><div class="tl-time">09:15 – 09:30</div><div class="tl-body"><b>Opening imbalance — NO NEW ENTRIES</b>Gaps + overnight global cues distort everything. Let the noise clear.</div></div>
+      <div class="tl-row"><div class="tl-time">09:30 – 11:30</div><div class="tl-body"><b>Primary trend session — BEST WINDOW</b>Technique A and C entries shine here. Real volume, real signals.</div></div>
+      <div class="tl-row"><div class="tl-time">11:30 – 12:30</div><div class="tl-body"><b>First lull</b>Manage open trades. Move SL to breakeven if T1 hit. Don't force new entries on dead candles.</div></div>
+      <div class="tl-row"><div class="tl-time">12:30 – 14:00</div><div class="tl-body"><b>Lunch chop — trap zone</b>False breakouts multiply. Avoid breakouts. Pullback entries only if confluence is A-grade, sized down 25%.</div></div>
+      <div class="tl-row"><div class="tl-time">14:00 – 15:00</div><div class="tl-body"><b>Institutional session — SECOND-BEST WINDOW</b>Real positioning finalises. Trend resumes or a counter-IFVG forms — reassess bias.</div></div>
+      <div class="tl-row"><div class="tl-time">15:00 – 15:20</div><div class="tl-body"><b>Pre-close</b>No new weekly options. Overnight holds only if A-grade.</div></div>
+      <div class="tl-row"><div class="tl-time">15:20 – 15:30</div><div class="tl-body"><b>Close — journal time</b>Record closes. Update journal. No panic trading into the bell.</div></div>
+    </div>
+  </section>
+
+  <!-- 10. TRAPS SUMMARY -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">10 / TRAPS</div>
+      <h2 class="sec-title">The full trap catalogue</h2>
+    </div>
+    <div class="sec-lead">Every trap the playbook warns about, on one screen. Print it. Pin it.</div>
+
+    <div class="grid-2" style="margin-top:22px">
+      <div class="trap"><b>// 3/4 MANDATORY ≠ TRADE</b>Taking a setup "because it looks good" with only 3 of 4 mandatories is the strategy failing by design. The checklist IS the edge.</div>
+      <div class="trap"><b>// REDRAWING FIB</b>If you had to redraw the fib to make the level fit, the setup did not exist. Bias-fitting, not analysis.</div>
+      <div class="trap"><b>// MICRO-IFVG</b>Gaps under 0.15% of price on indices are noise. Filter them out or drown in false signals.</div>
+      <div class="trap"><b>// WICK INVERSION</b>Wick poking through an FVG is not an inversion. Require a 1H candle CLOSE on the far side.</div>
+      <div class="trap"><b>// FORCED ELLIOTT COUNT</b>If the wave count isn't obvious in 10 seconds, it's not tradeable. Stand aside.</div>
+      <div class="trap"><b>// THE B-WAVE BUY</b>After a completed impulse + regular divergence, the next rally is a trap. Wave B looks like breakout — it's the setup for C to destroy you.</div>
+      <div class="trap"><b>// MARGIN-BASED SIZING</b>Sizing by margin instead of stop distance is how one bad day ends a career. Always size by the stop.</div>
+      <div class="trap"><b>// AVERAGING DOWN OPTIONS</b>Theta compounds. Your thesis doesn't. Never double a losing option.</div>
+      <div class="trap"><b>// MOVING THE STOP</b>A stop moved against the trade is not a stop — it's a hope. Stops only tighten toward the trade.</div>
+      <div class="trap"><b>// REVENGE TRADING</b>After a loss, the next setup is never as good as the one you missed. Walk away until A-grade returns.</div>
+      <div class="trap"><b>// BREAKING DAILY LIMIT</b>The 3% daily stop exists for a reason. Breaking it is how -3% becomes -15% in one afternoon.</div>
+      <div class="trap"><b>// MENTAL STOPS</b>Not allowed. Hard stop at the broker, placed immediately on entry. Mental stops become mental losses.</div>
+    </div>
+  </section>
+
+  <div class="strip">
+    Trade <em>fewer</em>. Trade <em>better</em>. The money is made in the waiting, not in the clicking.
+  </div>
+
+  <footer>
+    <b>// DISCLAIMER</b><br>
+    Educational material built from the Confluence Playbook v1.0 prepared for AK. Not investment advice. Indian F&amp;O carries substantial risk of loss; SEBI data shows most retail F&amp;O traders lose money. Paper-trade and backtest every rule on your own instruments before risking capital. Verify NSE lot sizes — exchange revises them periodically. Comply with SEBI regulations and your broker's risk policies. The author bears no responsibility for losses incurred.
+  </footer>
+
+</div>
+
+<script>
+/* ============================================================
+   SIM 01 — FVG → IFVG formation
+   ============================================================ */
+const fvgCx = document.getElementById('fvgCanvas');
+const fvgCtx = fvgCx.getContext('2d');
+let fvgStageIdx = 0;
+const fvgStages = [
+  {label:'3-candle formation', desc:'Three candles form. Candle 2 is a strong bull bar. Candle 3 opens above candle 1\'s high — leaving an <b style="color:var(--ifvg)">imbalance</b> between them. That is a bullish FVG.'},
+  {label:'First test', desc:'Price drifts back down and touches the FVG. <b style="color:var(--up)">Bulls defend it</b> — it acts as support for the moment. Trend continues up.'},
+  {label:'Second approach', desc:'Price approaches again. This time momentum is weaker. Watch the candle close.'},
+  {label:'INVERSION', desc:'Price trades fully through and a 1H candle <b>closes below</b> the FVG. The gap is now INVERTED — former support is now <b style="color:var(--ifvg)">resistance</b>. Structural change of character.'},
+  {label:'The re-test', desc:'Price rallies back up into the flipped zone. <b style="color:var(--down)">This is your short entry</b> — the IFVG holds, a bearish 15m confirmation prints, structural SL above the zone.'}
+];
+
+function candle(ctx,x,o,h,l,c,w){
+  const up = c>=o;
+  ctx.strokeStyle = up?'#4ac48a':'#e16b6b';
+  ctx.fillStyle = up?'#4ac48a':'#e16b6b';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();ctx.moveTo(x,h);ctx.lineTo(x,l);ctx.stroke();
+  ctx.fillRect(x-w/2, Math.min(o,c), w, Math.abs(c-o)||1);
+}
+
+function fvgDraw(){
+  const W=fvgCx.width, H=fvgCx.height;
+  fvgCtx.fillStyle='#0a0c0e';fvgCtx.fillRect(0,0,W,H);
+  // grid
+  fvgCtx.strokeStyle='#161a1d';fvgCtx.lineWidth=1;
+  for(let y=0;y<H;y+=40){fvgCtx.beginPath();fvgCtx.moveTo(0,y);fvgCtx.lineTo(W,y);fvgCtx.stroke()}
+  for(let x=0;x<W;x+=40){fvgCtx.beginPath();fvgCtx.moveTo(x,0);fvgCtx.lineTo(x,H);fvgCtx.stroke()}
+
+  // Candle data: [o,h,l,c]
+  const candles = [
+    [250,255,245,252],[251,258,248,256],[255,262,252,260], // pre
+    [260,268,258,265],[265,290,264,288],[295,310,293,307], // 3-candle bull FVG (gap between 268 and 293)
+    [307,312,302,305],[305,310,300,302],[302,306,296,299], // drift
+    [299,302,288,290], // touch FVG bottom
+    [290,298,288,296],[296,305,294,303],[303,312,302,310], // bounce, trend continues
+    [310,315,305,308],[308,311,301,304],[304,308,295,297], // weakening
+    [297,302,285,287], // second approach
+    [287,292,272,274], // INVERSION candle — closes below FVG
+    [274,282,270,280],[280,292,278,290], // rally to retest
+    [290,296,287,288], // retest top of IFVG — rejection
+    [288,293,275,278] // falls
+  ];
+
+  // price scale: 260 → 320 maps to y
+  const yMax = 325, yMin = 258;
+  const Y = p => 40 + (yMax-p)/(yMax-yMin) * (H-80);
+  const step = (W-100)/candles.length;
+
+  // FVG shading — between candle1.high(258 → bullish case uses range 268 to 293)
+  // actual bullish FVG: high of candle 4 = 268, low of candle 6 = 293? — here c4 high=268, c6 low=293, so FVG = 268 to 293
+  const fvgTop = 293, fvgBot = 268;
+  // Stage-dependent coloring
+  const inverted = fvgStageIdx >= 3;
+  fvgCtx.fillStyle = inverted ? 'rgba(192,139,255,.14)' : 'rgba(94,193,214,.12)';
+  fvgCtx.fillRect(50 + 3*step, Y(fvgTop), W-70, Y(fvgBot)-Y(fvgTop));
+  fvgCtx.strokeStyle = inverted ? 'rgba(192,139,255,.55)' : 'rgba(94,193,214,.45)';
+  fvgCtx.setLineDash([4,4]);fvgCtx.lineWidth=1.2;
+  fvgCtx.beginPath();fvgCtx.moveTo(50 + 3*step, Y(fvgTop));fvgCtx.lineTo(W-20, Y(fvgTop));fvgCtx.stroke();
+  fvgCtx.beginPath();fvgCtx.moveTo(50 + 3*step, Y(fvgBot));fvgCtx.lineTo(W-20, Y(fvgBot));fvgCtx.stroke();
+  fvgCtx.setLineDash([]);
+
+  // label
+  fvgCtx.font = '11px JetBrains Mono';
+  fvgCtx.fillStyle = inverted ? '#c08bff' : '#5ec1d6';
+  fvgCtx.fillText(inverted ? 'IFVG  (flipped → resistance)' : 'FVG  (imbalance → support)', W-230, Y(fvgTop)-8);
+
+  // Draw visible candles based on stage
+  const visible = {0:6, 1:12, 2:15, 3:17, 4:candles.length}[fvgStageIdx] || 3;
+  for(let i=0;i<Math.min(visible,candles.length);i++){
+    const [o,h,l,c] = candles[i];
+    candle(fvgCtx, 60 + i*step, Y(o), Y(h), Y(l), Y(c), step*0.6);
+  }
+
+  // Stage label
+  fvgCtx.fillStyle = '#d4a84b';
+  fvgCtx.font = 'bold 12px JetBrains Mono';
+  fvgCtx.fillText('STAGE ' + (fvgStageIdx+1) + ' / 5 — ' + fvgStages[fvgStageIdx].label, 20, 24);
+
+  // Entry arrow at stage 4
+  if(fvgStageIdx === 4){
+    const ex = 60 + 19*step, ey = Y(290);
+    fvgCtx.strokeStyle = '#e16b6b';fvgCtx.lineWidth = 2;
+    fvgCtx.beginPath();fvgCtx.moveTo(ex-30, ey-40);fvgCtx.lineTo(ex, ey-5);fvgCtx.stroke();
+    fvgCtx.fillStyle = '#e16b6b';
+    fvgCtx.beginPath();fvgCtx.moveTo(ex,ey-5);fvgCtx.lineTo(ex-10,ey-14);fvgCtx.lineTo(ex-14,ey-4);fvgCtx.closePath();fvgCtx.fill();
+    fvgCtx.font = 'bold 11px JetBrains Mono';
+    fvgCtx.fillText('SHORT @ re-test', ex-110, ey-48);
+  }
+
+  document.getElementById('fvgStage').innerHTML = 'STAGE: <b style="color:var(--accent)">' + fvgStages[fvgStageIdx].label + '</b>';
+  document.getElementById('fvgRead').innerHTML = '> ' + fvgStages[fvgStageIdx].desc;
+}
+function fvgStep(){fvgStageIdx = (fvgStageIdx+1)%5; fvgDraw();}
+function fvgReset(){fvgStageIdx=0;fvgDraw();}
+let fvgTimer=null;
+function fvgPlay(){
+  if(fvgTimer){clearInterval(fvgTimer);fvgTimer=null;return;}
+  fvgStageIdx=0;fvgDraw();
+  fvgTimer = setInterval(()=>{
+    if(fvgStageIdx>=4){clearInterval(fvgTimer);fvgTimer=null;return;}
+    fvgStageIdx++;fvgDraw();
+  }, 1400);
+}
+fvgDraw();
+
+/* ============================================================
+   SIM 02 — Fibonacci pullback
+   ============================================================ */
+const fibCx = document.getElementById('fibCanvas');
+const fibCtx = fibCx.getContext('2d');
+const fibSlide = document.getElementById('fibSlide');
+
+function fibDraw(){
+  const W=fibCx.width, H=fibCx.height;
+  fibCtx.fillStyle='#0a0c0e';fibCtx.fillRect(0,0,W,H);
+  fibCtx.strokeStyle='#161a1d';fibCtx.lineWidth=1;
+  for(let y=0;y<H;y+=40){fibCtx.beginPath();fibCtx.moveTo(0,y);fibCtx.lineTo(W,y);fibCtx.stroke()}
+
+  // Swing low 23000 → Swing high 24800
+  const low = 23000, high = 24800;
+  const Y = p => 40 + (24900-p)/(24900-22900) * (H-80);
+
+  // draw rising leg (low → high)
+  fibCtx.strokeStyle='#4ac48a';fibCtx.lineWidth=2.5;
+  fibCtx.beginPath();
+  fibCtx.moveTo(80, Y(23000));
+  fibCtx.lineTo(420, Y(24800));
+  fibCtx.stroke();
+
+  // fib levels
+  const levels = [
+    {r:0, label:'0 (high)', color:'#4ac48a'},
+    {r:0.236, label:'23.6%', color:'#9ea19a'},
+    {r:0.382, label:'38.2%', color:'#9ea19a'},
+    {r:0.5, label:'50.0%', color:'#d4a84b'},
+    {r:0.618, label:'61.8% — golden', color:'#d4a84b'},
+    {r:0.786, label:'78.6%', color:'#e2b548'},
+    {r:1, label:'100 (invalid)', color:'#e16b6b'}
+  ];
+
+  fibCtx.font = '11px JetBrains Mono';
+  for(const lv of levels){
+    const price = high - (high-low)*lv.r;
+    const y = Y(price);
+    fibCtx.strokeStyle = lv.color;
+    fibCtx.setLineDash(lv.r===0||lv.r===1?[]: [2,4]);
+    fibCtx.lineWidth = (lv.r===0.618||lv.r===0.5)?1.5:1;
+    fibCtx.beginPath();fibCtx.moveTo(420,y);fibCtx.lineTo(W-20,y);fibCtx.stroke();
+    fibCtx.setLineDash([]);
+    fibCtx.fillStyle = lv.color;
+    fibCtx.fillText(lv.label + '  ' + price.toFixed(0), W-170, y-4);
+  }
+
+  // pullback based on slider
+  const pct = +fibSlide.value / 100;
+  const pullbackPrice = high - (high-low)*pct;
+  const px = 420 + (W-440) * 0.5;
+  const py = Y(pullbackPrice);
+
+  // draw pullback line
+  fibCtx.strokeStyle = '#e16b6b';fibCtx.lineWidth=2.5;
+  fibCtx.beginPath();fibCtx.moveTo(420, Y(24800));fibCtx.lineTo(px, py);fibCtx.stroke();
+
+  // dot
+  fibCtx.fillStyle='#e16b6b';
+  fibCtx.beginPath();fibCtx.arc(px,py,6,0,Math.PI*2);fibCtx.fill();
+  fibCtx.strokeStyle='#fff';fibCtx.lineWidth=2;fibCtx.stroke();
+
+  // label
+  fibCtx.fillStyle='#fff';
+  fibCtx.font='bold 12px JetBrains Mono';
+  fibCtx.fillText((pct*100).toFixed(1)+'%  ·  ' + pullbackPrice.toFixed(0), px+12, py+4);
+
+  // readout verdict
+  let zone, verd, cls;
+  if(pct < 0.2){zone='Too shallow — strong trend only'; verd='Risky — tight SL, low edge'; cls='warn';}
+  else if(pct < 0.35){zone='Shallow'; verd='Valid if IFVG + momentum agree'; cls='warn';}
+  else if(pct < 0.45){zone='Aggressive continuation (38.2)'; verd='Valid entry with confluence'; cls='ok';}
+  else if(pct < 0.55){zone='Bread & butter (50)'; verd='Valid continuation entry'; cls='ok';}
+  else if(pct < 0.7){zone='Golden Ratio (61.8)'; verd='HIGH-probability — best zone'; cls='ok';}
+  else if(pct < 0.85){zone='Deep (78.6)'; verd='Last-chance — need divergence + IFVG'; cls='warn';}
+  else if(pct <= 1){zone='Dangerous — near invalidation'; verd='Wait for confirmation or skip'; cls='bad';}
+  else {zone='BROKEN 100%'; verd='Thesis invalid — exit/reverse'; cls='bad';}
+  document.getElementById('fibPct').textContent = (pct*100).toFixed(1)+'%';
+  document.getElementById('fibZone').textContent = zone;
+  const v = document.getElementById('fibVerd');
+  v.textContent = verd;
+  v.style.color = cls==='ok'?'var(--up)':(cls==='warn'?'var(--warn)':'var(--down)');
+}
+fibSlide.addEventListener('input', fibDraw);
+fibDraw();
+
+/* ============================================================
+   SIM 03 — Elliott wave scenarios
+   ============================================================ */
+const waveCx = document.getElementById('waveCanvas');
+const waveCtx = waveCx.getContext('2d');
+
+function drawWave(scenario){
+  const W=waveCx.width, H=waveCx.height;
+  waveCtx.fillStyle='#0a0c0e';waveCtx.fillRect(0,0,W,H);
+  waveCtx.strokeStyle='#161a1d';waveCtx.lineWidth=1;
+  for(let y=0;y<H;y+=40){waveCtx.beginPath();waveCtx.moveTo(0,y);waveCtx.lineTo(W,y);waveCtx.stroke()}
+
+  // Scenarios — same first 5-wave impulse, different after
+  // points: [x%, y%] (y% = 0 top, 1 bottom)
+  let points, labels, entryZone, entrySign, caption;
+
+  if(scenario==='correction'){
+    // Only 3 waves visible, then a Wave 4 pullback — we're in Wave 4 looking for Wave 5 long
+    points = [[5,85],[15,45],[22,65],[35,20],[48,50],[60,10],[72,40]];
+    labels = ['','(1)','(2)','(3)','(4)','(5)?','(4)'];
+    // rework — show: up to wave 3, then wave 4 pullback (the setup)
+    points = [[5,85],[15,55],[22,70],[38,25],[55,48]];
+    labels = ['start','(1)','(2)','(3)','(4)'];
+    entryZone = {x1:50, x2:70, y1:40, y2:55};
+    entrySign = 'LONG — buy Wave 4 pullback';
+    caption = 'Wave 4 in progress. Count incomplete. Fib 38.2–50 of Wave 3 + IFVG in same zone = long the dip. Target Wave 5 above Wave 3 high.';
+  } else if(scenario==='reversal'){
+    // Full 5 waves done, now topping — short opportunity
+    points = [[5,85],[12,55],[18,70],[32,25],[42,45],[55,8],[62,22],[70,15]];
+    labels = ['','(1)','(2)','(3)','(4)','(5)','a','b'];
+    entryZone = {x1:65, x2:78, y1:10, y2:22};
+    entrySign = 'SHORT — fade exhausted trend';
+    caption = 'Five-wave impulse complete with regular divergence at Wave 5. "b" rally retests near the high — short zone. Target Fib 0.382/0.618 of entire up-move.';
+  } else { // waveB
+    points = [[5,85],[12,55],[18,70],[32,25],[42,45],[55,8],[62,35],[72,14]];
+    labels = ['','(1)','(2)','(3)','(4)','(5)','a','B — TRAP'];
+    entryZone = {x1:68, x2:78, y1:10, y2:22};
+    entrySign = '⚠ Wave B — LOOKS bullish, ISN\'T';
+    caption = 'Wave B rallies near the prior top and looks like a breakout continuation. Beginners buy it. Then C crushes them. If 5 is complete with divergence, the next rally is the short entry.';
+  }
+
+  // entry zone
+  waveCtx.fillStyle = scenario==='waveB'?'rgba(225,107,107,.12)':'rgba(212,168,75,.12)';
+  waveCtx.fillRect((entryZone.x1/100)*W, (entryZone.y1/100)*H, ((entryZone.x2-entryZone.x1)/100)*W, ((entryZone.y2-entryZone.y1)/100)*H);
+  waveCtx.strokeStyle = scenario==='waveB'?'#e16b6b':'#d4a84b';
+  waveCtx.setLineDash([4,4]);waveCtx.lineWidth=1.5;
+  waveCtx.strokeRect((entryZone.x1/100)*W, (entryZone.y1/100)*H, ((entryZone.x2-entryZone.x1)/100)*W, ((entryZone.y2-entryZone.y1)/100)*H);
+  waveCtx.setLineDash([]);
+
+  // draw line
+  waveCtx.strokeStyle = '#e8e6df';waveCtx.lineWidth=2.5;
+  waveCtx.beginPath();
+  waveCtx.moveTo((points[0][0]/100)*W, (points[0][1]/100)*H);
+  for(let i=1;i<points.length;i++){
+    waveCtx.lineTo((points[i][0]/100)*W, (points[i][1]/100)*H);
+  }
+  waveCtx.stroke();
+
+  // points & labels
+  waveCtx.font='bold 13px JetBrains Mono';
+  for(let i=0;i<points.length;i++){
+    const x = (points[i][0]/100)*W, y = (points[i][1]/100)*H;
+    waveCtx.fillStyle = labels[i].includes('TRAP')?'#e16b6b':'#d4a84b';
+    waveCtx.beginPath();waveCtx.arc(x,y,5,0,Math.PI*2);waveCtx.fill();
+    waveCtx.fillStyle = labels[i].includes('TRAP')?'#e16b6b':'#e8e6df';
+    if(labels[i]) waveCtx.fillText(labels[i], x+8, y-8);
+  }
+
+  // entry sign
+  waveCtx.font='bold 12px JetBrains Mono';
+  waveCtx.fillStyle = scenario==='waveB'?'#e16b6b':'#d4a84b';
+  waveCtx.fillText(entrySign, (entryZone.x1/100)*W + 4, (entryZone.y1/100)*H - 8);
+
+  document.getElementById('waveRead').innerHTML = '> ' + caption;
+}
+drawWave('correction');
+
+/* ============================================================
+   SIM 04 — Divergence types
+   ============================================================ */
+const divCx = document.getElementById('divCanvas');
+const divCtx = divCx.getContext('2d');
+
+function drawDiv(type){
+  const W=divCx.width, H=divCx.height;
+  divCtx.fillStyle='#0a0c0e';divCtx.fillRect(0,0,W,H);
+
+  // Split: top = price, bottom = oscillator
+  const priceH = H*0.55, oscY = priceH+10, oscH = H-oscY-20;
+  // grid
+  divCtx.strokeStyle='#161a1d';
+  for(let y=0;y<H;y+=30){divCtx.beginPath();divCtx.moveTo(0,y);divCtx.lineTo(W,y);divCtx.stroke()}
+
+  // Divider
+  divCtx.strokeStyle='#222629';divCtx.lineWidth=1;
+  divCtx.beginPath();divCtx.moveTo(0,priceH);divCtx.lineTo(W,priceH);divCtx.stroke();
+
+  divCtx.fillStyle='#9ea19a';divCtx.font='11px JetBrains Mono';
+  divCtx.fillText('PRICE', 14, 22);
+  divCtx.fillText('RSI', 14, priceH+22);
+
+  // Data for each type — [price points], [rsi points]
+  let pricePts, rsiPts, p1, p2, r1, r2, label, desc;
+
+  if(type==='regBear'){
+    pricePts = [[60,300],[200,180],[340,250],[480,120],[620,200],[760,90],[900,160],[1050,140]];
+    rsiPts   = [[60,140],[200,70 ],[340,110],[480,40 ],[620,90 ],[760,55],[900,100],[1050,85]];
+    p1=3; p2=5; r1=3; r2=5;
+    label='REGULAR BEARISH';
+    desc='Price: Higher High. RSI: Lower High. Trend exhausting — reversal SHORT signal.';
+  } else if(type==='regBull'){
+    pricePts = [[60,60],[200,200],[340,120],[480,280],[620,200],[760,320],[900,240],[1050,260]];
+    rsiPts   = [[60,40],[200,100],[340,80 ],[480,130],[620,95 ],[760,110],[900,70 ],[1050,90 ]];
+    p1=3; p2=5; r1=3; r2=5;
+    label='REGULAR BULLISH';
+    desc='Price: Lower Low. RSI: Higher Low. Selling losing force — reversal LONG signal.';
+  } else if(type==='hidBear'){
+    pricePts = [[60,80],[200,180],[340,130],[480,240],[620,170],[760,280],[900,200],[1050,300]];
+    rsiPts   = [[60,50],[200,105],[340,90 ],[480,130],[620,75 ],[760,115],[900,70 ],[1050,130]];
+    p1=2; p2=4; r1=2; r2=4;
+    label='HIDDEN BEARISH';
+    desc='Price: Lower High (downtrend pullback). RSI: Higher High. Pullback fails — CONTINUATION short.';
+  } else { // hidBull
+    pricePts = [[60,280],[200,160],[340,230],[480,100],[620,180],[760,70 ],[900,140],[1050,40 ]];
+    rsiPts   = [[60,120],[200,75 ],[340,100],[480,40 ],[620,85 ],[760,30 ],[900,75 ],[1050,20 ]];
+    p1=2; p2=4; r1=2; r2=4;
+    label='HIDDEN BULLISH';
+    desc='Price: Higher Low (uptrend pullback). RSI: Lower Low. Pullback fails — CONTINUATION long.';
+  }
+
+  // draw price line
+  divCtx.strokeStyle='#e8e6df';divCtx.lineWidth=2;
+  divCtx.beginPath();
+  for(let i=0;i<pricePts.length;i++){
+    const [x,y] = pricePts[i];
+    if(i===0) divCtx.moveTo(x,y); else divCtx.lineTo(x,y);
+  }
+  divCtx.stroke();
+
+  // draw rsi line
+  divCtx.strokeStyle='#5ec1d6';divCtx.lineWidth=2;
+  divCtx.beginPath();
+  for(let i=0;i<rsiPts.length;i++){
+    const [x,y] = rsiPts[i];
+    if(i===0) divCtx.moveTo(x,priceH + y*0.7 + 10); else divCtx.lineTo(x,priceH + y*0.7 + 10);
+  }
+  divCtx.stroke();
+
+  // highlight pivots
+  const drawPivot = (x,y,col)=>{
+    divCtx.fillStyle=col;
+    divCtx.beginPath();divCtx.arc(x,y,6,0,Math.PI*2);divCtx.fill();
+  };
+  drawPivot(pricePts[p1][0], pricePts[p1][1], '#d4a84b');
+  drawPivot(pricePts[p2][0], pricePts[p2][1], '#d4a84b');
+  drawPivot(rsiPts[r1][0], priceH + rsiPts[r1][1]*0.7 + 10, '#d4a84b');
+  drawPivot(rsiPts[r2][0], priceH + rsiPts[r2][1]*0.7 + 10, '#d4a84b');
+
+  // divergence lines (dashed between pivots)
+  divCtx.setLineDash([6,4]);divCtx.strokeStyle='#d4a84b';divCtx.lineWidth=2;
+  divCtx.beginPath();
+  divCtx.moveTo(pricePts[p1][0], pricePts[p1][1]);
+  divCtx.lineTo(pricePts[p2][0], pricePts[p2][1]);
+  divCtx.stroke();
+  divCtx.beginPath();
+  divCtx.moveTo(rsiPts[r1][0], priceH + rsiPts[r1][1]*0.7 + 10);
+  divCtx.lineTo(rsiPts[r2][0], priceH + rsiPts[r2][1]*0.7 + 10);
+  divCtx.stroke();
+  divCtx.setLineDash([]);
+
+  // label
+  document.getElementById('divType').innerHTML = 'TYPE: <b style="color:var(--accent)">' + label.toLowerCase() + '</b>';
+  document.getElementById('divRead').innerHTML = '> <b>' + label + '</b> — ' + desc;
+}
+drawDiv('regBear');
+
+/* ============================================================
+   SIM 05 — Full confluence
+   ============================================================ */
+const confCx = document.getElementById('confCanvas');
+const confCtx = confCx.getContext('2d');
+const lensState = {ema:false, wave:false, fib:false, ifvg:false, div:false};
+
+function toggleLens(k){lensState[k]=!lensState[k]; drawConf();}
+function toggleAll(){
+  const any = Object.values(lensState).some(v=>!v);
+  for(const k in lensState) lensState[k] = any;
+  drawConf();
+}
+function drawConf(){
+  const W=confCx.width, H=confCx.height;
+  confCtx.fillStyle='#0a0c0e';confCtx.fillRect(0,0,W,H);
+  confCtx.strokeStyle='#161a1d';confCtx.lineWidth=1;
+  for(let y=0;y<H;y+=40){confCtx.beginPath();confCtx.moveTo(0,y);confCtx.lineTo(W,y);confCtx.stroke()}
+
+  // price range 23000 - 25100
+  const yMax=25100, yMin=22900;
+  const Y = p => 30 + (yMax-p)/(yMax-yMin)*(H-60);
+
+  // Main NIFTY path — Wave 1-2-3, then pullback (Wave 4), continuation up
+  const path = [
+    [20, 23000],[80, 23300],[130, 23150],[200, 23700],[260, 23550],[340, 24400],[420, 24800],
+    [490, 24600],[560, 24700],[620, 24450],[680, 24300],[730, 24200],[780, 24180],[830, 24220], // pullback into zone
+    [890, 24400],[950, 24650],[1020, 24950] // future continuation (faint)
+  ];
+
+  // Draw EMA if enabled
+  if(lensState.ema){
+    confCtx.strokeStyle = 'rgba(94,193,214,.6)';
+    confCtx.lineWidth = 2;
+    confCtx.setLineDash([4,4]);
+    // rough 50-EMA rising slowly
+    confCtx.beginPath();
+    confCtx.moveTo(20, Y(22950));
+    confCtx.lineTo(1020, Y(24000));
+    confCtx.stroke();
+    confCtx.setLineDash([]);
+    confCtx.fillStyle='#5ec1d6';
+    confCtx.font='11px JetBrains Mono';
+    confCtx.fillText('50-EMA (rising)', 920, Y(24000)-6);
+  }
+
+  // Fib retracement if enabled
+  if(lensState.fib){
+    const fibs = [0.382, 0.5, 0.618, 0.786];
+    confCtx.font='10px JetBrains Mono';
+    for(const f of fibs){
+      const p = 24800 - (24800-23000)*f;
+      const y = Y(p);
+      confCtx.strokeStyle = f===0.5?'rgba(212,168,75,.6)':'rgba(212,168,75,.3)';
+      confCtx.setLineDash([2,4]);
+      confCtx.beginPath();confCtx.moveTo(420,y);confCtx.lineTo(1000,y);confCtx.stroke();
+      confCtx.setLineDash([]);
+      confCtx.fillStyle='#d4a84b';
+      confCtx.fillText((f*100).toFixed(1)+'%  '+p.toFixed(0), 1010, y+3);
+    }
+  }
+
+  // IFVG zone
+  if(lensState.ifvg){
+    confCtx.fillStyle='rgba(192,139,255,.15)';
+    confCtx.fillRect(620, Y(24220), 380, Y(24150)-Y(24220));
+    confCtx.strokeStyle='rgba(192,139,255,.5)';
+    confCtx.setLineDash([4,4]);
+    confCtx.strokeRect(620, Y(24220), 380, Y(24150)-Y(24220));
+    confCtx.setLineDash([]);
+    confCtx.fillStyle='#c08bff';
+    confCtx.font='11px JetBrains Mono';
+    confCtx.fillText('IFVG 24150–24220 (bullish flip)', 630, Y(24220)-6);
+  }
+
+  // Draw main path
+  confCtx.strokeStyle='#e8e6df';confCtx.lineWidth=2.2;
+  confCtx.beginPath();
+  for(let i=0;i<path.length;i++){
+    const [x,p] = path[i];
+    if(i===0) confCtx.moveTo(x,Y(p)); else confCtx.lineTo(x,Y(p));
+  }
+  confCtx.stroke();
+
+  // fade future portion
+  confCtx.strokeStyle='rgba(74,196,138,.35)';confCtx.lineWidth=2;
+  confCtx.setLineDash([3,4]);
+  confCtx.beginPath();
+  confCtx.moveTo(path[13][0], Y(path[13][1]));
+  for(let i=14;i<path.length;i++){
+    confCtx.lineTo(path[i][0], Y(path[i][1]));
+  }
+  confCtx.stroke();
+  confCtx.setLineDash([]);
+
+  // Elliott labels
+  if(lensState.wave){
+    const markers = [[20,23000,'start'],[130,23150,'(1)'],[200,23700,'(2)?'],[130,23150,''],[340,24400,'(3)'],[490,24600,'(4)?'],[420,24800,'(3)peak'],[780,24180,'(4)']];
+    const use = [[130,23150,'1'],[200,23700,'2'],[420,24800,'3'],[780,24180,'4'],[1020,24950,'5 →']];
+    confCtx.font='bold 13px JetBrains Mono';
+    confCtx.fillStyle='#d4a84b';
+    for(const [x,p,l] of use){
+      confCtx.beginPath();confCtx.arc(x,Y(p),5,0,Math.PI*2);confCtx.fill();
+      confCtx.fillStyle='#e8e6df';
+      confCtx.fillText('('+l+')', x+8, Y(p)-8);
+      confCtx.fillStyle='#d4a84b';
+    }
+  }
+
+  // Divergence
+  if(lensState.div){
+    confCtx.fillStyle='#5ec1d6';
+    confCtx.font='11px JetBrains Mono';
+    confCtx.fillText('↑ 1H RSI hidden bullish divergence here', 660, Y(24500));
+    confCtx.strokeStyle='rgba(94,193,214,.6)';
+    confCtx.lineWidth=1.5;
+    confCtx.setLineDash([4,3]);
+    confCtx.beginPath();confCtx.moveTo(620,Y(24450));confCtx.lineTo(780,Y(24180));confCtx.stroke();
+    confCtx.setLineDash([]);
+  }
+
+  // Entry zone marker when all on
+  const allOn = Object.values(lensState).every(v=>v);
+  if(allOn){
+    confCtx.fillStyle='rgba(74,196,138,.15)';
+    confCtx.fillRect(740, Y(24240), 100, Y(24140)-Y(24240));
+    confCtx.strokeStyle='#4ac48a';
+    confCtx.lineWidth=2;
+    confCtx.setLineDash([6,4]);
+    confCtx.strokeRect(740, Y(24240), 100, Y(24140)-Y(24240));
+    confCtx.setLineDash([]);
+    confCtx.fillStyle='#4ac48a';
+    confCtx.font='bold 12px JetBrains Mono';
+    confCtx.fillText('A-GRADE ENTRY', 742, Y(24140)+14);
+  }
+
+  // count active
+  const n = Object.values(lensState).filter(v=>v).length;
+  const msgs = [
+    '> No lenses active. Toggle one at a time — watch the overlap build.',
+    '> 1 lens — partial picture. Not a trade.',
+    '> 2 lenses — interesting. Not enough.',
+    '> 3 lenses — building confluence. Still waiting.',
+    '> 4 lenses — TRADEABLE. This is the gate.',
+    '> 5/5 — A-grade setup. Max position size allowed.'
+  ];
+  document.getElementById('confRead').innerHTML = msgs[n];
+}
+drawConf();
+
+/* ============================================================
+   CHECKLIST
+   ============================================================ */
+const checklistData = [
+  {id:1, m:true, text:'HTF (Daily/4H) trend direction is clearly defined by 50-EMA and structure.'},
+  {id:2, m:true, text:'Elliott Wave count suggests completed Wave 2 or 4 (continuation) OR Wave 5 with divergence (reversal).'},
+  {id:3, m:true, text:'Price is inside Fibonacci retracement zone 38.2%–78.6% (or extension for reversal).'},
+  {id:4, m:true, text:'IFVG aligned with trade direction has formed and been re-tested on 1H.'},
+  {id:5, m:false, text:'1H MACD histogram has flipped or is flipping in trade direction.'},
+  {id:6, m:false, text:'1H RSI shows divergence (hidden for continuation, regular for reversal).'},
+  {id:7, m:false, text:'ADX > 20 and rising (trend) OR ADX < 18 with clean IFVG (reversal).'},
+  {id:8, m:false, text:'Setup is NOT forming in a news-heavy window (RBI, budget, major global event) unless planned.'},
+  {id:9, m:false, text:'Planned stop is structural (beyond swing/IFVG/100% fib) and risk within position-size rules.'}
+];
+const chEl = document.getElementById('checklist');
+const checked = new Array(9).fill(false);
+chEl.innerHTML = checklistData.map((c,i)=>`
+  <div class="ch-row">
+    <div class="ch-num">#${String(c.id).padStart(2,'0')}</div>
+    <div class="ch-text">${c.text}<small class="${c.m?'m':''}">${c.m?'MANDATORY':'OPTIONAL'}</small></div>
+    <div class="ch-box" data-i="${i}" onclick="tick(${i})"></div>
+  </div>
+`).join('');
+
+function tick(i){
+  checked[i] = !checked[i];
+  const b = document.querySelector('.ch-box[data-i="'+i+'"]');
+  b.classList.toggle('checked');
+  b.textContent = checked[i]?'✓':'';
+  updateVerdict();
+}
+function updateVerdict(){
+  const mand = [0,1,2,3];
+  const opt = [4,5,6,7,8];
+  const mandOK = mand.every(i=>checked[i]);
+  const optN = opt.filter(i=>checked[i]).length;
+  const v = document.getElementById('verdict');
+  const mCount = mand.filter(i=>checked[i]).length;
+  if(!mandOK){
+    v.className='verdict no';
+    v.innerHTML = '> MANDATORY: '+mCount+'/4 &nbsp;·&nbsp; OPTIONAL: '+optN+'/5<br>> VERDICT: <b>NO TRADE.</b> Missing mandatory points. Four of four must be YES — no exceptions.';
+  } else if(optN <= 2){
+    v.className='verdict care';
+    v.innerHTML = '> MANDATORY: 4/4 &nbsp;·&nbsp; OPTIONAL: '+optN+'/5<br>> VERDICT: <b>BORDERLINE.</b> C-grade at best. Reduce size to 0.5% or skip.';
+  } else if(optN <= 3){
+    v.className='verdict go';
+    v.innerHTML = '> MANDATORY: 4/4 &nbsp;·&nbsp; OPTIONAL: '+optN+'/5<br>> VERDICT: <b>TRADEABLE.</b> B-grade setup. Default 1% risk.';
+  } else {
+    v.className='verdict go';
+    v.innerHTML = '> MANDATORY: 4/4 &nbsp;·&nbsp; OPTIONAL: '+optN+'/5<br>> VERDICT: <b>A-GRADE.</b> Max size allowed (up to 1.5%). This is the trade you waited for.';
+  }
+}
+
+/* ============================================================
+   POSITION SIZE
+   ============================================================ */
+document.getElementById('ls').addEventListener('change', e=>{
+  document.getElementById('customLotWrap').style.display = e.target.value==='custom'?'block':'none';
+});
+function calcSize(){
+  const eq = +document.getElementById('eq').value;
+  const rk = +document.getElementById('rk').value;
+  const sd = +document.getElementById('sd').value;
+  let ls = document.getElementById('ls').value;
+  if(ls==='custom') ls = +document.getElementById('customLot').value;
+  else ls = +ls;
+
+  if(!eq || !rk || !sd || !ls){
+    document.getElementById('sizeLots').textContent = '— lots';
+    document.getElementById('sizeNote').textContent = 'Fill all fields with positive numbers.';
+    return;
+  }
+  const riskInr = eq * rk/100;
+  const perLot = sd * ls;
+  const lots = Math.floor(riskInr / perLot);
+  const actualRisk = lots * perLot;
+  const unused = riskInr - actualRisk;
+
+  document.getElementById('sizeLots').textContent = lots + ' lot' + (lots===1?'':'s');
+  if(lots === 0){
+    document.getElementById('sizeNote').innerHTML = 'Stop is too wide for this risk budget. Tighten SL or reduce risk% (not recommended — find a better setup).';
+  } else {
+    document.getElementById('sizeNote').innerHTML = 'Risk budget ₹'+riskInr.toLocaleString('en-IN')+' · risk per lot ₹'+perLot.toLocaleString('en-IN')+' · actual risk ₹'+actualRisk.toLocaleString('en-IN')+' · unused ₹'+unused.toLocaleString('en-IN');
+  }
+}
+calcSize();
+</script>
+</body>
+</html>

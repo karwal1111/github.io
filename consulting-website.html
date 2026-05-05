@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexHire Consulting — Strategic Talent Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0a0f;
+    --cream: #f5f1eb;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --rust: #b85c38;
+    --slate: #2d3142;
+    --mist: #e8e4dc;
+    --text-secondary: #5a5567;
+    --card-bg: #ffffff;
+    --border: rgba(201,168,76,0.2);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; width: 100%; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 5%;
+    background: rgba(245,241,235,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    transition: box-shadow .3s;
+  }
+  nav.scrolled { box-shadow: 0 4px 40px rgba(0,0,0,.07); }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem; font-weight: 900; letter-spacing: -.02em;
+    color: var(--ink);
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .logo span { color: var(--gold); }
+
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a {
+    font-size: .875rem; font-weight: 500; letter-spacing: .05em;
+    text-transform: uppercase; color: var(--text-secondary);
+    text-decoration: none; transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--gold); }
+
+  .nav-cta {
+    background: var(--ink); color: var(--cream);
+    padding: .65rem 1.6rem; border-radius: 2px;
+    font-size: .875rem; font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase; text-decoration: none;
+    transition: background .2s, transform .15s;
+  }
+  .nav-cta:hover { background: var(--gold); transform: translateY(-1px); }
+
+  /* ─── HERO ─── */
+  .hero {
+    min-height: 100vh;
+    display: grid; grid-template-columns: 1fr 1fr; align-items: center;
+    padding: 8rem 5% 4rem;
+    position: relative; overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute; right: -5%; top: 0; width: 55%; height: 100%;
+    background: var(--slate);
+    clip-path: polygon(8% 0, 100% 0, 100% 100%, 0% 100%);
+    z-index: 0;
+  }
+
+  .hero-text { position: relative; z-index: 1; padding-right: 4rem; }
+
+  .eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: .75rem; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: .75rem;
+  }
+  .eyebrow::before {
+    content: ''; display: block; width: 2rem; height: 1px; background: var(--gold);
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.8rem, 5vw, 4.2rem);
+    line-height: 1.1; font-weight: 900; letter-spacing: -.02em;
+    margin-bottom: 1.5rem;
+  }
+  h1 em { font-style: italic; color: var(--gold); }
+
+  .hero-desc {
+    font-size: 1.05rem; line-height: 1.7; color: var(--text-secondary);
+    max-width: 480px; margin-bottom: 2.5rem;
+  }
+
+  .hero-actions { display: flex; gap: 1rem; align-items: center; }
+
+  .btn-primary {
+    background: var(--gold); color: var(--ink);
+    padding: .9rem 2.2rem; border-radius: 2px;
+    font-weight: 700; font-size: .9rem; letter-spacing: .06em; text-transform: uppercase;
+    text-decoration: none; transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 4px 20px rgba(201,168,76,.3);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(201,168,76,.4); }
+
+  .btn-ghost {
+    color: var(--ink); font-weight: 500; font-size: .9rem;
+    text-decoration: none; display: flex; align-items: center; gap: .5rem;
+    transition: gap .2s;
+  }
+  .btn-ghost:hover { gap: .9rem; }
+
+  .hero-visual {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; gap: 1.2rem;
+    padding-left: 3rem;
+  }
+
+  .stat-card {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 4px; padding: 1.4rem 1.8rem;
+    backdrop-filter: blur(8px);
+    animation: floatIn .6s ease both;
+  }
+  .stat-card:nth-child(1) { animation-delay: .1s; }
+  .stat-card:nth-child(2) { animation-delay: .25s; margin-left: 2rem; }
+  .stat-card:nth-child(3) { animation-delay: .4s; }
+
+  @keyframes floatIn {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .stat-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem; font-weight: 900; color: var(--gold-light);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: .8rem; color: rgba(245,241,235,.6);
+    letter-spacing: .1em; text-transform: uppercase; margin-top: .3rem;
+  }
+
+  /* ─── MARQUEE ─── */
+  .marquee-strip {
+    background: var(--gold); padding: .75rem 0; overflow: hidden;
+    display: flex; gap: 0;
+  }
+  .marquee-track {
+    display: flex; gap: 3rem; white-space: nowrap;
+    animation: marquee 25s linear infinite;
+  }
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .marquee-item {
+    font-family: 'Playfair Display', serif;
+    font-size: .85rem; font-weight: 700; letter-spacing: .15em;
+    text-transform: uppercase; color: var(--ink);
+    display: flex; align-items: center; gap: 1.5rem;
+  }
+  .marquee-item::after { content: '◆'; font-size: .5rem; }
+
+  /* ─── SECTIONS COMMON ─── */
+  section { padding: 7rem 5%; }
+
+  .section-header { text-align: center; margin-bottom: 4.5rem; }
+  .section-header .eyebrow { justify-content: center; }
+  .section-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 3rem); font-weight: 900; letter-spacing: -.02em;
+    margin-top: .5rem;
+  }
+  .section-header p {
+    color: var(--text-secondary); font-size: 1.05rem; line-height: 1.7;
+    max-width: 580px; margin: 1rem auto 0;
+  }
+
+  /* ─── PROCESS (SDLC) ─── */
+  #process { background: var(--slate); }
+  #process .section-header .eyebrow { color: var(--gold); }
+  #process .section-header h2, #process .section-header p { color: var(--cream); }
+  #process .section-header p { color: rgba(245,241,235,.6); }
+
+  .process-timeline {
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    gap: 0; position: relative;
+    max-width: 1100px; margin: 0 auto;
+  }
+
+  .process-timeline::before {
+    content: ''; position: absolute;
+    top: 3rem; left: 2.5rem; right: 2.5rem; height: 2px;
+    background: linear-gradient(90deg, var(--gold), var(--rust), var(--gold));
+    z-index: 0;
+  }
+
+  .phase-card {
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; padding: 0 .75rem;
+    position: relative; z-index: 1;
+    transition: transform .3s;
+  }
+  .phase-card:hover { transform: translateY(-6px); }
+
+  .phase-num {
+    width: 4rem; height: 4rem; border-radius: 50%;
+    background: var(--slate); border: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem; font-weight: 900; color: var(--gold);
+    margin-bottom: 1.25rem; position: relative;
+  }
+  .phase-card:hover .phase-num {
+    background: var(--gold); color: var(--slate);
+  }
+
+  .phase-title {
+    font-family: 'Playfair Display', serif;
+    font-size: .95rem; font-weight: 700; color: var(--cream);
+    margin-bottom: .5rem;
+  }
+  .phase-desc {
+    font-size: .78rem; line-height: 1.5;
+    color: rgba(245,241,235,.5);
+  }
+
+  /* ─── SERVICES ─── */
+  .services-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1.5px; background: var(--mist);
+    max-width: 1100px; margin: 0 auto;
+    border: 1.5px solid var(--mist);
+  }
+
+  .service-item {
+    background: var(--card-bg); padding: 2.5rem;
+    transition: background .2s;
+    cursor: default;
+    position: relative; overflow: hidden;
+  }
+  .service-item::after {
+    content: ''; position: absolute; bottom: 0; left: 0;
+    width: 0; height: 3px; background: var(--gold);
+    transition: width .3s ease;
+  }
+  .service-item:hover::after { width: 100%; }
+  .service-item:hover { background: #fefcf9; }
+
+  .service-icon {
+    font-size: 2rem; margin-bottom: 1.2rem; display: block;
+  }
+  .service-item h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem; font-weight: 700; margin-bottom: .75rem;
+  }
+  .service-item p {
+    font-size: .88rem; line-height: 1.65; color: var(--text-secondary);
+  }
+
+  /* ─── HOW IT WORKS ─── */
+  #how { background: var(--ink); }
+  #how .section-header h2 { color: var(--cream); }
+  #how .section-header p { color: rgba(245,241,235,.5); }
+
+  .steps-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 2px; max-width: 900px; margin: 0 auto;
+    background: rgba(255,255,255,.05);
+  }
+  .step-block {
+    background: #0d0d14; padding: 3rem;
+    border: 1px solid rgba(255,255,255,.06);
+    display: flex; gap: 1.5rem; align-items: flex-start;
+    transition: border-color .25s;
+  }
+  .step-block:hover { border-color: rgba(201,168,76,.3); }
+
+  .step-num-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 2.5rem; font-weight: 500; color: rgba(201,168,76,.2);
+    line-height: 1; flex-shrink: 0; width: 3rem;
+  }
+  .step-content h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem; color: var(--cream); margin-bottom: .6rem;
+  }
+  .step-content p {
+    font-size: .875rem; line-height: 1.65;
+    color: rgba(245,241,235,.45);
+  }
+
+  /* ─── INTAKE FORM ─── */
+  #intake { background: var(--cream); }
+
+  .intake-wrapper {
+    max-width: 780px; margin: 0 auto;
+    background: var(--card-bg);
+    border: 1px solid var(--mist);
+    padding: 3.5rem;
+    position: relative;
+  }
+  .intake-wrapper::before {
+    content: ''; position: absolute;
+    top: -4px; left: 2rem; right: 2rem; height: 4px;
+    background: linear-gradient(90deg, var(--gold), var(--rust));
+  }
+
+  .intake-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .intake-grid .full { grid-column: 1/-1; }
+
+  .form-group { display: flex; flex-direction: column; gap: .5rem; }
+  .form-group label {
+    font-size: .75rem; font-weight: 600; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--text-secondary);
+  }
+  .form-group input, .form-group select, .form-group textarea {
+    padding: .85rem 1rem;
+    border: 1.5px solid var(--mist);
+    border-radius: 2px; background: var(--cream);
+    font-family: 'DM Sans', sans-serif; font-size: .9rem;
+    color: var(--ink); transition: border-color .2s;
+    outline: none;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: var(--gold);
+    background: #fff;
+  }
+  textarea { resize: vertical; min-height: 120px; }
+
+  .checkbox-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: .6rem;
+    margin-top: .25rem;
+  }
+  .checkbox-item {
+    display: flex; align-items: center; gap: .6rem;
+    cursor: pointer; font-size: .875rem; color: var(--text-secondary);
+  }
+  .checkbox-item input[type="checkbox"] {
+    width: 1rem; height: 1rem; accent-color: var(--gold);
+    padding: 0; border: none; background: none; border-radius: 2px;
+  }
+
+  .progress-bar {
+    display: flex; gap: .4rem; margin-bottom: 2.5rem;
+  }
+  .progress-step {
+    flex: 1; height: 4px; border-radius: 2px;
+    background: var(--mist); transition: background .4s;
+  }
+  .progress-step.active { background: var(--gold); }
+  .progress-step.done { background: var(--rust); }
+
+  .form-section { display: none; }
+  .form-section.visible { display: block; }
+
+  .form-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 2rem; padding-top: 1.5rem;
+    border-top: 1px solid var(--mist);
+  }
+
+  .btn-back {
+    background: transparent; border: 1.5px solid var(--mist);
+    padding: .75rem 1.8rem; border-radius: 2px;
+    font-family: 'DM Sans', sans-serif; font-weight: 600;
+    font-size: .85rem; letter-spacing: .06em; text-transform: uppercase;
+    cursor: pointer; color: var(--text-secondary); transition: all .2s;
+  }
+  .btn-back:hover { border-color: var(--ink); color: var(--ink); }
+
+  .btn-next {
+    background: var(--ink); color: var(--cream);
+    padding: .75rem 2.2rem; border-radius: 2px; border: none;
+    font-family: 'DM Sans', sans-serif; font-weight: 700;
+    font-size: .85rem; letter-spacing: .1em; text-transform: uppercase;
+    cursor: pointer; transition: background .2s, transform .15s;
+  }
+  .btn-next:hover { background: var(--gold); color: var(--ink); transform: translateY(-1px); }
+
+  .step-label {
+    font-family: 'DM Mono', monospace; font-size: .75rem;
+    color: var(--text-secondary); letter-spacing: .1em;
+  }
+
+  /* Success State */
+  .form-success {
+    display: none; text-align: center; padding: 2rem 0;
+  }
+  .success-icon {
+    font-size: 3rem; margin-bottom: 1rem; display: block;
+  }
+  .form-success h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem; margin-bottom: .75rem;
+  }
+  .form-success p { color: var(--text-secondary); line-height: 1.7; }
+
+  /* ─── TESTIMONIALS ─── */
+  #testimonials { background: var(--mist); }
+
+  .testimonials-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem; max-width: 1100px; margin: 0 auto;
+  }
+
+  .testimonial-card {
+    background: var(--card-bg); padding: 2.2rem;
+    border-radius: 2px;
+    border-left: 3px solid var(--gold);
+    transition: transform .3s, box-shadow .3s;
+  }
+  .testimonial-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,.08);
+  }
+
+  .quote-mark {
+    font-family: 'Playfair Display', serif;
+    font-size: 4rem; line-height: .8;
+    color: var(--gold); opacity: .3; margin-bottom: .5rem;
+  }
+  .testimonial-text {
+    font-size: .9rem; line-height: 1.7;
+    color: var(--text-secondary); margin-bottom: 1.5rem;
+    font-style: italic;
+  }
+  .testimonial-author {
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .author-avatar {
+    width: 2.5rem; height: 2.5rem; border-radius: 50%;
+    background: var(--slate); display: flex; align-items: center;
+    justify-content: center; color: var(--cream);
+    font-weight: 700; font-size: .85rem; flex-shrink: 0;
+  }
+  .author-name {
+    font-weight: 700; font-size: .875rem;
+  }
+  .author-title {
+    font-size: .78rem; color: var(--text-secondary);
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    background: var(--ink); color: var(--cream);
+    padding: 4rem 5% 2rem;
+  }
+  .footer-grid {
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 3rem; margin-bottom: 3rem;
+  }
+  .footer-brand .logo { color: var(--cream); margin-bottom: 1rem; }
+  .footer-desc {
+    font-size: .875rem; line-height: 1.7;
+    color: rgba(245,241,235,.45); max-width: 280px;
+  }
+  .footer-col h4 {
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 1.2rem;
+  }
+  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: .6rem; }
+  .footer-col a {
+    font-size: .875rem; color: rgba(245,241,235,.5);
+    text-decoration: none; transition: color .2s;
+  }
+  .footer-col a:hover { color: var(--gold); }
+  .footer-bottom {
+    border-top: 1px solid rgba(255,255,255,.08);
+    padding-top: 1.5rem;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .footer-bottom p { font-size: .8rem; color: rgba(245,241,235,.3); }
+
+  /* ─── ANIMATIONS ─── */
+  .fade-up {
+    opacity: 0; transform: translateY(30px);
+    transition: opacity .6s ease, transform .6s ease;
+  }
+  .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; padding-top: 6rem; }
+    .hero::before { display: none; }
+    .hero-text { padding-right: 0; }
+    .hero-visual { padding-left: 0; }
+    .stat-card { background: rgba(45,49,66,.08); border-color: var(--border); }
+    .stat-number { color: var(--gold); }
+    .stat-label { color: var(--text-secondary); }
+    .process-timeline { grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+    .process-timeline::before { display: none; }
+    .services-grid { grid-template-columns: 1fr 1fr; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .testimonials-grid { grid-template-columns: 1fr; }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    .intake-grid { grid-template-columns: 1fr; }
+    nav .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="logo">Nex<span>Hire</span></div>
+  <ul class="nav-links">
+    <li><a href="#process">Our Process</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#testimonials">Clients</a></li>
+  </ul>
+  <a href="#intake" class="nav-cta">Start Hiring</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-text">
+    <div class="eyebrow">Strategic Talent Consulting</div>
+    <h1>We Build Teams<br>That <em>Scale</em><br>With You</h1>
+    <p class="hero-desc">NexHire is a consulting firm that architects your entire hiring lifecycle — from requirement discovery through onboarding — using a rigorous, SDLC-inspired methodology.</p>
+    <div class="hero-actions">
+      <a href="#intake" class="btn-primary">Begin Engagement →</a>
+      <a href="#process" class="btn-ghost">See Our Process <span>↓</span></a>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="stat-card">
+      <div class="stat-number">340+</div>
+      <div class="stat-label">Positions Filled This Year</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">94%</div>
+      <div class="stat-label">Client Retention Rate</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">18 Days</div>
+      <div class="stat-label">Average Time-to-Hire</div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-strip">
+  <div class="marquee-track">
+    <span class="marquee-item">Requirement Analysis</span>
+    <span class="marquee-item">Talent Architecture</span>
+    <span class="marquee-item">Candidate Pipeline</span>
+    <span class="marquee-item">SDLC Methodology</span>
+    <span class="marquee-item">Executive Search</span>
+    <span class="marquee-item">Tech Hiring</span>
+    <span class="marquee-item">Culture Fit Mapping</span>
+    <span class="marquee-item">Onboarding Design</span>
+    <span class="marquee-item">Requirement Analysis</span>
+    <span class="marquee-item">Talent Architecture</span>
+    <span class="marquee-item">Candidate Pipeline</span>
+    <span class="marquee-item">SDLC Methodology</span>
+    <span class="marquee-item">Executive Search</span>
+    <span class="marquee-item">Tech Hiring</span>
+    <span class="marquee-item">Culture Fit Mapping</span>
+    <span class="marquee-item">Onboarding Design</span>
+  </div>
+</div>
+
+<!-- PROCESS / SDLC -->
+<section id="process">
+  <div class="section-header fade-up">
+    <div class="eyebrow">Our Methodology</div>
+    <h2>Hiring, Engineered Like Software</h2>
+    <p>Every engagement follows our 6-phase SDLC-inspired talent delivery framework — structured, measurable, and repeatable.</p>
+  </div>
+
+  <div class="process-timeline">
+    <div class="phase-card fade-up">
+      <div class="phase-num">1</div>
+      <div class="phase-title">Discovery</div>
+      <div class="phase-desc">Deep-dive requirement gathering with stakeholders. Define roles, team gaps, culture, and success metrics.</div>
+    </div>
+    <div class="phase-card fade-up">
+      <div class="phase-num">2</div>
+      <div class="phase-title">Planning</div>
+      <div class="phase-desc">Build a talent roadmap. Define timelines, sourcing strategy, evaluation criteria, and risk buffers.</div>
+    </div>
+    <div class="phase-card fade-up">
+      <div class="phase-num">3</div>
+      <div class="phase-title">Sourcing</div>
+      <div class="phase-desc">Active headhunting, network mining, and job market campaigns to fill a qualified pipeline.</div>
+    </div>
+    <div class="phase-card fade-up">
+      <div class="phase-num">4</div>
+      <div class="phase-title">Screening</div>
+      <div class="phase-desc">Multi-layer evaluation: skills assessment, behavioral interviews, culture alignment, and reference checks.</div>
+    </div>
+    <div class="phase-card fade-up">
+      <div class="phase-num">5</div>
+      <div class="phase-title">Deployment</div>
+      <div class="phase-desc">Offer facilitation, negotiation support, and seamless handoff to your team with full documentation.</div>
+    </div>
+    <div class="phase-card fade-up">
+      <div class="phase-num">6</div>
+      <div class="phase-title">Review</div>
+      <div class="phase-desc">30/60/90-day post-placement tracking and retrospectives to continuously improve our process.</div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="section-header fade-up">
+    <div class="eyebrow">What We Do</div>
+    <h2>Full-Spectrum Talent Services</h2>
+    <p>From early-stage startups building their first engineering team to enterprises restructuring entire divisions.</p>
+  </div>
+
+  <div class="services-grid fade-up">
+    <div class="service-item">
+      <span class="service-icon">🔍</span>
+      <h3>Executive Search</h3>
+      <p>C-suite and VP-level placements requiring confidential sourcing, market intelligence, and board-level advisory support.</p>
+    </div>
+    <div class="service-item">
+      <span class="service-icon">⚙️</span>
+      <h3>Technical Hiring</h3>
+      <p>Engineers, architects, data scientists, and DevOps leads evaluated through structured technical assessments.</p>
+    </div>
+    <div class="service-item">
+      <span class="service-icon">🚀</span>
+      <h3>Startup Team Building</h3>
+      <p>Build your core team from scratch. We help founders define culture, write job specs, and land foundational hires.</p>
+    </div>
+    <div class="service-item">
+      <span class="service-icon">📋</span>
+      <h3>JD & Requirements Design</h3>
+      <p>We interview your team leads and translate organizational needs into precise, attractive job architectures.</p>
+    </div>
+    <div class="service-item">
+      <span class="service-icon">🎯</span>
+      <h3>Contract & Project Staffing</h3>
+      <p>Short-term talent for sprints, launches, or capacity crises. Pre-vetted, deployable within 72 hours.</p>
+    </div>
+    <div class="service-item">
+      <span class="service-icon">🏗️</span>
+      <h3>HR Process Consulting</h3>
+      <p>Audit and redesign your internal hiring workflows, ATS configurations, and employer branding strategy.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-header fade-up">
+    <div class="eyebrow">Client Journey</div>
+    <h2>From First Contact to First Day</h2>
+    <p>A clear, low-friction engagement process designed around your time and priorities.</p>
+  </div>
+
+  <div class="steps-grid fade-up">
+    <div class="step-block">
+      <div class="step-num-badge">01</div>
+      <div class="step-content">
+        <h3>Submit Your Brief</h3>
+        <p>Fill our structured intake form — role details, team context, timeline, and budget. Takes under 10 minutes.</p>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num-badge">02</div>
+      <div class="step-content">
+        <h3>Discovery Call</h3>
+        <p>A senior consultant schedules a 45-min deep-dive to clarify requirements and align on strategy and success criteria.</p>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num-badge">03</div>
+      <div class="step-content">
+        <h3>Talent Blueprint</h3>
+        <p>We deliver a written talent plan within 48 hours — personas, sourcing channels, timeline, and engagement model.</p>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num-badge">04</div>
+      <div class="step-content">
+        <h3>Shortlist Delivery</h3>
+        <p>Receive 3–5 deeply vetted candidates with structured evaluation reports, not just resumes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INTAKE FORM -->
+<section id="intake">
+  <div class="section-header fade-up">
+    <div class="eyebrow">Client Intake</div>
+    <h2>Tell Us What You're Building</h2>
+    <p>Share your hiring needs and a consultant will follow up within one business day.</p>
+  </div>
+
+  <div class="intake-wrapper fade-up">
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-step active" id="ps1"></div>
+      <div class="progress-step" id="ps2"></div>
+      <div class="progress-step" id="ps3"></div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="form-section visible" id="step1">
+      <div style="margin-bottom:1.5rem">
+        <p class="step-label">Step 1 of 3 — Company Info</p>
+      </div>
+      <div class="intake-grid">
+        <div class="form-group">
+          <label>Your Full Name *</label>
+          <input type="text" id="name" placeholder="Jane Smith">
+        </div>
+        <div class="form-group">
+          <label>Company Name *</label>
+          <input type="text" id="company" placeholder="Acme Corp">
+        </div>
+        <div class="form-group">
+          <label>Work Email *</label>
+          <input type="email" id="email" placeholder="jane@acme.com">
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" id="phone" placeholder="+91 98765 43210">
+        </div>
+        <div class="form-group">
+          <label>Company Size</label>
+          <select id="companySize">
+            <option value="">Select...</option>
+            <option>1–10 (Seed)</option>
+            <option>11–50 (Early Stage)</option>
+            <option>51–200 (Growth)</option>
+            <option>201–1000 (Scale-up)</option>
+            <option>1000+ (Enterprise)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Industry</label>
+          <select id="industry">
+            <option value="">Select...</option>
+            <option>Technology / SaaS</option>
+            <option>Fintech / BFSI</option>
+            <option>Healthcare / MedTech</option>
+            <option>E-commerce / Retail</option>
+            <option>Manufacturing</option>
+            <option>Consulting / Professional Services</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-nav">
+        <span class="step-label">Company Details</span>
+        <button class="btn-next" onclick="nextStep(2)">Next: Role Details →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="form-section" id="step2">
+      <div style="margin-bottom:1.5rem">
+        <p class="step-label">Step 2 of 3 — Role Requirements</p>
+      </div>
+      <div class="intake-grid">
+        <div class="form-group">
+          <label>Role / Job Title *</label>
+          <input type="text" id="role" placeholder="e.g. Senior Backend Engineer">
+        </div>
+        <div class="form-group">
+          <label>Number of Openings</label>
+          <input type="number" id="openings" placeholder="1" min="1">
+        </div>
+        <div class="form-group">
+          <label>Employment Type</label>
+          <select id="empType">
+            <option>Full-time Permanent</option>
+            <option>Contract</option>
+            <option>Part-time</option>
+            <option>Internship</option>
+            <option>Freelance / Project</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Hiring Urgency</label>
+          <select id="urgency">
+            <option>Within 2 weeks</option>
+            <option>1 month</option>
+            <option>1–3 months</option>
+            <option>3+ months (planning)</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Key Skills & Requirements</label>
+          <textarea id="skills" placeholder="e.g. 5+ years Node.js, microservices experience, AWS, strong system design skills..."></textarea>
+        </div>
+        <div class="form-group full">
+          <label>Services You're Interested In</label>
+          <div class="checkbox-grid">
+            <label class="checkbox-item"><input type="checkbox" value="Executive Search"> Executive Search</label>
+            <label class="checkbox-item"><input type="checkbox" value="Technical Hiring"> Technical Hiring</label>
+            <label class="checkbox-item"><input type="checkbox" value="Startup Team Building"> Startup Team Building</label>
+            <label class="checkbox-item"><input type="checkbox" value="JD Design"> JD & Requirements Design</label>
+            <label class="checkbox-item"><input type="checkbox" value="Contract Staffing"> Contract Staffing</label>
+            <label class="checkbox-item"><input type="checkbox" value="HR Consulting"> HR Process Consulting</label>
+          </div>
+        </div>
+      </div>
+      <div class="form-nav">
+        <button class="btn-back" onclick="nextStep(1)">← Back</button>
+        <button class="btn-next" onclick="nextStep(3)">Next: Final Details →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="form-section" id="step3">
+      <div style="margin-bottom:1.5rem">
+        <p class="step-label">Step 3 of 3 — Additional Context</p>
+      </div>
+      <div class="intake-grid">
+        <div class="form-group">
+          <label>Budget Range (Annual CTC)</label>
+          <select id="budget">
+            <option value="">Select...</option>
+            <option>Under ₹8 LPA</option>
+            <option>₹8 – ₹15 LPA</option>
+            <option>₹15 – ₹30 LPA</option>
+            <option>₹30 – ₹60 LPA</option>
+            <option>₹60 LPA+</option>
+            <option>Not Disclosed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Preferred Work Mode</label>
+          <select id="workMode">
+            <option>In-Office</option>
+            <option>Remote</option>
+            <option>Hybrid</option>
+            <option>Flexible</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Team & Culture Context</label>
+          <textarea id="culture" placeholder="Describe your team culture, tech stack, working style, or anything that helps us find the right fit..."></textarea>
+        </div>
+        <div class="form-group full">
+          <label>Anything Else We Should Know?</label>
+          <textarea id="notes" placeholder="Pain points with previous hiring? Special requirements? Ideal start date?"></textarea>
+        </div>
+      </div>
+      <div class="form-nav">
+        <button class="btn-back" onclick="nextStep(2)">← Back</button>
+        <button class="btn-next" onclick="submitForm()">Submit Brief ✓</button>
+      </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="form-success" id="formSuccess">
+      <span class="success-icon">✅</span>
+      <h3>Brief Received!</h3>
+      <p>Thank you for reaching out. A senior NexHire consultant will review your requirements and get back to you within <strong>one business day</strong>.<br><br>In the meantime, feel free to explore our process or check out client stories below.</p>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials">
+  <div class="section-header fade-up">
+    <div class="eyebrow">Client Stories</div>
+    <h2>What Our Clients Say</h2>
+    <p>From founding engineers to entire departments — here's what partners experienced working with NexHire.</p>
+  </div>
+
+  <div class="testimonials-grid fade-up">
+    <div class="testimonial-card">
+      <div class="quote-mark">"</div>
+      <p class="testimonial-text">NexHire didn't just send us CVs. They delivered a talent blueprint for our entire engineering org. Their discovery process was more thorough than any recruiter we've ever worked with.</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">RK</div>
+        <div>
+          <div class="author-name">Rahul Khanna</div>
+          <div class="author-title">CTO, Fintech Series B</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="quote-mark">"</div>
+      <p class="testimonial-text">We hired our first 12 engineers through NexHire. Their structured intake process helped us define what we actually needed — not just what we thought we needed.</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">AS</div>
+        <div>
+          <div class="author-name">Aisha Siddiqui</div>
+          <div class="author-title">Founder, SaaS Startup</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="quote-mark">"</div>
+      <p class="testimonial-text">The 6-phase process gave our HR team full visibility at every stage. We reduced time-to-hire by 40% and improved quality of candidates dramatically.</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">PV</div>
+        <div>
+          <div class="author-name">Priya Varma</div>
+          <div class="author-title">VP People, 500-person Enterprise</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="logo">Nex<span>Hire</span></div>
+      <p class="footer-desc">Strategic talent consulting built on structured methodology, deep market access, and genuine partnership.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Services</h4>
+      <ul>
+        <li><a href="#">Executive Search</a></li>
+        <li><a href="#">Technical Hiring</a></li>
+        <li><a href="#">Contract Staffing</a></li>
+        <li><a href="#">HR Consulting</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Our Team</a></li>
+        <li><a href="#">Case Studies</a></li>
+        <li><a href="#">Blog</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="#">hello@nexhire.in</a></li>
+        <li><a href="#">+91 98765 43210</a></li>
+        <li><a href="#">Jaipur / Bangalore</a></li>
+        <li><a href="#intake">Start Engagement</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 NexHire Consulting. All rights reserved.</p>
+    <p>Privacy Policy · Terms of Service</p>
+  </div>
+</footer>
+
+<script>
+  // Nav scroll
+  window.addEventListener('scroll', () => {
+    document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 40);
+  });
+
+  // Intersection observer for fade-up
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+  // Multi-step form
+  let currentStep = 1;
+
+  function nextStep(step) {
+    document.getElementById('step' + currentStep).classList.remove('visible');
+    currentStep = step;
+    document.getElementById('step' + step).classList.add('visible');
+
+    // Progress
+    for (let i = 1; i <= 3; i++) {
+      const el = document.getElementById('ps' + i);
+      el.className = 'progress-step';
+      if (i < step) el.classList.add('done');
+      if (i === step) el.classList.add('active');
+    }
+
+    document.getElementById('intake').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function submitForm() {
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const company = document.getElementById('company').value.trim();
+
+    if (!name || !email || !company) {
+      alert('Please fill in your name, email, and company name before submitting.');
+      nextStep(1); return;
+    }
+
+    // Hide all steps
+    document.querySelectorAll('.form-section').forEach(s => s.classList.remove('visible'));
+    document.getElementById('progressBar').style.display = 'none';
+    document.getElementById('formSuccess').style.display = 'block';
+  }
+</script>
+
+</body>
+</html>
